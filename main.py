@@ -45,10 +45,71 @@ class AutoPlanGUI(tk.Tk):
         frame = ttk.LabelFrame(self, text="Planning Flow Management")
         frame.pack(fill="x", padx=10, pady=5)
 
-        ttk.Button(frame, text="New Flow", command=self.new_flow).pack(side="left", padx=5, pady=2)
+        ttk.Button(frame, text="New Flow", command=lambda: PlanFlowDesigner(self)).pack(side="left", padx=5, pady=2)
         ttk.Button(frame, text="Edit Flow", command=self.edit_flow).pack(side="left", padx=5, pady=2)
         ttk.Button(frame, text="Start", command=self.start_planning).pack(side="right", padx=5, pady=2)
 
+    def show_step_info(self, step):
+        """Popup with step description."""
+        messagebox.showinfo("Step Info", f"Details about {step} step.")
+
+    def load_flow(self):
+        """Load an existing workflow from JSON."""
+        file_path = filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")])
+        if file_path:
+            with open(file_path, "r") as f:
+                self.workflow_data = json.load(f)
+            messagebox.showinfo("Load Flow", f"Loaded workflow from {file_path}")
+
+    def edit_flow(self):
+        """Allow editing of the selected workflow and open the planning steps window."""
+        messagebox.showwarning("Edit flow", "Please select flow first.")
+
+    def start_planning(self):
+        """Start the automated planning process."""
+        messagebox.showinfo("Start Planning", "STARTING AUTOMATED PLANNING FROM SELECTED FLOW...")
+
+    def simple_input_dialog(self, title, prompt):
+        """Show a simple input dialog for user text entry."""
+        dialog = tk.Toplevel(self)
+        dialog.title(title)
+        dialog.geometry("300x100")
+
+        tk.Label(dialog, text=prompt).pack(pady=5)
+        entry = tk.Entry(dialog)
+        entry.pack(pady=5)
+
+        def on_ok():
+            dialog.user_input = entry.get()
+            dialog.destroy()
+
+        tk.Button(dialog, text="OK", command=on_ok).pack(pady=5)
+        dialog.transient()
+        dialog.wait_window()
+        return getattr(dialog, "user_input", None)
+
+class PlanFlowDesigner:
+    """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
+    """Open a new window for planning steps."""
+    def __init__(self, parent):
+        self.planning_window = tk.Toplevel(parent)
+        self.planning_window.title("Planning flow")
+        self.planning_window.geometry("550x450")
+        
+        self.name_configured(self.planning_window)
+        
+        self.techniques_configured(self.planning_window)
+        
+        self.planning_flow(self.planning_window)
+        
+        # Save Flow Button
+        self.save_flow_btn = ttk.Button(self.planning_window, text="Save Flow", command=self.save_flow)
+        self.save_flow_btn.pack(padx=200,pady=10)
+        
+    def save_flow(self):
+        """Save the workflow to a JSON file."""
+        messagebox.showinfo("Save Flow", f"Planning flow saved")
+    
     def name_configured(self, popup):
         """For setting flow name and user"""
         frame = ttk.LabelFrame(popup, text="Name Configuration")
@@ -74,23 +135,96 @@ class AutoPlanGUI(tk.Tk):
         self.technique_dropdown = ttk.Combobox(frame, textvariable=self.technique_var, values=['VMAT', 'IMPT'], state="readonly")
         self.technique_dropdown.pack(side="left", padx=5, pady=2)
         
-        beam_settings_btn = ttk.Button(frame, text="Beam Settings", command=lambda: self.open_VMAT_beam_settings_window() if self.technique_var.get() == "VMAT" else self.open_IMPT_beam_settings_window())
+        beam_settings_btn = ttk.Button(frame, text="Beam Settings", command=lambda: VMAT_beam_setting_Window(self.planning_window) if self.technique_var.get() == "VMAT" else IMPT_beam_setting_Window(self.planning_window))
         beam_settings_btn.pack(side="left", padx=5, pady=2)
         
         isocenter_settings_btn = ttk.Button(frame, text="Isocenter Settings", command=lambda: self.open_isocenter_settings_window())
         isocenter_settings_btn.pack(side="left", padx=5, pady=2)
     
-    def open_IMPT_beam_settings_window(self):
-        """Open a new window for Beam Settings."""
-        beam_window = tk.Toplevel(self)
-        beam_window.title("IMPT Beam Settings")
-        beam_window.geometry("1500x700")
+    def open_isocenter_settings_window(self):
+        """Open a new window for Isocenter Settings."""
+        isocenter_window = tk.Toplevel(self.planning_window)
+        isocenter_window.title("Isocenter Settings")
+        isocenter_window.geometry("400x300")
         # Bold Title Label
-        title_label = tk.Label(beam_window, text="IMPT Beam Settings", font=("Arial", 14, "bold"))
+        title_label = tk.Label(isocenter_window, text="Isocenter Settings", font=("Arial", 14, "bold"))
+        title_label.pack(pady=10)
+        
+        # Content can be added here
+        
+        # Close Button
+        close_btn = ttk.Button(isocenter_window, text="Close", command=isocenter_window.destroy)
+        close_btn.pack(pady=10)
+    
+    def planning_flow(self, popup):
+        """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
+        # Planning Flow Steps Frame
+        frame = ttk.LabelFrame(popup, text="Planning Flow")
+        frame.pack(fill="both", expand=True, padx=10, pady=5)
+
+        # Steps Buttons
+        self.match_roi_btn = ttk.Button(frame, text="Match ROI", command=lambda: MatchROI_Window(self.planning_window))
+        self.match_roi_btn.place(x=50, y=40)
+        
+        self.automate_roi_btn = ttk.Button(frame, text="Create Automate ROI", command=lambda: AutomateROI_Window(self.planning_window))
+        self.automate_roi_btn.place(x=200, y=40)
+        
+        self.initial_function_btn = ttk.Button(frame, text="Initial function", command=lambda: InitialFunction_Window(self.planning_window))
+        self.initial_function_btn.place(x=380, y=40)
+        
+        self.optimization_btn = ttk.Button(frame, text="Optimization", command=lambda: OptimizationSetting_Window(self.planning_window))
+        self.optimization_btn.place(x=380, y=100)
+        
+        self.final_calc_btn = ttk.Button(frame, text="Final Calculation", command=lambda: FinalCalculationSetting_Window(self.planning_window))
+        self.final_calc_btn.place(x=200, y=100)
+        
+        self.check_condition_btn = ttk.Button(frame, text="Check Condition", command=lambda: CheckCondition_Window(self.planning_window))
+        self.check_condition_btn.place(x=40, y=100)
+        
+        self.condition_roi_btn = ttk.Button(frame, text="Create Condition ROI", command=lambda: ConditionROI_Window(self.planning_window))
+        self.condition_roi_btn.place(x=110, y=160)
+        
+        self.function_adjustment_btn = ttk.Button(frame, text="Conditionally Function Adjustment", command=lambda: FunctionAdjustment_Window(self.planning_window))
+        self.function_adjustment_btn.place(x=270, y=160)
+        
+        self.end_flow_btn = ttk.Button(frame, text="End Planning Flow", command=lambda: EndPlanningFlow_Window(self.planning_window))
+        self.end_flow_btn.place(x=20, y=220)
+
+        # Arrows between steps
+        self.add_arrow(frame, "→", 150, 35)
+        self.add_arrow(frame, "→", 340, 35)
+        self.add_arrow(frame, "↓", 430, 65)
+        self.add_arrow(frame, "←", 330, 95)
+        self.add_arrow(frame, "←", 150, 95)
+        self.add_arrow(frame, "↓", 115, 130)
+        self.add_arrow(frame, "→", 240, 155)
+        self.add_arrow(frame, "↑", 430, 130)
+        self.add_arrow(frame, "↓", 60, 130)
+        self.add_arrow(frame, "↓", 60, 160)
+        self.add_arrow(frame, "↓", 60, 190)
+
+    def add_arrow(self, parent, symbol, x, y):
+        """Helper function to add arrows between steps."""
+        label = tk.Label(parent, text=symbol, font=("Arial", 14))
+        label.place(x=x, y=y)   
+
+    def show_step_info(self, message):
+        """Display information about the selected step."""
+        messagebox.showinfo("Step Information", message)
+
+class IMPT_beam_setting_Window:
+    """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
+    """Open a new window for IMRT beam settings."""
+    def __init__(self, parent):
+        self.beam_window = tk.Toplevel(parent)
+        self.beam_window.title("IMPT Beam Settings")
+        self.beam_window.geometry("1500x700")
+        # Bold Title Label
+        title_label = tk.Label(self.beam_window, text="IMPT Beam Settings", font=("Arial", 14, "bold"))
         title_label.pack(pady=10)
         
         # Beams tree with scrollbar
-        beam_tree_frame = ttk.Frame(beam_window)
+        beam_tree_frame = ttk.Frame(self.beam_window)
         beam_tree_frame.pack(pady=5, fill="both", expand=True)
         
         beam_tree_scroll_y = ttk.Scrollbar(beam_tree_frame, orient="vertical")
@@ -121,7 +255,7 @@ class AutoPlanGUI(tk.Tk):
         beam_tree_frame.grid_columnconfigure(0, weight=1)
         
         # Beam computation setting tree with scrollbar
-        beam_comp_tree_frame = ttk.Frame(beam_window)
+        beam_comp_tree_frame = ttk.Frame(self.beam_window)
         beam_comp_tree_frame.pack(pady=5, fill="both", expand=True)
         
         beam_comp_tree_scroll_y = ttk.Scrollbar(beam_comp_tree_frame, orient="vertical")
@@ -170,33 +304,39 @@ class AutoPlanGUI(tk.Tk):
         beam_comp_tree_frame.grid_columnconfigure(0, weight=1)
         
         # Add Beam Button
-        self.add_beam_btn = ttk.Button(beam_window, text="Add Beam", command=lambda: self.show_step_info("Add Beam"))
+        self.add_beam_btn = ttk.Button(self.beam_window, text="Add Beam", command=lambda: self.show_step_info("Add Beam"))
         self.add_beam_btn.pack(side="left", padx=5, pady=5)
         # Remove Beam Button
-        self.remove_beam_btn = ttk.Button(beam_window, text="Remove Selected Beam", command=lambda: self.show_step_info("Remove Beam"))
+        self.remove_beam_btn = ttk.Button(self.beam_window, text="Remove Selected Beam", command=lambda: self.show_step_info("Remove Beam"))
         self.remove_beam_btn.pack(side="left", padx=5, pady=5)
         # Edit Beam Button
-        self.edit_beam_btn = ttk.Button(beam_window, text="Edit Selected Beam", command=lambda: self.show_step_info("Edit Beam"))
+        self.edit_beam_btn = ttk.Button(self.beam_window, text="Edit Selected Beam", command=lambda: self.show_step_info("Edit Beam"))
         self.edit_beam_btn.pack(side="left", padx=5, pady=5)
         # Save Button
-        self.save_beam_btn = ttk.Button(beam_window, text="Save", command=lambda: self.show_step_info("Beam Settings Saved"))
+        self.save_beam_btn = ttk.Button(self.beam_window, text="Save", command=lambda: self.show_step_info("Beam Settings Saved"))
         self.save_beam_btn.pack(side="left", padx=5, pady=5)
         
         # Close Button
-        close_btn = ttk.Button(beam_window, text="Close", command=beam_window.destroy)
+        close_btn = ttk.Button(self.beam_window, text="Close", command=self.beam_window.destroy)
         close_btn.pack(pady=10)
-    
-    def open_VMAT_beam_settings_window(self):
-        """Open a new window for VMAT Beam Settings."""
-        beam_window = tk.Toplevel(self)
-        beam_window.title("VMAT Beam Settings")
-        beam_window.geometry("800x500")
+        
+    def show_step_info(self, message):
+        """Display a message box with step information."""
+        messagebox.showinfo("Step Information", message)
+        
+class VMAT_beam_setting_Window:
+    """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
+    """Open a new window for VMAT beam settings."""
+    def __init__(self, parent):
+        self.beam_window = tk.Toplevel(parent)
+        self.beam_window.title("VMAT Beam Settings")
+        self.beam_window.geometry("800x500")
         # Bold Title Label
-        title_label = tk.Label(beam_window, text="VMAT Beam Settings", font=("Arial", 14, "bold"))
+        title_label = tk.Label(self.beam_window, text="VMAT Beam Settings", font=("Arial", 14, "bold"))
         title_label.pack(pady=10)
         
         # Beams tree with scrollbar
-        beam_tree_frame = ttk.Frame(beam_window)
+        beam_tree_frame = ttk.Frame(self.beam_window)
         beam_tree_frame.pack(pady=5, fill="both", expand=True)
         
         beam_tree_scroll_y = ttk.Scrollbar(beam_tree_frame, orient="vertical")
@@ -229,171 +369,30 @@ class AutoPlanGUI(tk.Tk):
         beam_tree_frame.grid_columnconfigure(0, weight=1)
         
         # Add Beam Button
-        self.add_beam_btn = ttk.Button(beam_window, text="Add Beam", command=lambda: self.show_step_info("Add Beam"))
+        self.add_beam_btn = ttk.Button(self.beam_window, text="Add Beam", command=lambda: self.show_step_info("Add Beam"))
         self.add_beam_btn.pack(side="left", padx=5, pady=5)
         # Remove Beam Button
-        self.remove_beam_btn = ttk.Button(beam_window, text="Remove Selected Beam", command=lambda: self.show_step_info("Remove Beam"))
+        self.remove_beam_btn = ttk.Button(self.beam_window, text="Remove Selected Beam", command=lambda: self.show_step_info("Remove Beam"))
         self.remove_beam_btn.pack(side="left", padx=5, pady=5)
         # Edit Beam Button
-        self.edit_beam_btn = ttk.Button(beam_window, text="Edit Selected Beam", command=lambda: self.show_step_info("Edit Beam"))
+        self.edit_beam_btn = ttk.Button(self.beam_window, text="Edit Selected Beam", command=lambda: self.show_step_info("Edit Beam"))
         self.edit_beam_btn.pack(side="left", padx=5, pady=5)
         # Save Button
-        self.save_beam_btn = ttk.Button(beam_window, text="Save", command=lambda: self.show_step_info("Beam Settings Saved"))
+        self.save_beam_btn = ttk.Button(self.beam_window, text="Save", command=lambda: self.show_step_info("Beam Settings Saved"))
         self.save_beam_btn.pack(side="left", padx=5, pady=5)
         # Close Button
-        close_btn = ttk.Button(beam_window, text="Close", command=beam_window.destroy)
+        close_btn = ttk.Button(self.beam_window, text="Close", command=self.beam_window.destroy)
         close_btn.pack(pady=10)
         
-    def open_isocenter_settings_window(self):
-        """Open a new window for Isocenter Settings."""
-        isocenter_window = tk.Toplevel(self)
-        isocenter_window.title("Isocenter Settings")
-        isocenter_window.geometry("400x300")
-        # Bold Title Label
-        title_label = tk.Label(isocenter_window, text="Isocenter Settings", font=("Arial", 14, "bold"))
-        title_label.pack(pady=10)
-        
-        # Content can be added here
-        
-        # Close Button
-        close_btn = ttk.Button(isocenter_window, text="Close", command=isocenter_window.destroy)
-        close_btn.pack(pady=10)
-    
-    def planning_flow_steps(self, popup):
-        """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
-        # Planning Flow Steps Frame
-        frame = ttk.LabelFrame(popup, text="Planning Flow")
-        frame.pack(fill="both", expand=True, padx=10, pady=5)
+    def show_step_info(self, message):
+        """Display a message box with step information."""
+        messagebox.showinfo("Step Information", message)
 
-        # Steps Buttons
-        self.match_roi_btn = ttk.Button(frame, text="Match ROI", command=self.open_match_roi_window)
-        self.match_roi_btn.place(x=50, y=40)
-        
-        self.automate_roi_btn = ttk.Button(frame, text="Create Automate ROI", command=self.open_automate_roi_window)
-        self.automate_roi_btn.place(x=200, y=40)
-        
-        self.initial_function_btn = ttk.Button(frame, text="Initial function", command=self.open_initial_function_window)
-        self.initial_function_btn.place(x=380, y=40)
-        
-        self.optimization_btn = ttk.Button(frame, text="Optimization", command=self.open_optimization_settings_window)
-        self.optimization_btn.place(x=380, y=100)
-        
-        self.final_calc_btn = ttk.Button(frame, text="Final Calculation", command=self.open_final_calculation_window)
-        self.final_calc_btn.place(x=200, y=100)
-        
-        self.check_condition_btn = ttk.Button(frame, text="Check Condition", command=self.open_check_condition_window)
-        self.check_condition_btn.place(x=40, y=100)
-        
-        self.condition_roi_btn = ttk.Button(frame, text="Create Condition ROI", command=self.open_condition_roi_window)
-        self.condition_roi_btn.place(x=110, y=160)
-        
-        self.function_adjustment_btn = ttk.Button(frame, text="Conditionally Function Adjustment", command=self.open_function_adjustment_window)
-        self.function_adjustment_btn.place(x=270, y=160)
-        
-        self.end_flow_btn = ttk.Button(frame, text="End Planning Flow", command=self.open_end_planning_flow_window)
-        self.end_flow_btn.place(x=20, y=220)
-
-        # Arrows between steps
-        self.add_arrow(frame, "→", 150, 35)
-        self.add_arrow(frame, "→", 340, 35)
-        self.add_arrow(frame, "↓", 430, 65)
-        self.add_arrow(frame, "←", 330, 95)
-        self.add_arrow(frame, "←", 150, 95)
-        self.add_arrow(frame, "↓", 115, 130)
-        self.add_arrow(frame, "→", 240, 155)
-        self.add_arrow(frame, "↑", 430, 130)
-        self.add_arrow(frame, "↓", 60, 130)
-        self.add_arrow(frame, "↓", 60, 160)
-        self.add_arrow(frame, "↓", 60, 190)
-    
-    def open_planning_steps_window(self):
-        """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
-        """Open a new window for planning steps."""
-        if self.planning_window is not None:
-            self.planning_window.destroy()
-
-        self.planning_window = tk.Toplevel(self)
-        self.planning_window.title("Planning flow")
-        self.planning_window.geometry("550x450")
-        
-        self.name_configured(self.planning_window)
-        
-        self.techniques_configured(self.planning_window)
-        
-        self.planning_flow_steps(self.planning_window)
-        
-        # Save Flow Button
-        self.save_flow_btn = ttk.Button(self.planning_window, text="Save Flow", command=self.save_flow)
-        self.save_flow_btn.pack(padx=200,pady=10)
-        
-    def add_arrow(self, parent, symbol, x, y):
-        """Helper function to add arrows between steps."""
-        label = tk.Label(parent, text=symbol, font=("Arial", 14))
-        label.place(x=x, y=y)
-
-    def show_step_info(self, step):
-        """Popup with step description."""
-        messagebox.showinfo("Step Info", f"Details about {step} step.")
-
-    def new_flow(self):
-        """Reset the workflow to create a new one."""
-        self.workflow_data = {"flow_name": "", "steps": []}
-        self.open_planning_steps_window()
-
-    def load_flow(self):
-        """Load an existing workflow from JSON."""
-        file_path = filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")])
-        if file_path:
-            with open(file_path, "r") as f:
-                self.workflow_data = json.load(f)
-            messagebox.showinfo("Load Flow", f"Loaded workflow from {file_path}")
-
-    def edit_flow(self):
-        """Allow editing of the selected workflow and open the planning steps window."""
-        messagebox.showwarning("Edit flow", "Please select flow first.")
-
-    def start_planning(self):
-        """Start the automated planning process."""
-        messagebox.showinfo("Start Planning", "STARTING AUTOMATED PLANNING FROM SELECTED FLOW...")
-
-    def save_flow(self):
-        """Save the workflow to a JSON file."""
-        # Update the workflow data with flow_name and user_name
-        self.workflow_data["flow_name"] = self.flow_name_var.get()
-        self.workflow_data["user_name"] = self.user_name_var.get()
-
-        if not self.workflow_data["flow_name"]:
-            messagebox.showwarning("Save Flow", "Please enter a flow name.")
-            return
-
-        file_path = filedialog.asksaveasfilename(defaultextension=".json", filetypes=[("JSON Files", "*.json")])
-        if file_path:
-            with open(file_path, "w") as f:
-                json.dump(self.workflow_data, f, indent=4)
-            messagebox.showinfo("Save Flow", f"Workflow saved to {file_path}")
-
-    def simple_input_dialog(self, title, prompt):
-        """Show a simple input dialog for user text entry."""
-        dialog = tk.Toplevel(self)
-        dialog.title(title)
-        dialog.geometry("300x100")
-
-        tk.Label(dialog, text=prompt).pack(pady=5)
-        entry = tk.Entry(dialog)
-        entry.pack(pady=5)
-
-        def on_ok():
-            dialog.user_input = entry.get()
-            dialog.destroy()
-
-        tk.Button(dialog, text="OK", command=on_ok).pack(pady=5)
-        dialog.transient()
-        dialog.wait_window()
-        return getattr(dialog, "user_input", None)
-    
-    def open_match_roi_window(self):
-        """Open a new window for Match ROI step."""
-        match_roi_window = tk.Toplevel(self)
+class MatchROI_Window:
+    """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
+    """Open a new window for Match ROI step."""
+    def __init__(self, parent):
+        match_roi_window = tk.Toplevel(parent)
         match_roi_window.title("Match ROI")
         match_roi_window.geometry("600x400")
 
@@ -408,7 +407,7 @@ class AutoPlanGUI(tk.Tk):
         roi_tree_scroll_y = ttk.Scrollbar(roi_tree_frame, orient="vertical")
         
         self.roi_tree = ttk.Treeview(roi_tree_frame, columns=("ROI name", "Possible ROI name"), show="headings",
-                                     yscrollcommand=roi_tree_scroll_y.set, height=8)
+                                    yscrollcommand=roi_tree_scroll_y.set, height=8)
         
         roi_tree_scroll_y.config(command=self.roi_tree.yview)
         
@@ -422,7 +421,7 @@ class AutoPlanGUI(tk.Tk):
         roi_tree_scroll_y.pack(side="right", fill="y")
 
         # Add ROI Button
-        self.add_roi_btn = ttk.Button(match_roi_window, text="Add ROI", command=self.open_add_roi_popup)
+        self.add_roi_btn = ttk.Button(match_roi_window, text="Add ROI", command=lambda: self.open_add_roi_popup(match_roi_window))
         self.add_roi_btn.pack(side="left", pady=5)
         # Remove ROI Button
         self.remove_roi_btn = ttk.Button(match_roi_window, text="Remove Selected ROI", command=self.remove_match_roi)
@@ -436,10 +435,10 @@ class AutoPlanGUI(tk.Tk):
         # Close Button
         self.close_btn = ttk.Button(match_roi_window, text="Close", command=match_roi_window.destroy)
         self.close_btn.pack(pady=5)
-
-    def open_add_roi_popup(self):
+        
+    def open_add_roi_popup(self, parent):
         """Open a popup window to add ROI."""
-        add_roi_popup = tk.Toplevel(self)
+        add_roi_popup = tk.Toplevel(parent)
         add_roi_popup.title("Add ROI")
         add_roi_popup.geometry("250x100")
 
@@ -481,10 +480,68 @@ class AutoPlanGUI(tk.Tk):
             messagebox.showinfo("Save Successful", "Matched ROI saved successfully.")
         else:
             messagebox.showwarning("Save Error", "No ROI items to save.")
-            
-    def open_automate_roi_window(self):
+    def show_step_info(self, step):
+        """Popup with step description."""
+        messagebox.showinfo("Step Info", f"Details about {step} step.")        
+
+class AutomateROI_Window:
+    """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
+    """Open a new window for Automate ROI step."""
+    def __init__(self, parent):
+        self.roi_window = tk.Toplevel(parent)
+        self.roi_window.title("Automate ROI")
+        self.roi_window.geometry("800x400")
+        # Bold Title Label
+        title_label = tk.Label(self.roi_window, text="Automate ROI", font=("Arial", 14, "bold"))
+        title_label.pack(pady=10)
+
+        # Treeview for ROI List (Supports Ordering and Functions) with vertical scrollbar
+        roi_tree_frame = ttk.Frame(self.roi_window)
+        roi_tree_frame.pack(pady=5, fill="both", expand=True)
+        
+        roi_tree_scroll_y = ttk.Scrollbar(roi_tree_frame, orient="vertical")
+        
+        self.roi_tree = ttk.Treeview(roi_tree_frame, columns=("Order", "ROI Name"), show="headings",
+                                    yscrollcommand=roi_tree_scroll_y.set)
+        
+        roi_tree_scroll_y.config(command=self.roi_tree.yview)
+        
+        self.roi_tree.heading("Order", text="Order")
+        self.roi_tree.heading("ROI Name", text="ROI Name")
+        
+        self.roi_tree.column("Order", width=80)
+        self.roi_tree.column("ROI Name", width=300)
+        
+        self.roi_tree.pack(side="left", fill="both", expand=True)
+        roi_tree_scroll_y.pack(side="right", fill="y")
+
+        # Button Frame for New, Remove, Edit Function, and Save
+        button_frame = ttk.Frame(self.roi_window)
+        button_frame.pack(pady=5)
+
+        self.new_roi_btn = ttk.Button(button_frame, text="New", command=self.open_new_roi_popup)
+        self.new_roi_btn.pack(side="left", padx=5)
+        self.remove_roi_btn = ttk.Button(button_frame, text="Remove", command=self.remove_roi)
+        self.remove_roi_btn.pack(side="left", padx=5)
+        
+        self.move_up_btn = ttk.Button(button_frame, text="Move Up", command=lambda: self.move_roi_order(-1))
+        self.move_up_btn.pack(side="left", padx=5)
+
+        self.move_down_btn = ttk.Button(button_frame, text="Move Down", command=lambda: self.move_roi_order(1))
+        self.move_down_btn.pack(side="left", padx=5)
+
+        self.edit_function_btn = ttk.Button(button_frame, text="Edit Function", command=self.edit_roi_function)
+        self.edit_function_btn.pack(side="left", padx=5)
+
+        self.save_roi_btn = ttk.Button(button_frame, text="Save", command=self.save_roi_list)
+        self.save_roi_btn.pack(side="left", padx=5)
+        # Close Button
+        self.close_btn = ttk.Button(self.roi_window, text="Close", command=self.roi_window.destroy)
+        self.close_btn.pack(pady=10)
+        
+    def open_automate_roi_window(self, parent):
         """Open a new window for Automate ROI step."""
-        roi_window = tk.Toplevel(self)
+        roi_window = tk.Toplevel(parent)
         roi_window.title("Automate ROI")
         roi_window.geometry("800x400")
         # Bold Title Label
@@ -498,7 +555,7 @@ class AutoPlanGUI(tk.Tk):
         roi_tree_scroll_y = ttk.Scrollbar(roi_tree_frame, orient="vertical")
         
         self.roi_tree = ttk.Treeview(roi_tree_frame, columns=("Order", "ROI Name"), show="headings",
-                                     yscrollcommand=roi_tree_scroll_y.set)
+                                    yscrollcommand=roi_tree_scroll_y.set)
         
         roi_tree_scroll_y.config(command=self.roi_tree.yview)
         
@@ -532,12 +589,12 @@ class AutoPlanGUI(tk.Tk):
         self.save_roi_btn = ttk.Button(button_frame, text="Save", command=self.save_roi_list)
         self.save_roi_btn.pack(side="left", padx=5)
         # Close Button
-        self.close_btn = ttk.Button(roi_window, text="Close", command=roi_window.destroy)
+        self.close_btn = ttk.Button(self.roi_window, text="Close", command=self.roi_window.destroy)
         self.close_btn.pack(pady=10)
 
     def open_new_roi_popup(self):
         """Open a popup window to add a new ROI item."""
-        new_roi_popup = tk.Toplevel(self)
+        new_roi_popup = tk.Toplevel(self.roi_window)
         new_roi_popup.title("Add ROI")
         new_roi_popup.geometry("150x150")
 
@@ -603,7 +660,12 @@ class AutoPlanGUI(tk.Tk):
             
     def open_boolean_window(self):
         """Open a new window for Boolean function editing."""
-        self.boolean_window = tk.Toplevel(self)
+        Boolean_Window(self.roi_window)
+
+class Boolean_Window:
+    """Boolean operation window for ROI algebra."""
+    def __init__(self, parent):
+        self.boolean_window = tk.Toplevel(parent)
         self.boolean_window.title("ROI Algebra")
         self.boolean_window.geometry("900x330")
         
@@ -620,7 +682,7 @@ class AutoPlanGUI(tk.Tk):
         tk.Label(frame_a, text="ROI A Name").grid(row=0, column=0)
         self.roi_a = tk.StringVar()
         roi_a_combo = ttk.Combobox(frame_a, textvariable=self.roi_a,
-                                   values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
+                                values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
         roi_a_combo.grid(row=0, column=1)
         
         margin_label_a = tk.Label(frame_a, text="Margin")
@@ -663,7 +725,7 @@ class AutoPlanGUI(tk.Tk):
         tk.Label(frame_b, text="ROI B Name").grid(row=0, column=0)
         self.roi_b = tk.StringVar()
         roi_b_combo = ttk.Combobox(frame_b, textvariable=self.roi_b,
-                                      values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
+                                    values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
         roi_b_combo.grid(row=0, column=1)
         
         margin_label_b = tk.Label(frame_b, text="Margin")
@@ -706,21 +768,23 @@ class AutoPlanGUI(tk.Tk):
             entry.grid(row=i+2, column=1)
             
         # Save button
-        save_button = tk.Button(self.boolean_window, text="Save", command=lambda: self.boolean_window.destroy())
+        save_button = tk.Button(self.boolean_window, text="Save", command=self.boolean_window.destroy)
         save_button.pack(pady=10)
-        
-    def open_initial_function_window(self):
-        """Open a new window for Initial Objective step."""
-        initial_function_window = tk.Toplevel(self)
-        initial_function_window.title("Initial Optimization function")
-        initial_function_window.geometry("1200x400")
+
+class InitialFunction_Window:
+    """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
+    """Open a new window for Initial Function step."""
+    def __init__(self, parent):
+        self.initial_function_window = tk.Toplevel(parent)
+        self.initial_function_window.title("Initial Optimization function")
+        self.initial_function_window.geometry("1200x400")
 
         # Bold Title Label
-        title_label = tk.Label(initial_function_window, text="Initial Optimization function", font=("Arial", 14, "bold"))
+        title_label = tk.Label(self.initial_function_window, text="Initial Optimization function", font=("Arial", 14, "bold"))
         title_label.pack(pady=10)
 
         # Content can be added here - with vertical scrollbar
-        initial_function_frame = ttk.Frame(initial_function_window)
+        initial_function_frame = ttk.Frame(self.initial_function_window)
         initial_function_frame.pack(pady=5, fill="both", expand=True)
         
         initial_function_scroll_y = ttk.Scrollbar(initial_function_frame, orient="vertical")
@@ -748,24 +812,24 @@ class AutoPlanGUI(tk.Tk):
         initial_function_scroll_y.pack(side="right", fill="y")
         
         # Add Objective Button
-        self.add_objective_btn = ttk.Button(initial_function_window, text="Add function", command=self.open_add_function_window)
+        self.add_objective_btn = ttk.Button(self.initial_function_window, text="Add function", command=self.open_add_function_window)
         self.add_objective_btn.pack(side="left", padx=5, pady=5)
         
         # Delete Objective Button
-        self.delete_objective_btn = ttk.Button(initial_function_window, text="Delete Selected function", command=lambda: self.show_step_info("Delete function"))
+        self.delete_objective_btn = ttk.Button(self.initial_function_window, text="Delete Selected function", command=self.delete_function)
         self.delete_objective_btn.pack(side="left", padx=5, pady=5)
 
         # Save Button
-        self.save_initial_function_btn = ttk.Button(initial_function_window, text="Save", command=lambda: self.show_step_info("Initial Functions Saved"))
+        self.save_initial_function_btn = ttk.Button(self.initial_function_window, text="Save", command=lambda: self.show_step_info("Initial Functions Saved"))
         self.save_initial_function_btn.pack(side="left", padx=5, pady=5)
         
         # Close Button
-        self.close_btn = ttk.Button(initial_function_window, text="Close", command=initial_function_window.destroy)
+        self.close_btn = ttk.Button(self.initial_function_window, text="Close", command=self.initial_function_window.destroy)
         self.close_btn.pack(side="left", padx=5, pady=5)
-        
+    
     def open_add_function_window(self):
         """Add an optimization function to the list."""
-        add_function_window = tk.Toplevel(self)
+        add_function_window = tk.Toplevel(self.initial_function_window)
         add_function_window.title("Add Optimization function")
         add_function_window.geometry("300x250")
         
@@ -815,10 +879,23 @@ class AutoPlanGUI(tk.Tk):
         # Here you would add the objective to your data structure
         self.initial_function_tree.insert("", "end", values=(function_tag, function, roi_name, weight, dose_level, volume_level))
         popup.destroy()
+    
+    def delete_function(self):
+        """Delete the selected function from the list."""
+        selected_item = self.initial_function_tree.selection()
+        for item in selected_item:
+            self.initial_function_tree.delete(item)
+    
+    def show_step_info(self, message):
+        """Display a message box with step information."""
+        messagebox.showinfo("Step Information", message)        
         
-    def open_optimization_settings_window(self):
+class OptimizationSetting_Window:
+    """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
+    """Open a new window for Optimization Settings step."""
+    def __init__(self, parent):
         """Open a new window for Optimization step."""
-        optimization_window = tk.Toplevel(self)
+        optimization_window = tk.Toplevel(parent)
         optimization_window.title("Optimization Settings")
         optimization_window.geometry("300x120")
         
@@ -837,10 +914,15 @@ class AutoPlanGUI(tk.Tk):
 
         # Close Button
         ttk.Button(optimization_window, text="Close", command=optimization_window.destroy).grid(row=2, column=1, columnspan=2, pady=10)
-        
-    def open_final_calculation_window(self):
-        """Open a new window for Final Calculation step."""
-        final_calc_window = tk.Toplevel(self)
+    def show_step_info(self, message):
+        """Display a message box with step information."""
+        messagebox.showinfo("Step Information", message)
+
+class FinalCalculationSetting_Window:
+    """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
+    """Open a new window for Final Calculation step."""
+    def __init__(self, parent):
+        final_calc_window = tk.Toplevel(parent)
         final_calc_window.title("Final Calculation")
         final_calc_window.geometry("250x70")
 
@@ -854,24 +936,29 @@ class AutoPlanGUI(tk.Tk):
         # Close Button
         ttk.Button(final_calc_window, text="Close", command=final_calc_window.destroy).grid(row=1, column=1, padx=5, pady=10)
     
-    def open_check_condition_window(self):
-        """Open a new window for Check Condition step."""
-        check_condition_window = tk.Toplevel(self)
-        check_condition_window.title("Check Condition")
-        check_condition_window.geometry("1000x400")
+    def show_step_info(self, message):
+        """Display a message box with step information."""
+        messagebox.showinfo("Step Information", message)
+
+class CheckCondition_Window:
+    """Open a new window for Check Condition step."""
+    def __init__(self, parent):
+        self.check_condition_window = tk.Toplevel(parent)
+        self.check_condition_window.title("Check Condition")
+        self.check_condition_window.geometry("1000x400")
         
         # Bold Title Label
-        title_label = tk.Label(check_condition_window, text="Check Condition", font=("Arial", 14, "bold"))
+        title_label = tk.Label(self.check_condition_window, text="Check Condition", font=("Arial", 14, "bold"))
         title_label.pack(pady=10)
 
         # Condition tree with vertical scrollbar
-        condition_tree_frame = ttk.Frame(check_condition_window)
+        condition_tree_frame = ttk.Frame(self.check_condition_window)
         condition_tree_frame.pack(pady=5, fill="both", expand=True)
         
         condition_tree_scroll_y = ttk.Scrollbar(condition_tree_frame, orient="vertical")
         
         self.condition_tree = ttk.Treeview(condition_tree_frame, columns=("Condition Name", "ROI",  "Condition Type", "Criteria"), show="headings",
-                                           yscrollcommand=condition_tree_scroll_y.set)
+                                            yscrollcommand=condition_tree_scroll_y.set)
         
         condition_tree_scroll_y.config(command=self.condition_tree.yview)
         
@@ -889,28 +976,28 @@ class AutoPlanGUI(tk.Tk):
         condition_tree_scroll_y.pack(side="right", fill="y")
         
         # Add Condition Button
-        self.add_condition_btn = ttk.Button(check_condition_window, text="New", command=self.open_add_condition_window)
+        self.add_condition_btn = ttk.Button(self.check_condition_window, text="New", command=self.open_add_condition_window)
         self.add_condition_btn.pack(side="left", padx=5, pady=5)
         
         # Delete Condition Button
-        self.delete_condition_btn = ttk.Button(check_condition_window, text="Remove", command=lambda: self.show_step_info("Remove Condition"))
+        self.delete_condition_btn = ttk.Button(self.check_condition_window, text="Remove", command=self.remove_condition)
         self.delete_condition_btn.pack(side="left", padx=5, pady=5)
         
         # Edit Condition Button
-        self.edit_condition_btn = ttk.Button(check_condition_window, text="Edit", command=lambda: self.show_step_info("Edit Condition"))
+        self.edit_condition_btn = ttk.Button(self.check_condition_window, text="Edit", command=lambda: self.show_step_info("Edit Condition"))
         self.edit_condition_btn.pack(side="left", padx=5, pady=5)
         
         # Save Button
-        self.save_condition_btn = ttk.Button(check_condition_window, text="Save", command=lambda: self.show_step_info("Conditions Saved"))
+        self.save_condition_btn = ttk.Button(self.check_condition_window, text="Save", command=lambda: self.show_step_info("Conditions Saved"))
         self.save_condition_btn.pack(side="left", padx=5, pady=5)
 
         # Close Button
-        self.close_btn = ttk.Button(check_condition_window, text="Close", command=check_condition_window.destroy)
+        self.close_btn = ttk.Button(self.check_condition_window, text="Close", command=self.check_condition_window.destroy)
         self.close_btn.pack(pady=10)
-        
+    
     def open_add_condition_window(self):
         """Add a condition to the list."""
-        add_condition_window = tk.Toplevel(self)
+        add_condition_window = tk.Toplevel(self.check_condition_window)
         add_condition_window.title("Add Condition")
         add_condition_window.geometry("350x220")
         
@@ -1157,24 +1244,35 @@ class AutoPlanGUI(tk.Tk):
         self.condition_tree.insert("", "end", values=(condition_name, roi_name, condition_type, criteria))
         popup.destroy()
     
-    def open_condition_roi_window(self):
-        """Open a new window for Condition ROI step."""
-        condition_roi_window = tk.Toplevel(self)
-        condition_roi_window.title("Condition ROI")
-        condition_roi_window.geometry("800x400")
+    def remove_condition(self):
+        """Remove the selected condition from the list."""
+        selected_item = self.condition_tree.selection()
+        for item in selected_item:
+            self.condition_tree.delete(item)
+    
+    def show_step_info(self, message):
+        """Display a message box with step information."""
+        messagebox.showinfo("Step Information", message)
+            
+class ConditionROI_Window:
+    """Open a new window for Condition ROI step."""
+    def __init__(self, parent):
+        self.condition_roi_window = tk.Toplevel(parent)
+        self.condition_roi_window.title("Condition ROI")
+        self.condition_roi_window.geometry("800x400")
         
         # Bold Title Label
-        title_label = tk.Label(condition_roi_window, text="Condition ROI", font=("Arial", 14, "bold"))
+        title_label = tk.Label(self.condition_roi_window, text="Condition ROI", font=("Arial", 14, "bold"))
         title_label.pack(pady=10)
         
         # Treeview for Condition ROI List with vertical scrollbar
-        condition_roi_frame = ttk.Frame(condition_roi_window)
+        condition_roi_frame = ttk.Frame(self.condition_roi_window)
         condition_roi_frame.pack(pady=5, fill="both", expand=True)
         
         condition_roi_scroll_y = ttk.Scrollbar(condition_roi_frame, orient="vertical")
         
         self.condition_roi_tree = ttk.Treeview(condition_roi_frame, columns=("Order","If this condition TRUE", "Create this ROI", "By this method"), show="headings",
-                                               yscrollcommand=condition_roi_scroll_y.set)
+                                                yscrollcommand=condition_roi_scroll_y.set)
         
         condition_roi_scroll_y.config(command=self.condition_roi_tree.yview)
         
@@ -1192,36 +1290,36 @@ class AutoPlanGUI(tk.Tk):
         condition_roi_scroll_y.pack(side="right", fill="y")
         
         # Add Condition ROI Button
-        self.add_condition_roi_btn = ttk.Button(condition_roi_window, text="New", command=self.open_add_condition_roi_window)
+        self.add_condition_roi_btn = ttk.Button(self.condition_roi_window, text="New", command=self.open_add_condition_roi_window)
         self.add_condition_roi_btn.pack(side="left", padx=5, pady=5)
         
         # Delete Condition ROI Button
-        self.delete_condition_roi_btn = ttk.Button(condition_roi_window, text="Remove", command=lambda: self.show_step_info("Remove Condition ROI"))
+        self.delete_condition_roi_btn = ttk.Button(self.condition_roi_window, text="Remove", command=self.remove_condition_roi)
         self.delete_condition_roi_btn.pack(side="left", padx=5, pady=5)
         
         # Move Up Button
-        self.move_up_condition_btn = ttk.Button(condition_roi_window, text="Move Up", command=lambda: self.show_step_info("Move Condition Up"))
+        self.move_up_condition_btn = ttk.Button(self.condition_roi_window, text="Move Up", command=lambda: self.move_condition_roi_order(-1))
         self.move_up_condition_btn.pack(side="left", padx=5, pady=5)
         
         # Move Down Button
-        self.move_down_condition_btn = ttk.Button(condition_roi_window, text="Move Down", command=lambda: self.show_step_info("Move Condition Down"))
+        self.move_down_condition_btn = ttk.Button(self.condition_roi_window, text="Move Down", command=lambda: self.move_condition_roi_order(1))
         self.move_down_condition_btn.pack(side="left", padx=5, pady=5)
         
         # Edit
-        self.edit_condition_btn = ttk.Button(condition_roi_window, text="Edit", command=lambda: self.show_step_info("Edit Condition"))
+        self.edit_condition_btn = ttk.Button(self.condition_roi_window, text="Edit", command=lambda: self.show_step_info("Edit Condition"))
         self.edit_condition_btn.pack(side="left", padx=5, pady=5)
         
         
         # Save Button
-        self.save_condition_roi_btn = ttk.Button(condition_roi_window, text="Save", command=lambda: self.show_step_info("Condition ROIs Saved"))
+        self.save_condition_roi_btn = ttk.Button(self.condition_roi_window, text="Save", command=lambda: self.show_step_info("Condition ROIs Saved"))
         self.save_condition_roi_btn.pack(side="left", padx=5, pady=5)
         
         # Close Button
-        ttk.Button(condition_roi_window, text="Close", command=condition_roi_window.destroy).pack(pady=10)
+        ttk.Button(self.condition_roi_window, text="Close", command=self.condition_roi_window.destroy).pack(pady=10)
     
     def open_add_condition_roi_window(self):
         """Add a condition ROI to the list."""
-        add_condition_roi_window = tk.Toplevel(self)
+        add_condition_roi_window = tk.Toplevel(self.condition_roi_window)
         add_condition_roi_window.title("Add Condition ROI")
         add_condition_roi_window.geometry("300x200")
         
@@ -1243,7 +1341,7 @@ class AutoPlanGUI(tk.Tk):
         
         # Boolean frame
         frame_boolean = ttk.Frame(add_condition_roi_window)
-        ttk.Button(frame_boolean, text="Boolean operation", command=self.open_boolean_window).grid(row=0, column=0, padx=5, pady=5)
+        ttk.Button(frame_boolean, text="Boolean operation", command=lambda: Boolean_Window(add_condition_roi_window)).grid(row=0, column=0, padx=5, pady=5)
         
         # Convert Dose to ROI frame
         frame_dose_to_roi = ttk.Frame(add_condition_roi_window)
@@ -1277,18 +1375,47 @@ class AutoPlanGUI(tk.Tk):
         self.condition_roi_tree.insert("", "end", values=(order, condition_true, create_roi, method))
         popup.destroy()
         
-    def open_function_adjustment_window(self):
-        """Open a new window for Function Adjustment step."""
-        function_adjustment_window = tk.Toplevel(self)
-        function_adjustment_window.title("Function Adjustment")
-        function_adjustment_window.geometry("1700x800")
+    def remove_condition_roi(self):
+        """Remove the selected condition ROI from the list."""
+        selected_item = self.condition_roi_tree.selection()
+        for item in selected_item:
+            self.condition_roi_tree.delete(item)
+    
+    def move_condition_roi_order(self, direction):
+        """Move the selected ROI item up or down and update order numbers."""
+        selected_item = self.condition_roi_tree.selection()
+        if selected_item:
+            index = self.condition_roi_tree.index(selected_item)
+            new_index = index + direction
+            items = self.condition_roi_tree.get_children()
+            if 0 <= new_index < len(items):
+                self.condition_roi_tree.move(selected_item, "", new_index)
+                self.update_condition_roi_order()
+                
+    def update_condition_roi_order(self):
+        """Update order numbers in the ROI tree."""
+        items = self.condition_roi_tree.get_children()
+        for i, item in enumerate(items, start=1):
+            values = self.condition_roi_tree.item(item, "values")
+            self.condition_roi_tree.item(item, values=(i, values[1]))
+            
+    def show_step_info(self, message):
+        """Display a message box with step information."""
+        messagebox.showinfo("Step Information", message)
+
+class FunctionAdjustment_Window:
+    """Open a new window for Function Adjustment step."""
+    def __init__(self, parent):
+        self.function_adjustment_window = tk.Toplevel(parent)
+        self.function_adjustment_window.title("Function Adjustment")
+        self.function_adjustment_window.geometry("1700x800")
         
         # Bold Title Label
-        title_label = tk.Label(function_adjustment_window, text="Function Adjustment", font=("Arial", 14, "bold"))
+        title_label = tk.Label(self.function_adjustment_window, text="Function Adjustment", font=("Arial", 14, "bold"))
         title_label.pack(pady=10)
         
         # Old function frame
-        old_function_label_frame = tk.LabelFrame(function_adjustment_window, text="Initial Functions")
+        old_function_label_frame = tk.LabelFrame(self.function_adjustment_window, text="Initial Functions")
         old_function_label_frame.pack(fill="both", expand=True, pady=10, padx=10)
         
         # Old function Tree with vertical scrollbar
@@ -1298,7 +1425,7 @@ class AutoPlanGUI(tk.Tk):
         old_function_scroll_y = ttk.Scrollbar(old_function_frame, orient="vertical")
         
         self.old_function_tree = ttk.Treeview(old_function_frame, columns=("Function tag","Function Type", "ROI",  "Weight", "Dose level (Gy)","Volume level (%)"), show="headings",
-                                              yscrollcommand=old_function_scroll_y.set)
+                                                yscrollcommand=old_function_scroll_y.set)
         
         old_function_scroll_y.config(command=self.old_function_tree.yview)
         
@@ -1337,7 +1464,7 @@ class AutoPlanGUI(tk.Tk):
         self.adjust_function_btn.pack(side="left", padx=5, pady=5)
         
         # Adjusted function frame
-        adjusted_function_label_frame = tk.LabelFrame(function_adjustment_window, text="Adjustment")
+        adjusted_function_label_frame = tk.LabelFrame(self.function_adjustment_window, text="Adjustment")
         adjusted_function_label_frame.pack(fill="both", expand=True, pady=10, padx=10)
         
         # New function adjustment Tree with vertical scrollbar
@@ -1347,7 +1474,7 @@ class AutoPlanGUI(tk.Tk):
         function_adjustment_scroll_y = ttk.Scrollbar(function_adjustment_frame, orient="vertical")
         
         self.function_adjustment_tree = ttk.Treeview(function_adjustment_frame, columns=("If this condition TRUE", "Make this Adjustment", "Function tag","Function Type", "ROI",  "Weight", "Dose level (Gy)","Volume level (%)"), show="headings",
-                                                     yscrollcommand=function_adjustment_scroll_y.set)
+                                                    yscrollcommand=function_adjustment_scroll_y.set)
         
         function_adjustment_scroll_y.config(command=self.function_adjustment_tree.yview)
         
@@ -1379,16 +1506,20 @@ class AutoPlanGUI(tk.Tk):
         self.delete_adjustment_btn = ttk.Button(adjusted_function_label_frame, text="Remove Adjustment", command=lambda: self.show_step_info("Remove Function Adjustment"))
         self.delete_adjustment_btn.pack(side="left", padx=5, pady=5)
         # Save Button
-        self.save_adjustment_btn = ttk.Button(function_adjustment_window, text="Save", command=lambda: self.show_step_info("Function Adjustments Saved"))
+        self.save_adjustment_btn = ttk.Button(self.function_adjustment_window, text="Save", command=lambda: self.show_step_info("Function Adjustments Saved"))
         self.save_adjustment_btn.pack(side="left", padx=5, pady=5)
         
         # Close Button
-        self.close_btn = ttk.Button(function_adjustment_window, text="Close", command=function_adjustment_window.destroy)
+        self.close_btn = ttk.Button(self.function_adjustment_window, text="Close", command=self.function_adjustment_window.destroy)
         self.close_btn.pack(side="left", padx=5, pady=5)
+        
+    def show_step_info(self, message):
+        """Display a message box with step information."""
+        messagebox.showinfo("Step Information", message)
     
     def open_add_function_adjustment_window(self):
         """Add a function adjustment to the list."""
-        add_adjustment_window = tk.Toplevel(self)
+        add_adjustment_window = tk.Toplevel(self.function_adjustment_window)
         add_adjustment_window.title("Add Function Adjustment")
         add_adjustment_window.geometry("300x260")
         
@@ -1444,10 +1575,11 @@ class AutoPlanGUI(tk.Tk):
         # Here you would add the function adjustment to your data structure
         self.function_adjustment_tree.insert("", "end", values=(condition_true, adjustment_type, adjustment_tag, roi_name, function_type, weight, dose_level, volume_level))
         popup.destroy()
-    
-    def open_end_planning_flow_window(self):
-        """Open a new window for End Planning Flow step."""
-        end_planning_window = tk.Toplevel(self)
+
+class EndPlanningFlow_Window:
+    """Open a new window for End Planning Flow step."""
+    def __init__(self, parent):
+        end_planning_window = tk.Toplevel(parent)
         end_planning_window.title("End Planning Flow")
         end_planning_window.geometry("300x100")
         
@@ -1460,7 +1592,10 @@ class AutoPlanGUI(tk.Tk):
         ttk.Button(end_planning_window, text="Save", command=lambda: self.show_step_info("End Planning Flow Settings Saved")).grid(row=1, column=0, padx=5, pady=10)
         
         # Close Button
-        ttk.Button(end_planning_window, text="Close", command=end_planning_window.destroy).grid(row=1, column=1, padx=5, pady=10)    
+        ttk.Button(end_planning_window, text="Close", command=end_planning_window.destroy).grid(row=1, column=1, padx=5, pady=10)  
+    def show_step_info(self, message):
+        """Display a message box with step information."""
+        messagebox.showinfo("Step Information", message)
         
 if __name__ == "__main__":
     app = AutoPlanGUI()
