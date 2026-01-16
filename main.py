@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import json
+import json
 
 class AutoPlanGUI(tk.Tk):
     def __init__(self):
@@ -28,7 +29,7 @@ class AutoPlanGUI(tk.Tk):
         ttk.Label(frame, text="Treatment Room:").grid(row=0, column=0, padx=5, pady=2)
         self.room_var = tk.StringVar()
         self.room_dropdown = ttk.Combobox(frame, textvariable=self.room_var,
-                                          values=['N3_VersaHD', 'N4_VersaHD', 'TrueBeam_L6', 'TrueBeam_L7', 'TrueBeam_N5'], state="readonly")
+                                        values=['N3_VersaHD', 'N4_VersaHD', 'TrueBeam_L6', 'TrueBeam_L7', 'TrueBeam_N5'], state="readonly")
         self.room_dropdown.grid(row=0, column=1, padx=5, pady=2)
 
         # Planning Flow (Read-only)
@@ -45,7 +46,7 @@ class AutoPlanGUI(tk.Tk):
         frame = ttk.LabelFrame(self, text="Planning Flow Management")
         frame.pack(fill="x", padx=10, pady=5)
 
-        ttk.Button(frame, text="New Flow", command=lambda: PlanFlowDesigner(self)).pack(side="left", padx=5, pady=2)
+        ttk.Button(frame, text="New Flow", command=self.new_flow).pack(side="left", padx=5, pady=2)
         ttk.Button(frame, text="Edit Flow", command=self.edit_flow).pack(side="left", padx=5, pady=2)
         ttk.Button(frame, text="Start", command=self.start_planning).pack(side="right", padx=5, pady=2)
 
@@ -55,15 +56,49 @@ class AutoPlanGUI(tk.Tk):
 
     def load_flow(self):
         """Load an existing workflow from JSON."""
-        file_path = filedialog.askopenfilename(filetypes=[("JSON Files", "*.json")])
+        from tkinter import filedialog
+        import json
+        
+        file_path = filedialog.askopenfilename(
+            title="Select Planning Flow JSON",
+            filetypes=[("JSON Files", "*.json"), ("All Files", "*.*")]
+        )
+        
         if file_path:
-            with open(file_path, "r") as f:
-                self.workflow_data = json.load(f)
-            messagebox.showinfo("Load Flow", f"Loaded workflow from {file_path}")
+            try:
+                with open(file_path, "r") as f:
+                    self.workflow_data = json.load(f)
+                
+                # Display flow name in the entry field
+                flow_name = self.workflow_data.get("flow_name", "Unnamed Flow")
+                self.flow_entry.config(state="normal")
+                self.flow_entry.delete(0, tk.END)
+                self.flow_entry.insert(0, flow_name)
+                self.flow_entry.config(state="readonly")
+                
+            except Exception as e:
+                messagebox.showerror("Load Error", f"Failed to load workflow:\n{str(e)}")
+                self.workflow_data = {}
 
     def edit_flow(self):
-        """Allow editing of the selected workflow and open the planning steps window."""
-        messagebox.showwarning("Edit flow", "Please select flow first.")
+        """Allow editing of the loaded workflow and open the planning steps window."""
+        if self.workflow_data:
+            # Ensure flow name is displayed in entry field
+            flow_name = self.workflow_data.get("flow_name", "Unnamed Flow")
+            self.flow_entry.config(state="normal")
+            self.flow_entry.delete(0, tk.END)
+            self.flow_entry.insert(0, flow_name)
+            self.flow_entry.config(state="readonly")
+            
+            # Open PlanFlowDesigner with loaded data
+            PlanFlowDesigner(self, load_data=self.workflow_data)
+        else:
+            messagebox.showwarning("Edit Flow", "Please load a flow first using 'Load Flow' button.")
+    
+    def new_flow(self):
+        """Create a completely new blank planning flow."""
+        # Open PlanFlowDesigner without any data (blank flow)
+        PlanFlowDesigner(self)
 
     def start_planning(self):
         """Start the automated planning process."""
@@ -91,10 +126,23 @@ class AutoPlanGUI(tk.Tk):
 class PlanFlowDesigner:
     """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
     """Open a new window for planning steps."""
-    def __init__(self, parent):
+    def __init__(self, parent, load_data=None):
         self.planning_window = tk.Toplevel(parent)
         self.planning_window.title("Planning flow")
         self.planning_window.geometry("550x450")
+        
+        # Initialize data storage for all steps
+        self.match_roi_data = []
+        self.automate_roi_data = []
+        self.initial_functions_data = []
+        self.optimization_data = {}
+        self.final_calc_data = {}
+        self.check_conditions_data = []
+        self.condition_rois_data = []
+        self.function_adjustments_data = []
+        self.end_flow_data = {}
+        self.beam_settings_data = []
+        self.isocenter_data = {}
         
         self.name_configured(self.planning_window)
         
@@ -102,13 +150,119 @@ class PlanFlowDesigner:
         
         self.planning_flow(self.planning_window)
         
+        # Load existing data if provided
+        if load_data:
+            self.load_flow_data(load_data)
+        
         # Save Flow Button
         self.save_flow_btn = ttk.Button(self.planning_window, text="Save Flow", command=self.save_flow)
         self.save_flow_btn.pack(padx=200,pady=10)
+    
+    def get_roi_list(self):
+        """Get list of ROI names from Match ROI data."""
+        roi_list = []
+        for item in self.match_roi_data:
+            roi_name = item.get("roi_name", "")
+            if roi_name and roi_name not in roi_list:
+                roi_list.append(roi_name)
+        # If no ROIs defined yet, return a default list
+        if not roi_list:
+            roi_list = ['Add in Match ROI step']
+        return roi_list
+    
+    def get_extended_roi_list(self):
+        """Get list of ROI names from both Match ROI and Condition ROI data."""
+        roi_list = []
+        # Add ROIs from Match ROI
+        for item in self.match_roi_data:
+            roi_name = item.get("roi_name", "")
+            if roi_name and roi_name not in roi_list:
+                roi_list.append(roi_name)
+        # Add ROIs from Condition ROI (created ROIs)
+        for item in self.condition_rois_data:
+            created_roi = item.get("roi", "")
+            if created_roi and created_roi not in roi_list:
+                roi_list.append(created_roi)
+        # If no ROIs defined yet, return a default list
+        if not roi_list:
+            roi_list = ['Add in Match ROI or Condition ROI step']
+        return roi_list
+    
+    def get_condition_list(self):
+        """Get list of condition names from Check Condition data."""
+        condition_list = []
+        for item in self.check_conditions_data:
+            condition_name = item.get("name", "")
+            if condition_name and condition_name not in condition_list:
+                condition_list.append(condition_name)
+        # If no conditions defined yet, return a default list
+        if not condition_list:
+            condition_list = ['Add in Check Condition step']
+        return condition_list
         
     def save_flow(self):
         """Save the workflow to a JSON file."""
-        messagebox.showinfo("Save Flow", f"Planning flow saved")
+        from datetime import datetime
+        from tkinter import filedialog
+        import json
+        
+        # Collect all flow data
+        flow_data = {
+            "flow_name": self.flow_name_var.get().strip(),
+            "created_by": self.user_name_var.get().strip(),
+            "created_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "version": "1.0",
+            "technique": self.technique_var.get(),
+            "match_roi": self.match_roi_data,
+            "automate_roi": self.automate_roi_data,
+            "initial_functions": self.initial_functions_data,
+            "optimization_settings": self.optimization_data,
+            "final_calculation": self.final_calc_data,
+            "check_conditions": self.check_conditions_data,
+            "condition_rois": self.condition_rois_data,
+            "function_adjustments": self.function_adjustments_data,
+            "end_flow": self.end_flow_data,
+            "beam_settings": self.beam_settings_data,
+            "isocenter": self.isocenter_data
+        }
+        
+        # Open file dialog to save
+        file_path = filedialog.asksaveasfilename(
+            defaultextension=".json",
+            filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
+            title="Save Planning Flow"
+        )
+        
+        if file_path:
+            try:
+                with open(file_path, 'w') as f:
+                    json.dump(flow_data, f, indent=4)
+                messagebox.showinfo("Save Flow", f"Planning flow saved successfully to:\n{file_path}")
+            except Exception as e:
+                messagebox.showerror("Save Error", f"Failed to save flow:\n{str(e)}")
+    
+    def load_flow_data(self, data):
+        """Load flow data from a dictionary."""
+        try:
+            # Load basic info
+            self.flow_name_var.set(data.get("flow_name", ""))
+            self.user_name_var.set(data.get("created_by", ""))
+            self.technique_var.set(data.get("technique", ""))
+            
+            # Load all step data
+            self.match_roi_data = data.get("match_roi", [])
+            self.automate_roi_data = data.get("automate_roi", [])
+            self.initial_functions_data = data.get("initial_functions", [])
+            self.optimization_data = data.get("optimization_settings", {})
+            self.final_calc_data = data.get("final_calculation", {})
+            self.check_conditions_data = data.get("check_conditions", [])
+            self.condition_rois_data = data.get("condition_rois", [])
+            self.function_adjustments_data = data.get("function_adjustments", [])
+            self.end_flow_data = data.get("end_flow", {})
+            self.beam_settings_data = data.get("beam_settings", [])
+            self.isocenter_data = data.get("isocenter", {})
+        except Exception as e:
+            messagebox.showerror("Load Error", f"Failed to load flow data:\n{str(e)}")
     
     def name_configured(self, popup):
         """For setting flow name and user"""
@@ -135,7 +289,7 @@ class PlanFlowDesigner:
         self.technique_dropdown = ttk.Combobox(frame, textvariable=self.technique_var, values=['VMAT', 'IMPT'], state="readonly")
         self.technique_dropdown.pack(side="left", padx=5, pady=2)
         
-        beam_settings_btn = ttk.Button(frame, text="Beam Settings", command=lambda: VMAT_beam_setting_Window(self.planning_window) if self.technique_var.get() == "VMAT" else IMPT_beam_setting_Window(self.planning_window))
+        beam_settings_btn = ttk.Button(frame, text="Beam Settings", command=lambda: VMAT_beam_setting_Window(self.planning_window, self) if self.technique_var.get() == "VMAT" else IMPT_beam_setting_Window(self.planning_window, self))
         beam_settings_btn.pack(side="left", padx=5, pady=2)
         
         isocenter_settings_btn = ttk.Button(frame, text="Isocenter Settings", command=lambda: self.open_isocenter_settings_window())
@@ -163,31 +317,31 @@ class PlanFlowDesigner:
         frame.pack(fill="both", expand=True, padx=10, pady=5)
 
         # Steps Buttons
-        self.match_roi_btn = ttk.Button(frame, text="Match ROI", command=lambda: MatchROI_Window(self.planning_window))
+        self.match_roi_btn = ttk.Button(frame, text="Match ROI", command=lambda: MatchROI_Window(self.planning_window, self))
         self.match_roi_btn.place(x=50, y=40)
         
-        self.automate_roi_btn = ttk.Button(frame, text="Create Automate ROI", command=lambda: AutomateROI_Window(self.planning_window))
+        self.automate_roi_btn = ttk.Button(frame, text="Create Automate ROI", command=lambda: AutomateROI_Window(self.planning_window, self))
         self.automate_roi_btn.place(x=200, y=40)
         
-        self.initial_function_btn = ttk.Button(frame, text="Initial function", command=lambda: InitialFunction_Window(self.planning_window))
+        self.initial_function_btn = ttk.Button(frame, text="Initial function", command=lambda: InitialFunction_Window(self.planning_window, self))
         self.initial_function_btn.place(x=380, y=40)
         
-        self.optimization_btn = ttk.Button(frame, text="Optimization", command=lambda: OptimizationSetting_Window(self.planning_window))
+        self.optimization_btn = ttk.Button(frame, text="Optimization", command=lambda: OptimizationSetting_Window(self.planning_window, self))
         self.optimization_btn.place(x=380, y=100)
         
-        self.final_calc_btn = ttk.Button(frame, text="Final Calculation", command=lambda: FinalCalculationSetting_Window(self.planning_window))
+        self.final_calc_btn = ttk.Button(frame, text="Final Calculation", command=lambda: FinalCalculationSetting_Window(self.planning_window, self))
         self.final_calc_btn.place(x=200, y=100)
         
-        self.check_condition_btn = ttk.Button(frame, text="Check Condition", command=lambda: CheckCondition_Window(self.planning_window))
+        self.check_condition_btn = ttk.Button(frame, text="Check Condition", command=lambda: CheckCondition_Window(self.planning_window, self))
         self.check_condition_btn.place(x=40, y=100)
         
-        self.condition_roi_btn = ttk.Button(frame, text="Create Condition ROI", command=lambda: ConditionROI_Window(self.planning_window))
+        self.condition_roi_btn = ttk.Button(frame, text="Create Condition ROI", command=lambda: ConditionROI_Window(self.planning_window, self))
         self.condition_roi_btn.place(x=110, y=160)
         
-        self.function_adjustment_btn = ttk.Button(frame, text="Conditionally Function Adjustment", command=lambda: FunctionAdjustment_Window(self.planning_window))
+        self.function_adjustment_btn = ttk.Button(frame, text="Conditionally Function Adjustment", command=lambda: FunctionAdjustment_Window(self.planning_window, self))
         self.function_adjustment_btn.place(x=270, y=160)
         
-        self.end_flow_btn = ttk.Button(frame, text="End Planning Flow", command=lambda: EndPlanningFlow_Window(self.planning_window))
+        self.end_flow_btn = ttk.Button(frame, text="End Planning Flow", command=lambda: EndPlanningFlow_Window(self.planning_window, self))
         self.end_flow_btn.place(x=20, y=220)
 
         # Arrows between steps
@@ -215,7 +369,8 @@ class PlanFlowDesigner:
 class IMPT_beam_setting_Window:
     """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
     """Open a new window for IMRT beam settings."""
-    def __init__(self, parent):
+    def __init__(self, parent, designer):
+        self.designer = designer
         self.beam_window = tk.Toplevel(parent)
         self.beam_window.title("IMPT Beam Settings")
         self.beam_window.geometry("1500x700")
@@ -327,7 +482,8 @@ class IMPT_beam_setting_Window:
 class VMAT_beam_setting_Window:
     """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
     """Open a new window for VMAT beam settings."""
-    def __init__(self, parent):
+    def __init__(self, parent, designer):
+        self.designer = designer
         self.beam_window = tk.Toplevel(parent)
         self.beam_window.title("VMAT Beam Settings")
         self.beam_window.geometry("800x500")
@@ -391,7 +547,8 @@ class VMAT_beam_setting_Window:
 class MatchROI_Window:
     """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
     """Open a new window for Match ROI step."""
-    def __init__(self, parent):
+    def __init__(self, parent, designer):
+        self.designer = designer
         match_roi_window = tk.Toplevel(parent)
         match_roi_window.title("Match ROI")
         match_roi_window.geometry("600x400")
@@ -419,6 +576,11 @@ class MatchROI_Window:
         
         self.roi_tree.pack(side="left", fill="both", expand=True)
         roi_tree_scroll_y.pack(side="right", fill="y")
+        
+        # Load existing data if available
+        if self.designer.match_roi_data:
+            for item in self.designer.match_roi_data:
+                self.roi_tree.insert("", "end", values=(item["roi_name"], item["possible_roi_name"]))
 
         # Add ROI Button
         self.add_roi_btn = ttk.Button(match_roi_window, text="Add ROI", command=lambda: self.open_add_roi_popup(match_roi_window))
@@ -456,16 +618,13 @@ class MatchROI_Window:
         
     def add_match_roi(self, popup):
         """Add ROI to the tree."""
-        print("Adding ROI")
         roi_name = self.roi_name_var.get().strip()
-        print("ROI Name:", roi_name)
         if roi_name:
             possible_roi_name = self.possible_roi_name_var.get().strip()
             self.roi_tree.insert("", "end", values=(roi_name, possible_roi_name))
             popup.destroy()
         else:
             messagebox.showwarning("Input Error", "ROI Name cannot be empty.")
-            popup.destroy()
 
     def remove_match_roi(self):
         """Remove selected ROI item from the treeview."""
@@ -475,9 +634,19 @@ class MatchROI_Window:
             
     def save_match_roi_list(self):
         """Save the current list of matched ROI items."""
-        roi_items = [self.roi_tree.item(child, "values") for child in self.roi_tree.get_children()]
+        roi_items = []
+        for child in self.roi_tree.get_children():
+            values = self.roi_tree.item(child, "values")
+            roi_items.append({
+                "roi_name": values[0],
+                "possible_roi_name": values[1]
+            })
+        
+        # Save to designer
+        self.designer.match_roi_data = roi_items
+        
         if roi_items:
-            messagebox.showinfo("Save Successful", "Matched ROI saved successfully.")
+            messagebox.showinfo("Save Successful", f"Matched ROI saved successfully. ({len(roi_items)} items)")
         else:
             messagebox.showwarning("Save Error", "No ROI items to save.")
     def show_step_info(self, step):
@@ -487,7 +656,8 @@ class MatchROI_Window:
 class AutomateROI_Window:
     """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
     """Open a new window for Automate ROI step."""
-    def __init__(self, parent):
+    def __init__(self, parent, designer):
+        self.designer = designer
         self.roi_window = tk.Toplevel(parent)
         self.roi_window.title("Automate ROI")
         self.roi_window.geometry("800x400")
@@ -514,6 +684,11 @@ class AutomateROI_Window:
         
         self.roi_tree.pack(side="left", fill="both", expand=True)
         roi_tree_scroll_y.pack(side="right", fill="y")
+        
+        # Load existing data if available
+        if self.designer.automate_roi_data:
+            for item in self.designer.automate_roi_data:
+                self.roi_tree.insert("", "end", values=(item["order"], item["roi_name"]))
 
         # Button Frame for New, Remove, Edit Function, and Save
         button_frame = ttk.Frame(self.roi_window)
@@ -652,19 +827,30 @@ class AutomateROI_Window:
 
     def save_roi_list(self):
         """Save the current list of ROI items."""
-        roi_items = [self.roi_tree.item(child, "values") for child in self.roi_tree.get_children()]
+        roi_items = []
+        for child in self.roi_tree.get_children():
+            values = self.roi_tree.item(child, "values")
+            roi_items.append({
+                "order": values[0],
+                "roi_name": values[1]
+            })
+        
+        # Save to designer
+        self.designer.automate_roi_data = roi_items
+        
         if roi_items:
-            messagebox.showinfo("Save Successful", "ROI list saved successfully.")
+            messagebox.showinfo("Save Successful", f"ROI list saved successfully. ({len(roi_items)} items)")
         else:
             messagebox.showwarning("Save Error", "No ROI items to save.")
             
     def open_boolean_window(self):
         """Open a new window for Boolean function editing."""
-        Boolean_Window(self.roi_window)
+        Boolean_Window(self.roi_window, self.designer)
 
 class Boolean_Window:
     """Boolean operation window for ROI algebra."""
-    def __init__(self, parent):
+    def __init__(self, parent, designer=None, use_extended_list=False):
+        self.designer = designer
         self.boolean_window = tk.Toplevel(parent)
         self.boolean_window.title("ROI Algebra")
         self.boolean_window.geometry("900x330")
@@ -681,8 +867,13 @@ class Boolean_Window:
         frame_a.grid(row=0, column=0, padx=5)
         tk.Label(frame_a, text="ROI A Name").grid(row=0, column=0)
         self.roi_a = tk.StringVar()
+        # Get ROI list from designer if available (extended list includes Match ROI + Condition ROI)
+        if self.designer:
+            roi_list = self.designer.get_extended_roi_list() if use_extended_list else self.designer.get_roi_list()
+        else:
+            roi_list = ['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External']
         roi_a_combo = ttk.Combobox(frame_a, textvariable=self.roi_a,
-                                values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
+                                values=roi_list, state="readonly")
         roi_a_combo.grid(row=0, column=1)
         
         margin_label_a = tk.Label(frame_a, text="Margin")
@@ -725,7 +916,7 @@ class Boolean_Window:
         tk.Label(frame_b, text="ROI B Name").grid(row=0, column=0)
         self.roi_b = tk.StringVar()
         roi_b_combo = ttk.Combobox(frame_b, textvariable=self.roi_b,
-                                    values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
+                                    values=roi_list, state="readonly")
         roi_b_combo.grid(row=0, column=1)
         
         margin_label_b = tk.Label(frame_b, text="Margin")
@@ -774,7 +965,8 @@ class Boolean_Window:
 class InitialFunction_Window:
     """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
     """Open a new window for Initial Function step."""
-    def __init__(self, parent):
+    def __init__(self, parent, designer):
+        self.designer = designer
         self.initial_function_window = tk.Toplevel(parent)
         self.initial_function_window.title("Initial Optimization function")
         self.initial_function_window.geometry("800x400")
@@ -817,13 +1009,38 @@ class InitialFunction_Window:
         self.delete_objective_btn = ttk.Button(self.initial_function_window, text="Delete Selected function", command=self.delete_function)
         self.delete_objective_btn.pack(side="left", padx=5, pady=5)
 
+        # Load existing data if available
+        if self.designer.initial_functions_data:
+            for item in self.designer.initial_functions_data:
+                self.initial_function_tree.insert("", "end", values=(item["tag"], item["type"], item["roi"], item["description"], item["weight"]))
+        
         # Save Button
-        self.save_initial_function_btn = ttk.Button(self.initial_function_window, text="Save", command=lambda: self.show_step_info("Initial Functions Saved"))
+        self.save_initial_function_btn = ttk.Button(self.initial_function_window, text="Save", command=self.save_initial_functions)
         self.save_initial_function_btn.pack(side="left", padx=5, pady=5)
         
         # Close Button
         self.close_btn = ttk.Button(self.initial_function_window, text="Close", command=self.initial_function_window.destroy)
         self.close_btn.pack(side="left", padx=5, pady=5)
+    
+    def save_initial_functions(self):
+        """Save the current list of initial functions."""
+        functions = []
+        for child in self.initial_function_tree.get_children():
+            values = self.initial_function_tree.item(child, "values")
+            functions.append({
+                "tag": values[0],
+                "type": values[1],
+                "roi": values[2],
+                "description": values[3],
+                "weight": values[4]
+            })
+        
+        self.designer.initial_functions_data = functions
+        
+        if functions:
+            messagebox.showinfo("Save Successful", f"Initial functions saved successfully. ({len(functions)} items)")
+        else:
+            messagebox.showwarning("Save Error", "No functions to save.")
     
     def open_add_function_window(self):
         """Add an optimization function to the list."""
@@ -840,7 +1057,7 @@ class InitialFunction_Window:
         ttk.Label(add_function_window, text="ROI Name:").grid(row=1, column=0, padx=5, pady=5)
         self.roi_name_var = tk.StringVar()
         self.roi_name_combo = ttk.Combobox(add_function_window, textvariable=self.roi_name_var,
-                                        values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
+                                        values=self.designer.get_roi_list(), state="readonly")
         self.roi_name_combo.grid(row=1, column=1, padx=5, pady=5)
         
         ttk.Label(add_function_window, text="Weight:").grid(row=2, column=0, padx=5, pady=5)
@@ -1059,7 +1276,8 @@ class InitialFunction_Window:
 class OptimizationSetting_Window:
     """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
     """Open a new window for Optimization Settings step."""
-    def __init__(self, parent):
+    def __init__(self, parent, designer):
+        self.designer = designer
         """Open a new window for Optimization step."""
         optimization_window = tk.Toplevel(parent)
         optimization_window.title("Optimization Settings")
@@ -1075,11 +1293,25 @@ class OptimizationSetting_Window:
         self.max_iterations_entry = ttk.Entry(optimization_window, textvariable=self.max_iterations_var)
         self.max_iterations_entry.grid(row=1, column=1, padx=5, pady=5)
         
+        # Load existing data if available
+        if self.designer.optimization_data:
+            self.tolerance_var.set(self.designer.optimization_data.get("tolerance", ""))
+            self.max_iterations_var.set(self.designer.optimization_data.get("max_iterations", ""))
+        
         # Save Button
-        ttk.Button(optimization_window, text="Save", command=lambda: self.show_step_info("Optimization Settings Saved")).grid(row=2, column=0, pady=10)
+        ttk.Button(optimization_window, text="Save", command=self.save_optimization_settings).grid(row=2, column=0, pady=10)
 
         # Close Button
         ttk.Button(optimization_window, text="Close", command=optimization_window.destroy).grid(row=2, column=1, columnspan=2, pady=10)
+    
+    def save_optimization_settings(self):
+        """Save optimization settings."""
+        self.designer.optimization_data = {
+            "tolerance": self.tolerance_var.get().strip(),
+            "max_iterations": self.max_iterations_var.get().strip()
+        }
+        messagebox.showinfo("Save Successful", "Optimization settings saved successfully.")
+    
     def show_step_info(self, message):
         """Display a message box with step information."""
         messagebox.showinfo("Step Information", message)
@@ -1087,7 +1319,8 @@ class OptimizationSetting_Window:
 class FinalCalculationSetting_Window:
     """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
     """Open a new window for Final Calculation step."""
-    def __init__(self, parent):
+    def __init__(self, parent, designer):
+        self.designer = designer
         final_calc_window = tk.Toplevel(parent)
         final_calc_window.title("Final Calculation")
         final_calc_window.geometry("250x70")
@@ -1096,11 +1329,22 @@ class FinalCalculationSetting_Window:
         self.algorithm_var = tk.StringVar()
         ttk.Combobox(final_calc_window, values=['Pencil beam', 'CC', 'MonteCarlo'], state="readonly", textvariable=self.algorithm_var).grid(row=0, column=1, padx=5, pady=5)
         
+        # Load existing data if available
+        if self.designer.final_calc_data:
+            self.algorithm_var.set(self.designer.final_calc_data.get("algorithm", ""))
+        
         # Save Button
-        ttk.Button(final_calc_window, text="Save", command=lambda: self.show_step_info("Final Calculation Settings Saved")).grid(row=1, column=0,padx=5, pady=10)
+        ttk.Button(final_calc_window, text="Save", command=self.save_final_calc_settings).grid(row=1, column=0,padx=5, pady=10)
         
         # Close Button
         ttk.Button(final_calc_window, text="Close", command=final_calc_window.destroy).grid(row=1, column=1, padx=5, pady=10)
+    
+    def save_final_calc_settings(self):
+        """Save final calculation settings."""
+        self.designer.final_calc_data = {
+            "algorithm": self.algorithm_var.get()
+        }
+        messagebox.showinfo("Save Successful", "Final calculation settings saved successfully.")
     
     def show_step_info(self, message):
         """Display a message box with step information."""
@@ -1108,7 +1352,8 @@ class FinalCalculationSetting_Window:
 
 class CheckCondition_Window:
     """Open a new window for Check Condition step."""
-    def __init__(self, parent):
+    def __init__(self, parent, designer):
+        self.designer = designer
         self.check_condition_window = tk.Toplevel(parent)
         self.check_condition_window.title("Check Condition")
         self.check_condition_window.geometry("1000x400")
@@ -1153,13 +1398,37 @@ class CheckCondition_Window:
         self.edit_condition_btn = ttk.Button(self.check_condition_window, text="Edit", command=lambda: self.show_step_info("Edit Condition"))
         self.edit_condition_btn.pack(side="left", padx=5, pady=5)
         
+        # Load existing data if available
+        if self.designer.check_conditions_data:
+            for item in self.designer.check_conditions_data:
+                self.condition_tree.insert("", "end", values=(item["name"], item["roi"], item["type"], item["criteria"]))
+        
         # Save Button
-        self.save_condition_btn = ttk.Button(self.check_condition_window, text="Save", command=lambda: self.show_step_info("Conditions Saved"))
+        self.save_condition_btn = ttk.Button(self.check_condition_window, text="Save", command=self.save_conditions)
         self.save_condition_btn.pack(side="left", padx=5, pady=5)
 
         # Close Button
         self.close_btn = ttk.Button(self.check_condition_window, text="Close", command=self.check_condition_window.destroy)
         self.close_btn.pack(pady=10)
+    
+    def save_conditions(self):
+        """Save the current list of conditions."""
+        conditions = []
+        for child in self.condition_tree.get_children():
+            values = self.condition_tree.item(child, "values")
+            conditions.append({
+                "name": values[0],
+                "roi": values[1],
+                "type": values[2],
+                "criteria": values[3]
+            })
+        
+        self.designer.check_conditions_data = conditions
+        
+        if conditions:
+            messagebox.showinfo("Save Successful", f"Conditions saved successfully. ({len(conditions)} items)")
+        else:
+            messagebox.showwarning("Save Error", "No conditions to save.")
     
     def open_add_condition_window(self):
         """Add a condition to the list."""
@@ -1194,7 +1463,7 @@ class CheckCondition_Window:
         ttk.Label(frame_max_dose, text="ROI Name:").grid(row=0, column=0, padx=5, pady=5)
         self.roi_name_var_max_dose = tk.StringVar()
         self.roi_name_combo_max_dose = ttk.Combobox(frame_max_dose, textvariable=self.roi_name_var_max_dose,
-                                        values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
+                                        values=self.designer.get_roi_list(), state="readonly")
         self.roi_name_combo_max_dose.grid(row=0, column=1, padx=5, pady=5)
         ttk.Label(frame_max_dose, text="Max Dose (Gy):").grid(row=1, column=0, padx=5, pady=5)
         self.max_dose_var = tk.StringVar()
@@ -1206,7 +1475,7 @@ class CheckCondition_Window:
         ttk.Label(frame_min_dose, text="ROI Name:").grid(row=0, column=0, padx=5, pady=5)
         self.roi_name_var_min_dose = tk.StringVar()
         self.roi_name_combo_min_dose = ttk.Combobox(frame_min_dose, textvariable=self.roi_name_var_min_dose,
-                                        values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
+                                        values=self.designer.get_roi_list(), state="readonly")
         self.roi_name_combo_min_dose.grid(row=0, column=1, padx=5, pady=5)
         ttk.Label(frame_min_dose, text="Min Dose (Gy):").grid(row=1, column=0, padx=5, pady=5)
         self.min_dose_var = tk.StringVar()
@@ -1218,7 +1487,7 @@ class CheckCondition_Window:
         ttk.Label(frame_max_dav, text="ROI Name:").grid(row=0, column=0, padx=5, pady=5)
         self.roi_name_var_max_dav = tk.StringVar()
         self.roi_name_combo_max_dav = ttk.Combobox(frame_max_dav, textvariable=self.roi_name_var_max_dav,
-                                        values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
+                                        values=self.designer.get_roi_list(), state="readonly")
         self.roi_name_combo_max_dav.grid(row=0, column=1, padx=5, pady=5)
         
         ttk.Label(frame_max_dav, text="Dose (cGy) at most:").grid(row=1, column=0, padx=5, pady=5)
@@ -1239,7 +1508,7 @@ class CheckCondition_Window:
         ttk.Label(frame_min_dav, text="ROI Name:").grid(row=0, column=0, padx=5, pady=5)
         self.roi_name_var_min_dav = tk.StringVar()
         self.roi_name_combo_min_dav = ttk.Combobox(frame_min_dav, textvariable=self.roi_name_var_min_dav,
-                                        values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
+                                        values=self.designer.get_roi_list(), state="readonly")
         self.roi_name_combo_min_dav.grid(row=0, column=1, padx=5, pady=5)
         
         ttk.Label(frame_min_dav, text="Dose (cGy) at least:").grid(row=1, column=0, padx=5, pady=5)
@@ -1260,7 +1529,7 @@ class CheckCondition_Window:
         ttk.Label(frame_max_vad, text="ROI Name:").grid(row=0, column=0, padx=5, pady=5)
         self.roi_name_var_max_vad = tk.StringVar()
         self.roi_name_combo_max_vad = ttk.Combobox(frame_max_vad, textvariable=self.roi_name_var_max_vad,
-                                        values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
+                                        values=self.designer.get_roi_list(), state="readonly")
         self.roi_name_combo_max_vad.grid(row=0, column=1, padx=5, pady=5)
         
         ttk.Label(frame_max_vad, text="Volume at most:").grid(row=1, column=0, padx=5, pady=5)
@@ -1281,7 +1550,7 @@ class CheckCondition_Window:
         ttk.Label(frame_min_vad, text="ROI Name:").grid(row=0, column=0, padx=5, pady=5)
         self.roi_name_var_min_vad = tk.StringVar()
         self.roi_name_combo_min_vad = ttk.Combobox(frame_min_vad, textvariable=self.roi_name_var_min_vad,
-                                        values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
+                                        values=self.designer.get_roi_list(), state="readonly")
         self.roi_name_combo_min_vad.grid(row=0, column=1, padx=5, pady=5)
         
         ttk.Label(frame_min_vad, text="Volume at most:").grid(row=1, column=0, padx=5, pady=5)
@@ -1302,7 +1571,7 @@ class CheckCondition_Window:
         ttk.Label(frame_max_dmean, text="ROI Name:").grid(row=0, column=0, padx=5, pady=5)
         self.roi_name_var_max_dmean = tk.StringVar()
         self.roi_name_combo_max_dmean = ttk.Combobox(frame_max_dmean, textvariable=self.roi_name_var_max_dmean,
-                                        values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
+                                        values=self.designer.get_roi_list(), state="readonly")
         self.roi_name_combo_max_dmean.grid(row=0, column=1, padx=5, pady=5)
         
         ttk.Label(frame_max_dmean, text="Max Dmean (cGy):").grid(row=1, column=0, padx=5, pady=5)
@@ -1315,7 +1584,7 @@ class CheckCondition_Window:
         ttk.Label(frame_min_dmean, text="ROI Name:").grid(row=0, column=0, padx=5, pady=5)
         self.roi_name_var_min_dmean = tk.StringVar()
         self.roi_name_combo_min_dmean = ttk.Combobox(frame_min_dmean, textvariable=self.roi_name_var_min_dmean,
-                                        values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
+                                        values=self.designer.get_roi_list(), state="readonly")
         self.roi_name_combo_min_dmean.grid(row=0, column=1, padx=5, pady=5)
         ttk.Label(frame_min_dmean, text="Min Dmean (cGy):").grid(row=1, column=0, padx=5, pady=5)
         self.min_dmean_var = tk.StringVar()
@@ -1422,7 +1691,8 @@ class CheckCondition_Window:
             
 class ConditionROI_Window:
     """Open a new window for Condition ROI step."""
-    def __init__(self, parent):
+    def __init__(self, parent, designer):
+        self.designer = designer
         self.condition_roi_window = tk.Toplevel(parent)
         self.condition_roi_window.title("Condition ROI")
         self.condition_roi_window.geometry("800x400")
@@ -1476,12 +1746,36 @@ class ConditionROI_Window:
         self.edit_condition_btn.pack(side="left", padx=5, pady=5)
         
         
+        # Load existing data if available
+        if self.designer.condition_rois_data:
+            for item in self.designer.condition_rois_data:
+                self.condition_roi_tree.insert("", "end", values=(item["order"], item["condition"], item["roi"], item["method"]))
+        
         # Save Button
-        self.save_condition_roi_btn = ttk.Button(self.condition_roi_window, text="Save", command=lambda: self.show_step_info("Condition ROIs Saved"))
+        self.save_condition_roi_btn = ttk.Button(self.condition_roi_window, text="Save", command=self.save_condition_rois)
         self.save_condition_roi_btn.pack(side="left", padx=5, pady=5)
         
         # Close Button
         ttk.Button(self.condition_roi_window, text="Close", command=self.condition_roi_window.destroy).pack(pady=10)
+    
+    def save_condition_rois(self):
+        """Save the current list of condition ROIs."""
+        condition_rois = []
+        for child in self.condition_roi_tree.get_children():
+            values = self.condition_roi_tree.item(child, "values")
+            condition_rois.append({
+                "order": values[0],
+                "condition": values[1],
+                "roi": values[2],
+                "method": values[3]
+            })
+        
+        self.designer.condition_rois_data = condition_rois
+        
+        if condition_rois:
+            messagebox.showinfo("Save Successful", f"Condition ROIs saved successfully. ({len(condition_rois)} items)")
+        else:
+            messagebox.showwarning("Save Error", "No condition ROIs to save.")
     
     def open_add_condition_roi_window(self):
         """Add a condition ROI to the list."""
@@ -1489,7 +1783,7 @@ class ConditionROI_Window:
         add_condition_roi_window.title("Add Condition ROI")
         add_condition_roi_window.geometry("300x200")
         
-        condition_list = ['Conditon 1', 'Condition 2', 'Condition 3']  # This should be populated with actual conditions
+        condition_list = self.designer.get_condition_list()  # Get dynamic list from Check Condition
         
         ttk.Label(add_condition_roi_window, text="If this condition TRUE:").grid(row=0, column=0, padx=5, pady=5)
         self.condition_true_var = tk.StringVar()
@@ -1509,7 +1803,7 @@ class ConditionROI_Window:
         
         # Boolean frame
         frame_boolean = ttk.Frame(add_condition_roi_window)
-        ttk.Button(frame_boolean, text="Boolean operation", command=lambda: Boolean_Window(add_condition_roi_window)).grid(row=0, column=0, padx=5, pady=5)
+        ttk.Button(frame_boolean, text="Boolean operation", command=lambda: Boolean_Window(add_condition_roi_window, self.designer, use_extended_list=True)).grid(row=0, column=0, padx=5, pady=5)
         
         # Convert Dose to ROI frame
         frame_dose_to_roi = ttk.Frame(add_condition_roi_window)
@@ -1573,7 +1867,8 @@ class ConditionROI_Window:
 
 class FunctionAdjustment_Window:
     """Open a new window for Function Adjustment step."""
-    def __init__(self, parent):
+    def __init__(self, parent, designer):
+        self.designer = designer
         self.function_adjustment_window = tk.Toplevel(parent)
         self.function_adjustment_window.title("Function Adjustment")
         self.function_adjustment_window.geometry("1300x800")
@@ -1614,14 +1909,10 @@ class FunctionAdjustment_Window:
         
         def add_old_functions(self):
             """Add old functions to the list."""
-            # Sample data for old functions
-            sample_functions = [
-                ("Func1", "Min Dose", "PTV", "Min Dose 45 Gy", "100"),
-                ("Func2", "Max Dose", "Bladder", "Max Dose 10 Gy", "10"),
-                ("Func3", "Max DVH", "Rectum", "Max DVH 20 Gy to 10% volume", "20"),
-            ]
-            for func in sample_functions:
-                self.old_function_tree.insert("", "end", values=func)
+            # Load initial functions from designer
+            if self.designer.initial_functions_data:
+                for func in self.designer.initial_functions_data:
+                    self.old_function_tree.insert("", "end", values=(func["tag"], func["type"], func["roi"], func["description"], func["weight"]))
                 
         add_old_functions(self)
         
@@ -1669,13 +1960,40 @@ class FunctionAdjustment_Window:
         # Delete Adjustment Button
         self.delete_adjustment_btn = ttk.Button(adjusted_function_label_frame, text="Remove Adjustment", command=lambda: self.show_step_info("Remove Function Adjustment"))
         self.delete_adjustment_btn.pack(side="left", padx=5, pady=5)
+        # Load existing data if available
+        if self.designer.function_adjustments_data:
+            for item in self.designer.function_adjustments_data:
+                self.function_adjustment_tree.insert("", "end", values=(item["condition"], item["adjustment"], item["tag"], item["type"], item["roi"], item["description"], item["weight"]))
+        
         # Save Button
-        self.save_adjustment_btn = ttk.Button(self.function_adjustment_window, text="Save", command=lambda: self.show_step_info("Function Adjustments Saved"))
+        self.save_adjustment_btn = ttk.Button(self.function_adjustment_window, text="Save", command=self.save_function_adjustments)
         self.save_adjustment_btn.pack(side="left", padx=5, pady=5)
         
         # Close Button
         self.close_btn = ttk.Button(self.function_adjustment_window, text="Close", command=self.function_adjustment_window.destroy)
         self.close_btn.pack(side="left", padx=5, pady=5)
+    
+    def save_function_adjustments(self):
+        """Save the current list of function adjustments."""
+        adjustments = []
+        for child in self.function_adjustment_tree.get_children():
+            values = self.function_adjustment_tree.item(child, "values")
+            adjustments.append({
+                "condition": values[0],
+                "adjustment": values[1],
+                "tag": values[2],
+                "type": values[3],
+                "roi": values[4],
+                "description": values[5],
+                "weight": values[6]
+            })
+        
+        self.designer.function_adjustments_data = adjustments
+        
+        if adjustments:
+            messagebox.showinfo("Save Successful", f"Function adjustments saved successfully. ({len(adjustments)} items)")
+        else:
+            messagebox.showwarning("Save Error", "No function adjustments to save.")
         
     def show_step_info(self, message):
         """Display a message box with step information."""
@@ -1702,7 +2020,7 @@ class FunctionAdjustment_Window:
         adjust_window.title("Adjust Function")
         adjust_window.geometry("350x320")
         
-        condition_list = ['Condition 1', 'Condition 2', 'Condition 3']
+        condition_list = self.designer.get_condition_list()
         
         ttk.Label(adjust_window, text="If this condition TRUE:").grid(row=0, column=0, padx=5, pady=5)
         self.condition_true_var = tk.StringVar()
@@ -1718,7 +2036,7 @@ class FunctionAdjustment_Window:
         ttk.Label(adjust_window, text="ROI Name:").grid(row=2, column=0, padx=5, pady=5)
         self.roi_name_var = tk.StringVar(value=selected_roi)
         self.roi_name_combo = ttk.Combobox(adjust_window, textvariable=self.roi_name_var,
-                                        values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
+                                        values=self.designer.get_extended_roi_list(), state="readonly")
         self.roi_name_combo.grid(row=2, column=1, padx=5, pady=5)
         
         ttk.Label(adjust_window, text="Weight:").grid(row=3, column=0, padx=5, pady=5)
@@ -2001,7 +2319,7 @@ class FunctionAdjustment_Window:
         add_adjustment_window.title("Add Function Adjustment")
         add_adjustment_window.geometry("350x320")
         
-        condition_list = ['Condition 1', 'Condition 2', 'Condition 3']
+        condition_list = self.designer.get_condition_list()
         
         ttk.Label(add_adjustment_window, text="If this condition TRUE:").grid(row=0, column=0, padx=5, pady=5)
         self.condition_true_var = tk.StringVar()
@@ -2017,7 +2335,7 @@ class FunctionAdjustment_Window:
         ttk.Label(add_adjustment_window, text="ROI Name:").grid(row=2, column=0, padx=5, pady=5)
         self.roi_name_var = tk.StringVar()
         self.roi_name_combo = ttk.Combobox(add_adjustment_window, textvariable=self.roi_name_var,
-                                        values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
+                                        values=self.designer.get_extended_roi_list(), state="readonly")
         self.roi_name_combo.grid(row=2, column=1, padx=5, pady=5)
         
         ttk.Label(add_adjustment_window, text="Weight:").grid(row=3, column=0, padx=5, pady=5)
@@ -2228,7 +2546,8 @@ class FunctionAdjustment_Window:
 
 class EndPlanningFlow_Window:
     """Open a new window for End Planning Flow step."""
-    def __init__(self, parent):
+    def __init__(self, parent, designer):
+        self.designer = designer
         end_planning_window = tk.Toplevel(parent)
         end_planning_window.title("End Planning Flow")
         end_planning_window.geometry("300x100")
@@ -2238,11 +2557,24 @@ class EndPlanningFlow_Window:
         max_optimize_entry = ttk.Entry(end_planning_window, textvariable=self.max_optimize_var, width=5)
         max_optimize_entry.grid(row=0, column=1, padx=0, pady=5)
         ttk.Label(end_planning_window, text="rounds").grid(row=0, column=2, padx=0, pady=5)
+        
+        # Load existing data if available
+        if self.designer.end_flow_data:
+            self.max_optimize_var.set(self.designer.end_flow_data.get("max_optimize_rounds", 0))
+        
         # Save Button
-        ttk.Button(end_planning_window, text="Save", command=lambda: self.show_step_info("End Planning Flow Settings Saved")).grid(row=1, column=0, padx=5, pady=10)
+        ttk.Button(end_planning_window, text="Save", command=self.save_end_flow_settings).grid(row=1, column=0, padx=5, pady=10)
         
         # Close Button
-        ttk.Button(end_planning_window, text="Close", command=end_planning_window.destroy).grid(row=1, column=1, padx=5, pady=10)  
+        ttk.Button(end_planning_window, text="Close", command=end_planning_window.destroy).grid(row=1, column=1, padx=5, pady=10)
+    
+    def save_end_flow_settings(self):
+        """Save end planning flow settings."""
+        self.designer.end_flow_data = {
+            "max_optimize_rounds": self.max_optimize_var.get()
+        }
+        messagebox.showinfo("Save Successful", "End planning flow settings saved successfully.")
+    
     def show_step_info(self, message):
         """Display a message box with step information."""
         messagebox.showinfo("Step Information", message)
