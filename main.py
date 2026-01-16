@@ -343,7 +343,7 @@ class VMAT_beam_setting_Window:
         beam_tree_scroll_x = ttk.Scrollbar(beam_tree_frame, orient="horizontal")
         
         self.beam_tree = ttk.Treeview(beam_tree_frame, columns=("Beam name", "Energy [MV]","Gantry Start [deg]", "Gantry Stop [deg]", "Rotation", "Couch [deg]"), 
-                                       show="headings", yscrollcommand=beam_tree_scroll_y.set, xscrollcommand=beam_tree_scroll_x.set)
+                                        show="headings", yscrollcommand=beam_tree_scroll_y.set, xscrollcommand=beam_tree_scroll_x.set)
         
         beam_tree_scroll_y.config(command=self.beam_tree.yview)
         beam_tree_scroll_x.config(command=self.beam_tree.xview)
@@ -777,7 +777,7 @@ class InitialFunction_Window:
     def __init__(self, parent):
         self.initial_function_window = tk.Toplevel(parent)
         self.initial_function_window.title("Initial Optimization function")
-        self.initial_function_window.geometry("1200x400")
+        self.initial_function_window.geometry("800x400")
 
         # Bold Title Label
         title_label = tk.Label(self.initial_function_window, text="Initial Optimization function", font=("Arial", 14, "bold"))
@@ -789,24 +789,22 @@ class InitialFunction_Window:
         
         initial_function_scroll_y = ttk.Scrollbar(initial_function_frame, orient="vertical")
         
-        self.initial_function_tree = ttk.Treeview(initial_function_frame, columns=("Function tag", "Function Type", "ROI",  "Weight", "Dose level (Gy)","Volume level (%)"), show="headings",
-                                                  yscrollcommand=initial_function_scroll_y.set)
+        self.initial_function_tree = ttk.Treeview(initial_function_frame, columns=("Function tag", "Function Type", "ROI", "Description", "Weight"), show="headings",
+                                                yscrollcommand=initial_function_scroll_y.set)
         
         initial_function_scroll_y.config(command=self.initial_function_tree.yview)
         
         self.initial_function_tree.heading("Function tag", text="Function tag")
         self.initial_function_tree.heading("Function Type", text="Function Type")
         self.initial_function_tree.heading("ROI", text="ROI")
+        self.initial_function_tree.heading("Description", text="Description")
         self.initial_function_tree.heading("Weight", text="Weight")
-        self.initial_function_tree.heading("Dose level (Gy)", text="Dose level (Gy)")
-        self.initial_function_tree.heading("Volume level (%)", text="Volume level (%)")
         
-        self.initial_function_tree.column("Function tag", width=100)
-        self.initial_function_tree.column("Function Type", width=120)
-        self.initial_function_tree.column("ROI", width=100)
-        self.initial_function_tree.column("Weight", width=80)
-        self.initial_function_tree.column("Dose level (Gy)", width=120)
-        self.initial_function_tree.column("Volume level (%)", width=120)
+        self.initial_function_tree.column("Function tag", width=20)
+        self.initial_function_tree.column("Function Type", width=20)
+        self.initial_function_tree.column("ROI", width=50)
+        self.initial_function_tree.column("Description", width=200)
+        self.initial_function_tree.column("Weight", width=20)
         
         self.initial_function_tree.pack(side="left", fill="both", expand=True)
         initial_function_scroll_y.pack(side="right", fill="y")
@@ -830,8 +828,8 @@ class InitialFunction_Window:
     def open_add_function_window(self):
         """Add an optimization function to the list."""
         add_function_window = tk.Toplevel(self.initial_function_window)
-        add_function_window.title("Add Optimization function")
-        add_function_window.geometry("300x250")
+        add_function_window.title("Add Opt. Function")
+        add_function_window.geometry("300x280")
         
         # function tag
         ttk.Label(add_function_window, text="Function tag").grid(row=0, column=0, pady=5)
@@ -845,26 +843,156 @@ class InitialFunction_Window:
                                         values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
         self.roi_name_combo.grid(row=1, column=1, padx=5, pady=5)
         
-        ttk.Label(add_function_window, text="Function type:").grid(row=2, column=0, padx=5, pady=5)
-        self.function_var = tk.StringVar()
-        self.function_combo = ttk.Combobox(add_function_window, textvariable=self.function_var,
-                                            values=['Min Dose', 'Min DVH', 'Min EUD', 'Max Dose', 'Max DVH', 'Max EUD', 'Uniform Dose', 'Dose fall-off'], state="readonly")
-        self.function_combo.grid(row=2, column=1, padx=5, pady=5)
-        
-        ttk.Label(add_function_window, text="Weight:").grid(row=3, column=0, padx=5, pady=5)
+        ttk.Label(add_function_window, text="Weight:").grid(row=2, column=0, padx=5, pady=5)
         self.weight_var = tk.StringVar()
         self.weight_entry = ttk.Entry(add_function_window, textvariable=self.weight_var)
-        self.weight_entry.grid(row=3, column=1, padx=5, pady=5)
+        self.weight_entry.grid(row=2, column=1, padx=5, pady=5)
         
-        ttk.Label(add_function_window, text="Dose Level (Gy):").grid(row=4, column=0, padx=5, pady=5)
-        self.dose_value_var = tk.StringVar()
-        self.dose_value_entry = ttk.Entry(add_function_window, textvariable=self.dose_value_var)
-        self.dose_value_entry.grid(row=4, column=1, padx=5, pady=5)
+        ttk.Label(add_function_window, text="Function type:").grid(row=3, column=0, padx=5, pady=5)
+        self.function_var = tk.StringVar()
+        self.function_combo = ttk.Combobox(add_function_window, textvariable=self.function_var,
+                                            values=['Min Dose', 'Max Dose', 'Min DVH', 'Max DVH', 'Uniform Dose', 'Min EUD', 'Max EUD', 'Target EUD', 'Dose fall-off', 'Uniformity Constraint'], state="readonly")
+        self.function_combo.grid(row=3, column=1, padx=5, pady=5)
         
-        ttk.Label(add_function_window, text="Volume Level (%):").grid(row=5, column=0, padx=5, pady=5)
-        self.volume_value_var = tk.StringVar()
-        self.volume_value_entry = ttk.Entry(add_function_window, textvariable=self.volume_value_var)
-        self.volume_value_entry.grid(row=5, column=1, padx=5, pady=5)
+        # --------------------
+        # Frame for each type
+        # --------------------
+        
+        # Frame for Min Dose
+        frame_min_dose = ttk.Frame(add_function_window)
+        ttk.Label(frame_min_dose, text="Min Dose (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.min_dose_value_var = tk.StringVar()
+        self.min_dose_value_entry = ttk.Entry(frame_min_dose, textvariable=self.min_dose_value_var)
+        self.min_dose_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        # Frame for Max Dose
+        frame_max_dose = ttk.Frame(add_function_window)
+        ttk.Label(frame_max_dose, text="Max Dose (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.max_dose_value_var = tk.StringVar()
+        self.max_dose_value_entry = ttk.Entry(frame_max_dose, textvariable=self.max_dose_value_var)
+        self.max_dose_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        # Frame for Min DVH
+        frame_min_dvh = ttk.Frame(add_function_window)
+        ttk.Label(frame_min_dvh, text="Dose Level (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.dose_value_min_dvh_var = tk.StringVar()
+        self.dose_value_min_dvh_entry = ttk.Entry(frame_min_dvh, textvariable=self.dose_value_min_dvh_var)
+        self.dose_value_min_dvh_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_min_dvh, text="Volume Level:").grid(row=1, column=0, padx=5, pady=5)
+        self.volume_value_min_dvh_var = tk.StringVar()
+        self.volume_value_min_dvh_entry = ttk.Entry(frame_min_dvh, textvariable=self.volume_value_min_dvh_var)
+        self.volume_value_min_dvh_entry.grid(row=1, column=1, padx=5, pady=5)
+        self.volume_value_min_dvh_unit = tk.StringVar()
+        self.volume_value_min_dvh_unit_combo = ttk.Combobox(frame_min_dvh, textvariable=self.volume_value_min_dvh_unit,
+                                            values=['%', 'cc'], state="readonly", width=5)
+        self.volume_value_min_dvh_unit_combo.grid(row=1, column=2, padx=5, pady=5)
+        # Frame for Max DVH
+        frame_max_dvh = ttk.Frame(add_function_window)
+        ttk.Label(frame_max_dvh, text="Dose Level (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.dose_value_max_dvh_var = tk.StringVar()
+        self.dose_value_max_dvh_entry = ttk.Entry(frame_max_dvh, textvariable=self.dose_value_max_dvh_var)
+        self.dose_value_max_dvh_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_max_dvh, text="Volume Level:").grid(row=1, column=0, padx=5, pady=5)
+        self.volume_value_max_dvh_var = tk.StringVar()
+        self.volume_value_max_dvh_entry = ttk.Entry(frame_max_dvh, textvariable=self.volume_value_max_dvh_var)
+        self.volume_value_max_dvh_entry.grid(row=1, column=1, padx=5, pady=5)
+        self.volume_value_max_dvh_unit = tk.StringVar()
+        self.volume_value_max_dvh_unit_combo = ttk.Combobox(frame_max_dvh, textvariable=self.volume_value_max_dvh_unit,
+                                            values=['%', 'cc'], state="readonly", width=5)
+        self.volume_value_max_dvh_unit_combo.grid(row=1, column=2, padx=5, pady=5)
+        # Frame for Min EUD
+        frame_min_eud = ttk.Frame(add_function_window)
+        ttk.Label(frame_min_eud, text="Min EUD (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.min_eud_value_var = tk.StringVar()
+        self.min_eud_value_entry = ttk.Entry(frame_min_eud, textvariable=self.min_eud_value_var)
+        self.min_eud_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_min_eud, text="Parameter A (-150,150):").grid(row=1, column=0, padx=5, pady=5)
+        self.a_param_min_eud_var = tk.StringVar()
+        self.a_param_min_eud_entry = ttk.Entry(frame_min_eud, textvariable=self.a_param_min_eud_var)
+        self.a_param_min_eud_entry.grid(row=1, column=1, padx=5, pady=5)
+        # Frame for Max EUD
+        frame_max_eud = ttk.Frame(add_function_window)
+        ttk.Label(frame_max_eud, text="Max EUD (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.max_eud_value_var = tk.StringVar()
+        self.max_eud_value_entry = ttk.Entry(frame_max_eud, textvariable=self.max_eud_value_var)
+        self.max_eud_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_max_eud, text="Parameter A (-150,150):").grid(row=1, column=0, padx=5, pady=5)
+        self.a_param_max_eud_var = tk.StringVar()
+        self.a_param_max_eud_entry = ttk.Entry(frame_max_eud, textvariable=self.a_param_max_eud_var)
+        self.a_param_max_eud_entry.grid(row=1, column=1, padx=5, pady=5)
+        # Frame for Target EUD
+        frame_target_eud = ttk.Frame(add_function_window)
+        ttk.Label(frame_target_eud, text="Target EUD (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.target_eud_value_var = tk.StringVar()
+        self.target_eud_value_entry = ttk.Entry(frame_target_eud, textvariable=self.target_eud_value_var)
+        self.target_eud_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_target_eud, text="Parameter A (-150,150):").grid(row=1, column=0, padx=5, pady=5)
+        self.a_param_target_eud_var = tk.StringVar()
+        self.a_param_target_eud_entry = ttk.Entry(frame_target_eud, textvariable=self.a_param_target_eud_var)
+        self.a_param_target_eud_entry.grid(row=1, column=1, padx=5, pady=5)
+        # Frame for Uniform Dose
+        frame_uniform_dose = ttk.Frame(add_function_window)
+        ttk.Label(frame_uniform_dose, text="Uniform Dose (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.uniform_dose_value_var = tk.StringVar()
+        self.uniform_dose_value_entry = ttk.Entry(frame_uniform_dose, textvariable=self.uniform_dose_value_var)
+        self.uniform_dose_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        # Frame for Dose fall-off
+        frame_dose_falloff = ttk.Frame(add_function_window)
+        ttk.Label(frame_dose_falloff, text="High dose level (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.high_dose_value_var = tk.StringVar()
+        self.high_dose_value_entry = ttk.Entry(frame_dose_falloff, textvariable=self.high_dose_value_var)
+        self.high_dose_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_dose_falloff, text="Low dose level (Gy):").grid(row=1, column=0, padx=5, pady=5)
+        self.low_dose_value_var = tk.StringVar()
+        self.low_dose_value_entry = ttk.Entry(frame_dose_falloff, textvariable=self.low_dose_value_var)
+        self.low_dose_value_entry.grid(row=1, column=1, padx=5, pady=5)
+        ttk.Label(frame_dose_falloff, text="Low dose distance (cm):").grid(row=2, column=0, padx=5, pady=5)
+        self.low_dose_distance_var = tk.StringVar()
+        self.low_dose_distance_entry = ttk.Entry(frame_dose_falloff, textvariable=self.low_dose_distance_var)
+        self.low_dose_distance_entry.grid(row=2, column=1, padx=5, pady=5)
+        # Frame for Uniformity Constraint
+        frame_uniformity_constraint = ttk.Frame(add_function_window)
+        ttk.Label(frame_uniformity_constraint, text="Rel.std.dev (%):").grid(row=0, column=0, padx=5, pady=5)
+        self.rel_std_dev_var = tk.StringVar()
+        self.rel_std_dev_entry = ttk.Entry(frame_uniformity_constraint, textvariable=self.rel_std_dev_var)
+        self.rel_std_dev_entry.grid(row=0, column=1, padx=5, pady=5)
+        
+        # ------------------------------------------------------------
+                                                            
+        def show_selected_frame(self):
+            """Show the relevant frame based on condition type selection."""
+            frame_min_dose.grid_forget()
+            frame_max_dose.grid_forget()
+            frame_min_dvh.grid_forget()
+            frame_max_dvh.grid_forget()
+            frame_min_eud.grid_forget()
+            frame_max_eud.grid_forget()
+            frame_target_eud.grid_forget()
+            frame_uniform_dose.grid_forget()
+            frame_dose_falloff.grid_forget()
+            frame_uniformity_constraint.grid_forget()
+            selection = self.function_var.get()
+            if selection == "Min Dose":
+                frame_min_dose.grid(row=4, column=0, columnspan=2, pady=5)
+            elif selection == "Max Dose":
+                frame_max_dose.grid(row=4, column=0, columnspan=2, pady=5)
+            elif selection == "Min DVH":
+                frame_min_dvh.grid(row=4, column=0, columnspan=2, pady=5)
+            elif selection == "Max DVH":
+                frame_max_dvh.grid(row=4, column=0, columnspan=2, pady=5)
+            elif selection == "Min EUD":
+                frame_min_eud.grid(row=4, column=0, columnspan=2, pady=5)
+            elif selection == "Max EUD":
+                frame_max_eud.grid(row=4, column=0, columnspan=2, pady=5)
+            elif selection == "Target EUD":
+                frame_target_eud.grid(row=4, column=0, columnspan=2, pady=5)
+            elif selection == "Uniform Dose":
+                frame_uniform_dose.grid(row=4, column=0, columnspan=2, pady=5)
+            elif selection == "Dose fall-off":
+                frame_dose_falloff.grid(row=4, column=0, columnspan=2, pady=5)
+            elif selection == "Uniformity Constraint":
+                frame_uniformity_constraint.grid(row=4, column=0, columnspan=2, pady=5)
+        self.function_combo.bind("<<ComboboxSelected>>", lambda event: show_selected_frame(self))
+        # Initially show the relevant frame
+        show_selected_frame(self)
         
         ttk.Button(add_function_window, text="Add", command=lambda: self.add_function(add_function_window)).grid(row=6, column=0, columnspan=2, pady=10)
         
@@ -873,11 +1001,49 @@ class InitialFunction_Window:
         function_tag = self.function_tag_var.get().strip()
         function = self.function_var.get().strip()
         roi_name = self.roi_name_var.get().strip()
-        dose_level = self.dose_value_var.get().strip()
-        volume_level = self.volume_value_var.get().strip()
         weight = self.weight_var.get().strip()
+        if function == "Min Dose":
+            min_dose = self.min_dose_value_var.get().strip()
+            description = f"Min Dose {min_dose} Gy"
+        elif function == "Max Dose":
+            max_dose = self.max_dose_value_var.get().strip()
+            description = f"Max Dose {max_dose} Gy"
+        elif function == "Min DVH":
+            dose_level = self.dose_value_min_dvh_var.get().strip()
+            volume_level = self.volume_value_min_dvh_var.get().strip()
+            volume_unit = self.volume_value_min_dvh_unit.get().strip()
+            description = f"Min DVH {dose_level} Gy to {volume_level}{volume_unit} volume"
+        elif function == "Max DVH":
+            dose_level = self.dose_value_max_dvh_var.get().strip()
+            volume_level = self.volume_value_max_dvh_var.get().strip()
+            volume_unit = self.volume_value_max_dvh_unit.get().strip()
+            description = f"Max DVH {dose_level} Gy to {volume_level}{volume_unit} volume"
+        elif function == "Min EUD":
+            min_eud = self.min_eud_value_var.get().strip()
+            a_param = self.a_param_min_eud_var.get().strip()
+            description = f"Min EUD {min_eud} Gy, Parameter A {a_param}"
+        elif function == "Max EUD":
+            max_eud = self.max_eud_value_var.get().strip()
+            a_param = self.a_param_max_eud_var.get().strip()
+            description = f"Max EUD {max_eud} Gy, Parameter A {a_param}"
+        elif function == "Target EUD":
+            target_eud = self.target_eud_value_var.get().strip()
+            a_param = self.a_param_target_eud_var.get().strip()
+            description = f"Target EUD {target_eud} Gy, Parameter A {a_param}"
+        elif function == "Uniform Dose":
+            uniform_dose = self.uniform_dose_value_var.get().strip()
+            description = f"Uniform Dose {uniform_dose} Gy"
+        elif function == "Dose fall-off":
+            high_dose = self.high_dose_value_var.get().strip()
+            low_dose = self.low_dose_value_var.get().strip()
+            low_distance = self.low_dose_distance_var.get().strip()
+            description = f"Dose fall-off [H] {high_dose} Gy [L] {low_dose} Gy, Low dose distance {low_distance} cm"
+        elif function == "Uniformity Constraint":
+            rel_std_dev = self.rel_std_dev_var.get().strip()
+            description = f"Uniformity Constraint Rel.std.dev {rel_std_dev} %"
+            
         # Here you would add the objective to your data structure
-        self.initial_function_tree.insert("", "end", values=(function_tag, function, roi_name, weight, dose_level, volume_level))
+        self.initial_function_tree.insert("", "end", values=(function_tag, function, roi_name, description, weight))
         popup.destroy()
     
     def delete_function(self):
@@ -1323,10 +1489,12 @@ class ConditionROI_Window:
         add_condition_roi_window.title("Add Condition ROI")
         add_condition_roi_window.geometry("300x200")
         
+        condition_list = ['Conditon 1', 'Condition 2', 'Condition 3']  # This should be populated with actual conditions
+        
         ttk.Label(add_condition_roi_window, text="If this condition TRUE:").grid(row=0, column=0, padx=5, pady=5)
         self.condition_true_var = tk.StringVar()
-        self.condition_true_entry = ttk.Entry(add_condition_roi_window, textvariable=self.condition_true_var)
-        self.condition_true_entry.grid(row=0, column=1, padx=5, pady=5)
+        self.condition_true_combo = ttk.Combobox(add_condition_roi_window, textvariable=self.condition_true_var, values=condition_list, state="readonly")
+        self.condition_true_combo.grid(row=0, column=1, padx=5, pady=5)
         
         ttk.Label(add_condition_roi_window, text="Create this ROI:").grid(row=1, column=0, padx=5, pady=5)
         self.create_roi_var = tk.StringVar()
@@ -1408,7 +1576,7 @@ class FunctionAdjustment_Window:
     def __init__(self, parent):
         self.function_adjustment_window = tk.Toplevel(parent)
         self.function_adjustment_window.title("Function Adjustment")
-        self.function_adjustment_window.geometry("1700x800")
+        self.function_adjustment_window.geometry("1300x800")
         
         # Bold Title Label
         title_label = tk.Label(self.function_adjustment_window, text="Function Adjustment", font=("Arial", 14, "bold"))
@@ -1424,7 +1592,7 @@ class FunctionAdjustment_Window:
         
         old_function_scroll_y = ttk.Scrollbar(old_function_frame, orient="vertical")
         
-        self.old_function_tree = ttk.Treeview(old_function_frame, columns=("Function tag","Function Type", "ROI",  "Weight", "Dose level (Gy)","Volume level (%)"), show="headings",
+        self.old_function_tree = ttk.Treeview(old_function_frame, columns=("Function tag","Function Type", "ROI",  "Description", "Weight"), show="headings",
                                                 yscrollcommand=old_function_scroll_y.set)
         
         old_function_scroll_y.config(command=self.old_function_tree.yview)
@@ -1432,16 +1600,14 @@ class FunctionAdjustment_Window:
         self.old_function_tree.heading("Function tag", text="Function tag")
         self.old_function_tree.heading("Function Type", text="Function Type")
         self.old_function_tree.heading("ROI", text="ROI")
+        self.old_function_tree.heading("Description", text="Description")
         self.old_function_tree.heading("Weight", text="Weight")
-        self.old_function_tree.heading("Dose level (Gy)", text="Dose level (Gy)")
-        self.old_function_tree.heading("Volume level (%)", text="Volume level (%)")
         
-        self.old_function_tree.column("Function tag", width=100)
-        self.old_function_tree.column("Function Type", width=120)
-        self.old_function_tree.column("ROI", width=100)
-        self.old_function_tree.column("Weight", width=80)
-        self.old_function_tree.column("Dose level (Gy)", width=120)
-        self.old_function_tree.column("Volume level (%)", width=120)
+        self.old_function_tree.column("Function tag", width=20)
+        self.old_function_tree.column("Function Type", width=20)
+        self.old_function_tree.column("ROI", width=50)
+        self.old_function_tree.column("Description", width=200)
+        self.old_function_tree.column("Weight", width=20)
         
         self.old_function_tree.pack(side="left", fill="both", expand=True)
         old_function_scroll_y.pack(side="right", fill="y")
@@ -1450,9 +1616,9 @@ class FunctionAdjustment_Window:
             """Add old functions to the list."""
             # Sample data for old functions
             sample_functions = [
-                ("Func1", "Min Dose", "PTV", "100", "50", ""),
-                ("Func2", "Max Dose", "Bladder", "10", "30", "0"),
-                ("Func3", "Min DVH", "Rectum", "20", "25", "10"),
+                ("Func1", "Min Dose", "PTV", "Min Dose 45 Gy", "100"),
+                ("Func2", "Max Dose", "Bladder", "Max Dose 10 Gy", "10"),
+                ("Func3", "Max DVH", "Rectum", "Max DVH 20 Gy to 10% volume", "20"),
             ]
             for func in sample_functions:
                 self.old_function_tree.insert("", "end", values=func)
@@ -1460,7 +1626,7 @@ class FunctionAdjustment_Window:
         add_old_functions(self)
         
         # Adjust Button
-        self.adjust_function_btn = ttk.Button(old_function_label_frame, text="Adjust Selected Function", command=lambda: self.show_step_info("Adjust Function"))
+        self.adjust_function_btn = ttk.Button(old_function_label_frame, text="Adjust Selected Function", command=self.adjust_function)
         self.adjust_function_btn.pack(side="left", padx=5, pady=5)
         
         # Adjusted function frame
@@ -1473,7 +1639,7 @@ class FunctionAdjustment_Window:
         
         function_adjustment_scroll_y = ttk.Scrollbar(function_adjustment_frame, orient="vertical")
         
-        self.function_adjustment_tree = ttk.Treeview(function_adjustment_frame, columns=("If this condition TRUE", "Make this Adjustment", "Function tag","Function Type", "ROI",  "Weight", "Dose level (Gy)","Volume level (%)"), show="headings",
+        self.function_adjustment_tree = ttk.Treeview(function_adjustment_frame, columns=("If this condition TRUE", "Make this Adjustment", "Function tag", "Function Type", "ROI", "Description", "Weight"), show="headings",
                                                     yscrollcommand=function_adjustment_scroll_y.set)
         
         function_adjustment_scroll_y.config(command=self.function_adjustment_tree.yview)
@@ -1481,20 +1647,18 @@ class FunctionAdjustment_Window:
         self.function_adjustment_tree.heading("If this condition TRUE", text="If this condition TRUE")
         self.function_adjustment_tree.heading("Make this Adjustment", text="Make this Adjustment")
         self.function_adjustment_tree.heading("Function tag", text="Function tag")
-        self.function_adjustment_tree.heading("ROI", text="ROI")
         self.function_adjustment_tree.heading("Function Type", text="Function Type")
+        self.function_adjustment_tree.heading("ROI", text="ROI")
+        self.function_adjustment_tree.heading("Description", text="Description")
         self.function_adjustment_tree.heading("Weight", text="Weight")
-        self.function_adjustment_tree.heading("Dose level (Gy)", text="Dose level (Gy)")
-        self.function_adjustment_tree.heading("Volume level (%)", text="Volume level (%)")
         
-        self.function_adjustment_tree.column("If this condition TRUE", width=150)
-        self.function_adjustment_tree.column("Make this Adjustment", width=150)
-        self.function_adjustment_tree.column("Function tag", width=100)
-        self.function_adjustment_tree.column("ROI", width=100)
-        self.function_adjustment_tree.column("Function Type", width=120)
-        self.function_adjustment_tree.column("Weight", width=80)
-        self.function_adjustment_tree.column("Dose level (Gy)", width=120)
-        self.function_adjustment_tree.column("Volume level (%)", width=120)
+        self.function_adjustment_tree.column("If this condition TRUE", width=20)
+        self.function_adjustment_tree.column("Make this Adjustment", width=20)
+        self.function_adjustment_tree.column("Function tag", width=20)
+        self.function_adjustment_tree.column("Function Type", width=20)
+        self.function_adjustment_tree.column("ROI", width=50)
+        self.function_adjustment_tree.column("Description", width=200)
+        self.function_adjustment_tree.column("Weight", width=50)
         
         self.function_adjustment_tree.pack(side="left", fill="both", expand=True)
         function_adjustment_scroll_y.pack(side="right", fill="y")
@@ -1517,63 +1681,549 @@ class FunctionAdjustment_Window:
         """Display a message box with step information."""
         messagebox.showinfo("Step Information", message)
     
+    def adjust_function(self):
+        """Adjust the selected function."""
+        # Get selected function from old_function_tree
+        selected_item = self.old_function_tree.selection()
+        if not selected_item:
+            messagebox.showwarning("No Selection", "Please select a function to adjust.")
+            return
+        
+        # Get values from selected item
+        item_values = self.old_function_tree.item(selected_item[0], "values")
+        selected_tag = item_values[0]
+        selected_type = item_values[1]
+        selected_roi = item_values[2]
+        selected_description = item_values[3]
+        selected_weight = item_values[4]
+        
+        # Open adjustment window
+        adjust_window = tk.Toplevel(self.function_adjustment_window)
+        adjust_window.title("Adjust Function")
+        adjust_window.geometry("350x320")
+        
+        condition_list = ['Condition 1', 'Condition 2', 'Condition 3']
+        
+        ttk.Label(adjust_window, text="If this condition TRUE:").grid(row=0, column=0, padx=5, pady=5)
+        self.condition_true_var = tk.StringVar()
+        self.condition_true_combo = ttk.Combobox(adjust_window, textvariable=self.condition_true_var,
+                                        values=condition_list, state="readonly")
+        self.condition_true_combo.grid(row=0, column=1, padx=5, pady=5)
+        
+        ttk.Label(adjust_window, text="Function tag:").grid(row=1, column=0, padx=5, pady=5)
+        self.adjustment_tag_var = tk.StringVar(value=selected_tag)
+        self.adjustment_tag_entry = ttk.Entry(adjust_window, textvariable=self.adjustment_tag_var)
+        self.adjustment_tag_entry.grid(row=1, column=1, padx=5, pady=5)
+        
+        ttk.Label(adjust_window, text="ROI Name:").grid(row=2, column=0, padx=5, pady=5)
+        self.roi_name_var = tk.StringVar(value=selected_roi)
+        self.roi_name_combo = ttk.Combobox(adjust_window, textvariable=self.roi_name_var,
+                                        values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
+        self.roi_name_combo.grid(row=2, column=1, padx=5, pady=5)
+        
+        ttk.Label(adjust_window, text="Weight:").grid(row=3, column=0, padx=5, pady=5)
+        self.weight_var = tk.StringVar(value=selected_weight)
+        self.weight_entry = ttk.Entry(adjust_window, textvariable=self.weight_var)
+        self.weight_entry.grid(row=3, column=1, padx=5, pady=5)
+        
+        ttk.Label(adjust_window, text="Function type:").grid(row=4, column=0, padx=5, pady=5)
+        self.function_type_var = tk.StringVar(value=selected_type)
+        self.function_type_combo = ttk.Combobox(adjust_window, textvariable=self.function_type_var,
+                                            values=['Min Dose', 'Max Dose', 'Min DVH', 'Max DVH', 'Uniform Dose', 'Min EUD', 'Max EUD', 'Target EUD', 'Dose fall-off', 'Uniformity Constraint'], state="readonly")
+        self.function_type_combo.grid(row=4, column=1, padx=5, pady=5)
+        
+        # --------------------
+        # Frame for each type
+        # --------------------
+        
+        # Frame for Min Dose
+        frame_min_dose = ttk.Frame(adjust_window)
+        ttk.Label(frame_min_dose, text="Min Dose (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.min_dose_value_var = tk.StringVar()
+        self.min_dose_value_entry = ttk.Entry(frame_min_dose, textvariable=self.min_dose_value_var)
+        self.min_dose_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        # Frame for Max Dose
+        frame_max_dose = ttk.Frame(adjust_window)
+        ttk.Label(frame_max_dose, text="Max Dose (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.max_dose_value_var = tk.StringVar()
+        self.max_dose_value_entry = ttk.Entry(frame_max_dose, textvariable=self.max_dose_value_var)
+        self.max_dose_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        # Frame for Min DVH
+        frame_min_dvh = ttk.Frame(adjust_window)
+        ttk.Label(frame_min_dvh, text="Dose Level (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.dose_value_min_dvh_var = tk.StringVar()
+        self.dose_value_min_dvh_entry = ttk.Entry(frame_min_dvh, textvariable=self.dose_value_min_dvh_var)
+        self.dose_value_min_dvh_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_min_dvh, text="Volume Level:").grid(row=1, column=0, padx=5, pady=5)
+        self.volume_value_min_dvh_var = tk.StringVar()
+        self.volume_value_min_dvh_entry = ttk.Entry(frame_min_dvh, textvariable=self.volume_value_min_dvh_var)
+        self.volume_value_min_dvh_entry.grid(row=1, column=1, padx=5, pady=5)
+        self.volume_value_min_dvh_unit = tk.StringVar()
+        self.volume_value_min_dvh_unit_combo = ttk.Combobox(frame_min_dvh, textvariable=self.volume_value_min_dvh_unit,
+                                            values=['%', 'cc'], state="readonly", width=5)
+        self.volume_value_min_dvh_unit_combo.grid(row=1, column=2, padx=5, pady=5)
+        # Frame for Max DVH
+        frame_max_dvh = ttk.Frame(adjust_window)
+        ttk.Label(frame_max_dvh, text="Dose Level (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.dose_value_max_dvh_var = tk.StringVar()
+        self.dose_value_max_dvh_entry = ttk.Entry(frame_max_dvh, textvariable=self.dose_value_max_dvh_var)
+        self.dose_value_max_dvh_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_max_dvh, text="Volume Level:").grid(row=1, column=0, padx=5, pady=5)
+        self.volume_value_max_dvh_var = tk.StringVar()
+        self.volume_value_max_dvh_entry = ttk.Entry(frame_max_dvh, textvariable=self.volume_value_max_dvh_var)
+        self.volume_value_max_dvh_entry.grid(row=1, column=1, padx=5, pady=5)
+        self.volume_value_max_dvh_unit = tk.StringVar()
+        self.volume_value_max_dvh_unit_combo = ttk.Combobox(frame_max_dvh, textvariable=self.volume_value_max_dvh_unit,
+                                            values=['%', 'cc'], state="readonly", width=5)
+        self.volume_value_max_dvh_unit_combo.grid(row=1, column=2, padx=5, pady=5)
+        # Frame for Min EUD
+        frame_min_eud = ttk.Frame(adjust_window)
+        ttk.Label(frame_min_eud, text="Min EUD (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.min_eud_value_var = tk.StringVar()
+        self.min_eud_value_entry = ttk.Entry(frame_min_eud, textvariable=self.min_eud_value_var)
+        self.min_eud_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_min_eud, text="Parameter A (-150,150):").grid(row=1, column=0, padx=5, pady=5)
+        self.a_param_min_eud_var = tk.StringVar()
+        self.a_param_min_eud_entry = ttk.Entry(frame_min_eud, textvariable=self.a_param_min_eud_var)
+        self.a_param_min_eud_entry.grid(row=1, column=1, padx=5, pady=5)
+        # Frame for Max EUD
+        frame_max_eud = ttk.Frame(adjust_window)
+        ttk.Label(frame_max_eud, text="Max EUD (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.max_eud_value_var = tk.StringVar()
+        self.max_eud_value_entry = ttk.Entry(frame_max_eud, textvariable=self.max_eud_value_var)
+        self.max_eud_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_max_eud, text="Parameter A (-150,150):").grid(row=1, column=0, padx=5, pady=5)
+        self.a_param_max_eud_var = tk.StringVar()
+        self.a_param_max_eud_entry = ttk.Entry(frame_max_eud, textvariable=self.a_param_max_eud_var)
+        self.a_param_max_eud_entry.grid(row=1, column=1, padx=5, pady=5)
+        # Frame for Target EUD
+        frame_target_eud = ttk.Frame(adjust_window)
+        ttk.Label(frame_target_eud, text="Target EUD (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.target_eud_value_var = tk.StringVar()
+        self.target_eud_value_entry = ttk.Entry(frame_target_eud, textvariable=self.target_eud_value_var)
+        self.target_eud_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_target_eud, text="Parameter A (-150,150):").grid(row=1, column=0, padx=5, pady=5)
+        self.a_param_target_eud_var = tk.StringVar()
+        self.a_param_target_eud_entry = ttk.Entry(frame_target_eud, textvariable=self.a_param_target_eud_var)
+        self.a_param_target_eud_entry.grid(row=1, column=1, padx=5, pady=5)
+        # Frame for Uniform Dose
+        frame_uniform_dose = ttk.Frame(adjust_window)
+        ttk.Label(frame_uniform_dose, text="Uniform Dose (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.uniform_dose_value_var = tk.StringVar()
+        self.uniform_dose_value_entry = ttk.Entry(frame_uniform_dose, textvariable=self.uniform_dose_value_var)
+        self.uniform_dose_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        # Frame for Dose fall-off
+        frame_dose_falloff = ttk.Frame(adjust_window)
+        ttk.Label(frame_dose_falloff, text="High dose level (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.high_dose_value_var = tk.StringVar()
+        self.high_dose_value_entry = ttk.Entry(frame_dose_falloff, textvariable=self.high_dose_value_var)
+        self.high_dose_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_dose_falloff, text="Low dose level (Gy):").grid(row=1, column=0, padx=5, pady=5)
+        self.low_dose_value_var = tk.StringVar()
+        self.low_dose_value_entry = ttk.Entry(frame_dose_falloff, textvariable=self.low_dose_value_var)
+        self.low_dose_value_entry.grid(row=1, column=1, padx=5, pady=5)
+        ttk.Label(frame_dose_falloff, text="Low dose distance (cm):").grid(row=2, column=0, padx=5, pady=5)
+        self.low_dose_distance_var = tk.StringVar()
+        self.low_dose_distance_entry = ttk.Entry(frame_dose_falloff, textvariable=self.low_dose_distance_var)
+        self.low_dose_distance_entry.grid(row=2, column=1, padx=5, pady=5)
+        # Frame for Uniformity Constraint
+        frame_uniformity_constraint = ttk.Frame(adjust_window)
+        ttk.Label(frame_uniformity_constraint, text="Rel.std.dev (%):").grid(row=0, column=0, padx=5, pady=5)
+        self.rel_std_dev_var = tk.StringVar()
+        self.rel_std_dev_entry = ttk.Entry(frame_uniformity_constraint, textvariable=self.rel_std_dev_var)
+        self.rel_std_dev_entry.grid(row=0, column=1, padx=5, pady=5)
+        
+        # Parse description to pre-populate values
+        self._parse_and_populate_values(selected_type, selected_description)
+        
+        # ------------------------------------------------------------
+                                                            
+        def show_selected_frame(self):
+            """Show the relevant frame based on function type selection."""
+            frame_min_dose.grid_forget()
+            frame_max_dose.grid_forget()
+            frame_min_dvh.grid_forget()
+            frame_max_dvh.grid_forget()
+            frame_min_eud.grid_forget()
+            frame_max_eud.grid_forget()
+            frame_target_eud.grid_forget()
+            frame_uniform_dose.grid_forget()
+            frame_dose_falloff.grid_forget()
+            frame_uniformity_constraint.grid_forget()
+            selection = self.function_type_var.get()
+            if selection == "Min Dose":
+                frame_min_dose.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Max Dose":
+                frame_max_dose.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Min DVH":
+                frame_min_dvh.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Max DVH":
+                frame_max_dvh.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Min EUD":
+                frame_min_eud.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Max EUD":
+                frame_max_eud.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Target EUD":
+                frame_target_eud.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Uniform Dose":
+                frame_uniform_dose.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Dose fall-off":
+                frame_dose_falloff.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Uniformity Constraint":
+                frame_uniformity_constraint.grid(row=5, column=0, columnspan=2, pady=5)
+        self.function_type_combo.bind("<<ComboboxSelected>>", lambda event: show_selected_frame(self))
+        # Initially show the relevant frame
+        show_selected_frame(self)
+        
+        ttk.Button(adjust_window, text="Adjust", command=lambda: self.adjust_old_function(adjust_window)).grid(row=7, column=0, columnspan=2, pady=10)
+    
+    def adjust_old_function(self, popup):
+        """Save the adjusted function to the adjustment list."""
+        condition_true = self.condition_true_var.get().strip()
+        make_adjustment = "Adjust OLD Function"
+        adjustment_tag = self.adjustment_tag_var.get().strip()
+        roi_name = self.roi_name_var.get().strip()
+        weight = self.weight_var.get().strip()
+        function_type = self.function_type_var.get().strip()
+        
+        # Build description based on function type and input values
+        description = ""
+        if function_type == "Min Dose":
+            min_dose = self.min_dose_value_var.get().strip()
+            description = f"Min Dose {min_dose} Gy"
+        elif function_type == "Max Dose":
+            max_dose = self.max_dose_value_var.get().strip()
+            description = f"Max Dose {max_dose} Gy"
+        elif function_type == "Min DVH":
+            dose_level = self.dose_value_min_dvh_var.get().strip()
+            volume_level = self.volume_value_min_dvh_var.get().strip()
+            volume_unit = self.volume_value_min_dvh_unit.get().strip()
+            description = f"Min DVH {dose_level} Gy to {volume_level}{volume_unit} volume"
+        elif function_type == "Max DVH":
+            dose_level = self.dose_value_max_dvh_var.get().strip()
+            volume_level = self.volume_value_max_dvh_var.get().strip()
+            volume_unit = self.volume_value_max_dvh_unit.get().strip()
+            description = f"Max DVH {dose_level} Gy to {volume_level}{volume_unit} volume"
+        elif function_type == "Min EUD":
+            min_eud = self.min_eud_value_var.get().strip()
+            a_param = self.a_param_min_eud_var.get().strip()
+            description = f"Min EUD {min_eud} Gy, Parameter A {a_param}"
+        elif function_type == "Max EUD":
+            max_eud = self.max_eud_value_var.get().strip()
+            a_param = self.a_param_max_eud_var.get().strip()
+            description = f"Max EUD {max_eud} Gy, Parameter A {a_param}"
+        elif function_type == "Target EUD":
+            target_eud = self.target_eud_value_var.get().strip()
+            a_param = self.a_param_target_eud_var.get().strip()
+            description = f"Target EUD {target_eud} Gy, Parameter A {a_param}"
+        elif function_type == "Uniform Dose":
+            uniform_dose = self.uniform_dose_value_var.get().strip()
+            description = f"Uniform Dose {uniform_dose} Gy"
+        elif function_type == "Dose fall-off":
+            high_dose = self.high_dose_value_var.get().strip()
+            low_dose = self.low_dose_value_var.get().strip()
+            low_dose_distance = self.low_dose_distance_var.get().strip()
+            description = f"Dose fall-off [H] {high_dose} Gy [L] {low_dose} Gy, Low dose distance {low_dose_distance} cm"
+        elif function_type == "Uniformity Constraint":
+            rel_std_dev = self.rel_std_dev_var.get().strip()
+            description = f"Uniformity Constraint Rel.std.dev {rel_std_dev} %"
+        # Insert into function adjustment tree
+        self.function_adjustment_tree.insert("", "end", values=(condition_true, make_adjustment, adjustment_tag, function_type, roi_name, description, weight))
+        popup.destroy()
+    
+    def _parse_and_populate_values(self, function_type, description):
+        """Parse the description and populate the corresponding input fields."""
+        import re
+        
+        if function_type == "Min Dose":
+            # "Min Dose 45 Gy"
+            match = re.search(r'Min Dose (\S+) Gy', description)
+            if match:
+                self.min_dose_value_var.set(match.group(1))
+        elif function_type == "Max Dose":
+            # "Max Dose 10 Gy"
+            match = re.search(r'Max Dose (\S+) Gy', description)
+            if match:
+                self.max_dose_value_var.set(match.group(1))
+        elif function_type == "Min DVH":
+            # "Min DVH 45 Gy to 95% volume"
+            match = re.search(r'Min DVH (\S+) Gy to (\S+)(%)|(cc) volume', description)
+            if match:
+                self.dose_value_min_dvh_var.set(match.group(1))
+                self.volume_value_min_dvh_var.set(match.group(2))
+                self.volume_value_min_dvh_unit.set(match.group(3) if match.group(3) else match.group(4))
+        elif function_type == "Max DVH":
+            # "Max DVH 20 Gy to 10% volume"
+            match = re.search(r'Max DVH (\S+) Gy to (\S+)(%)|(cc) volume', description)
+            if match:
+                self.dose_value_max_dvh_var.set(match.group(1))
+                self.volume_value_max_dvh_var.set(match.group(2))
+                self.volume_value_max_dvh_unit.set(match.group(3) if match.group(3) else match.group(4))
+        elif function_type == "Min EUD":
+            # "Min EUD 45 Gy, Parameter A -10"
+            match = re.search(r'Min EUD (\S+) Gy, Parameter A (\S+)', description)
+            if match:
+                self.min_eud_value_var.set(match.group(1))
+                self.a_param_min_eud_var.set(match.group(2))
+        elif function_type == "Max EUD":
+            # "Max EUD 10 Gy, Parameter A 5"
+            match = re.search(r'Max EUD (\S+) Gy, Parameter A (\S+)', description)
+            if match:
+                self.max_eud_value_var.set(match.group(1))
+                self.a_param_max_eud_var.set(match.group(2))
+        elif function_type == "Target EUD":
+            # "Target EUD 50 Gy, Parameter A 0"
+            match = re.search(r'Target EUD (\S+) Gy, Parameter A (\S+)', description)
+            if match:
+                self.target_eud_value_var.set(match.group(1))
+                self.a_param_target_eud_var.set(match.group(2))
+        elif function_type == "Uniform Dose":
+            # "Uniform Dose 50 Gy"
+            match = re.search(r'Uniform Dose (\S+) Gy', description)
+            if match:
+                self.uniform_dose_value_var.set(match.group(1))
+        elif function_type == "Dose fall-off":
+            # "Dose fall-off [H] 50 Gy [L] 20 Gy, Low dose distance 2 cm"
+            match = re.search(r'Dose fall-off \[H\] (\S+) Gy \[L\] (\S+) Gy, Low dose distance (\S+) cm', description)
+            if match:
+                self.high_dose_value_var.set(match.group(1))
+                self.low_dose_value_var.set(match.group(2))
+                self.low_dose_distance_var.set(match.group(3))
+        elif function_type == "Uniformity Constraint":
+            # "Uniformity Constraint Rel.std.dev 10 %"
+            match = re.search(r'Uniformity Constraint Rel\.std\.dev (\S+) %', description)
+            if match:
+                self.rel_std_dev_var.set(match.group(1))
+        
     def open_add_function_adjustment_window(self):
         """Add a function adjustment to the list."""
         add_adjustment_window = tk.Toplevel(self.function_adjustment_window)
         add_adjustment_window.title("Add Function Adjustment")
-        add_adjustment_window.geometry("300x260")
+        add_adjustment_window.geometry("350x320")
+        
+        condition_list = ['Condition 1', 'Condition 2', 'Condition 3']
         
         ttk.Label(add_adjustment_window, text="If this condition TRUE:").grid(row=0, column=0, padx=5, pady=5)
         self.condition_true_var = tk.StringVar()
-        self.condition_true_entry = ttk.Entry(add_adjustment_window, textvariable=self.condition_true_var)
-        self.condition_true_entry.grid(row=0, column=1, padx=5, pady=5)
+        self.condition_true_combo = ttk.Combobox(add_adjustment_window, textvariable=self.condition_true_var,
+                                        values=condition_list, state="readonly")
+        self.condition_true_combo.grid(row=0, column=1, padx=5, pady=5)
         
         ttk.Label(add_adjustment_window, text="Function tag:").grid(row=1, column=0, padx=5, pady=5)
         self.adjustment_tag_var = tk.StringVar()
         self.adjustment_tag_entry = ttk.Entry(add_adjustment_window, textvariable=self.adjustment_tag_var)
         self.adjustment_tag_entry.grid(row=1, column=1, padx=5, pady=5)
         
-        ttk.Label(add_adjustment_window, text="Function Type:").grid(row=2, column=0, padx=5, pady=5)
-        self.function_type_var = tk.StringVar()
-        self.function_type_combo = ttk.Combobox(add_adjustment_window, textvariable=self.function_type_var,
-                                            values=['Min Dose', 'Min DVH', 'Min EUD', 'Max Dose', 'Max DVH', 'Max EUD', 'Uniform Dose', 'Dose fall-off'], state="readonly")
-        self.function_type_combo.grid(row=2, column=1, padx=5, pady=5)
-        
-        ttk.Label(add_adjustment_window, text="ROI Name:").grid(row=3, column=0, padx=5, pady=5)
+        ttk.Label(add_adjustment_window, text="ROI Name:").grid(row=2, column=0, padx=5, pady=5)
         self.roi_name_var = tk.StringVar()
         self.roi_name_combo = ttk.Combobox(add_adjustment_window, textvariable=self.roi_name_var,
                                         values=['PTV', 'CTV', 'GTV', 'Bladder', 'Rectum', 'Bowel', 'External'], state="readonly")
-        self.roi_name_combo.grid(row=3, column=1, padx=5, pady=5)
+        self.roi_name_combo.grid(row=2, column=1, padx=5, pady=5)
         
-        ttk.Label(add_adjustment_window, text="Weight:").grid(row=4, column=0, padx=5, pady=5)
+        ttk.Label(add_adjustment_window, text="Weight:").grid(row=3, column=0, padx=5, pady=5)
         self.weight_var = tk.StringVar()
         self.weight_entry = ttk.Entry(add_adjustment_window, textvariable=self.weight_var)
-        self.weight_entry.grid(row=4, column=1, padx=5, pady=5)
+        self.weight_entry.grid(row=3, column=1, padx=5, pady=5)
         
-        ttk.Label(add_adjustment_window, text="Dose Level (Gy):").grid(row=5, column=0, padx=5, pady=5)
-        self.dose_value_var = tk.StringVar()
-        self.dose_value_entry = ttk.Entry(add_adjustment_window, textvariable=self.dose_value_var)
-        self.dose_value_entry.grid(row=5, column=1, padx=5, pady=5)
+        ttk.Label(add_adjustment_window, text="Function type:").grid(row=4, column=0, padx=5, pady=5)
+        self.function_type_var = tk.StringVar()
+        self.function_type_combo = ttk.Combobox(add_adjustment_window, textvariable=self.function_type_var,
+                                            values=['Min Dose', 'Max Dose', 'Min DVH', 'Max DVH', 'Uniform Dose', 'Min EUD', 'Max EUD', 'Target EUD', 'Dose fall-off', 'Uniformity Constraint'], state="readonly")
+        self.function_type_combo.grid(row=4, column=1, padx=5, pady=5)
         
-        ttk.Label(add_adjustment_window, text="Volume Level (%):").grid(row=6, column=0, padx=5, pady=5)
-        self.volume_value_var = tk.StringVar()
-        self.volume_value_entry = ttk.Entry(add_adjustment_window, textvariable=self.volume_value_var)
-        self.volume_value_entry.grid(row=6, column=1, padx=5, pady=5)
+        # --------------------
+        # Frame for each type
+        # --------------------
+        
+        # Frame for Min Dose
+        frame_min_dose = ttk.Frame(add_adjustment_window)
+        ttk.Label(frame_min_dose, text="Min Dose (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.min_dose_value_var = tk.StringVar()
+        self.min_dose_value_entry = ttk.Entry(frame_min_dose, textvariable=self.min_dose_value_var)
+        self.min_dose_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        # Frame for Max Dose
+        frame_max_dose = ttk.Frame(add_adjustment_window)
+        ttk.Label(frame_max_dose, text="Max Dose (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.max_dose_value_var = tk.StringVar()
+        self.max_dose_value_entry = ttk.Entry(frame_max_dose, textvariable=self.max_dose_value_var)
+        self.max_dose_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        # Frame for Min DVH
+        frame_min_dvh = ttk.Frame(add_adjustment_window)
+        ttk.Label(frame_min_dvh, text="Dose Level (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.dose_value_min_dvh_var = tk.StringVar()
+        self.dose_value_min_dvh_entry = ttk.Entry(frame_min_dvh, textvariable=self.dose_value_min_dvh_var)
+        self.dose_value_min_dvh_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_min_dvh, text="Volume Level:").grid(row=1, column=0, padx=5, pady=5)
+        self.volume_value_min_dvh_var = tk.StringVar()
+        self.volume_value_min_dvh_entry = ttk.Entry(frame_min_dvh, textvariable=self.volume_value_min_dvh_var)
+        self.volume_value_min_dvh_entry.grid(row=1, column=1, padx=5, pady=5)
+        self.volume_value_min_dvh_unit = tk.StringVar()
+        self.volume_value_min_dvh_unit_combo = ttk.Combobox(frame_min_dvh, textvariable=self.volume_value_min_dvh_unit,
+                                            values=['%', 'cc'], state="readonly", width=5)
+        self.volume_value_min_dvh_unit_combo.grid(row=1, column=2, padx=5, pady=5)
+        # Frame for Max DVH
+        frame_max_dvh = ttk.Frame(add_adjustment_window)
+        ttk.Label(frame_max_dvh, text="Dose Level (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.dose_value_max_dvh_var = tk.StringVar()
+        self.dose_value_max_dvh_entry = ttk.Entry(frame_max_dvh, textvariable=self.dose_value_max_dvh_var)
+        self.dose_value_max_dvh_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_max_dvh, text="Volume Level:").grid(row=1, column=0, padx=5, pady=5)
+        self.volume_value_max_dvh_var = tk.StringVar()
+        self.volume_value_max_dvh_entry = ttk.Entry(frame_max_dvh, textvariable=self.volume_value_max_dvh_var)
+        self.volume_value_max_dvh_entry.grid(row=1, column=1, padx=5, pady=5)
+        self.volume_value_max_dvh_unit = tk.StringVar()
+        self.volume_value_max_dvh_unit_combo = ttk.Combobox(frame_max_dvh, textvariable=self.volume_value_max_dvh_unit,
+                                            values=['%', 'cc'], state="readonly", width=5)
+        self.volume_value_max_dvh_unit_combo.grid(row=1, column=2, padx=5, pady=5)
+        # Frame for Min EUD
+        frame_min_eud = ttk.Frame(add_adjustment_window)
+        ttk.Label(frame_min_eud, text="Min EUD (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.min_eud_value_var = tk.StringVar()
+        self.min_eud_value_entry = ttk.Entry(frame_min_eud, textvariable=self.min_eud_value_var)
+        self.min_eud_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_min_eud, text="Parameter A (-150,150):").grid(row=1, column=0, padx=5, pady=5)
+        self.a_param_min_eud_var = tk.StringVar()
+        self.a_param_min_eud_entry = ttk.Entry(frame_min_eud, textvariable=self.a_param_min_eud_var)
+        self.a_param_min_eud_entry.grid(row=1, column=1, padx=5, pady=5)
+        # Frame for Max EUD
+        frame_max_eud = ttk.Frame(add_adjustment_window)
+        ttk.Label(frame_max_eud, text="Max EUD (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.max_eud_value_var = tk.StringVar()
+        self.max_eud_value_entry = ttk.Entry(frame_max_eud, textvariable=self.max_eud_value_var)
+        self.max_eud_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_max_eud, text="Parameter A (-150,150):").grid(row=1, column=0, padx=5, pady=5)
+        self.a_param_max_eud_var = tk.StringVar()
+        self.a_param_max_eud_entry = ttk.Entry(frame_max_eud, textvariable=self.a_param_max_eud_var)
+        self.a_param_max_eud_entry.grid(row=1, column=1, padx=5, pady=5)
+        # Frame for Target EUD
+        frame_target_eud = ttk.Frame(add_adjustment_window)
+        ttk.Label(frame_target_eud, text="Target EUD (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.target_eud_value_var = tk.StringVar()
+        self.target_eud_value_entry = ttk.Entry(frame_target_eud, textvariable=self.target_eud_value_var)
+        self.target_eud_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_target_eud, text="Parameter A (-150,150):").grid(row=1, column=0, padx=5, pady=5)
+        self.a_param_target_eud_var = tk.StringVar()
+        self.a_param_target_eud_entry = ttk.Entry(frame_target_eud, textvariable=self.a_param_target_eud_var)
+        self.a_param_target_eud_entry.grid(row=1, column=1, padx=5, pady=5)
+        # Frame for Uniform Dose
+        frame_uniform_dose = ttk.Frame(add_adjustment_window)
+        ttk.Label(frame_uniform_dose, text="Uniform Dose (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.uniform_dose_value_var = tk.StringVar()
+        self.uniform_dose_value_entry = ttk.Entry(frame_uniform_dose, textvariable=self.uniform_dose_value_var)
+        self.uniform_dose_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        # Frame for Dose fall-off
+        frame_dose_falloff = ttk.Frame(add_adjustment_window)
+        ttk.Label(frame_dose_falloff, text="High dose level (Gy):").grid(row=0, column=0, padx=5, pady=5)
+        self.high_dose_value_var = tk.StringVar()
+        self.high_dose_value_entry = ttk.Entry(frame_dose_falloff, textvariable=self.high_dose_value_var)
+        self.high_dose_value_entry.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_dose_falloff, text="Low dose level (Gy):").grid(row=1, column=0, padx=5, pady=5)
+        self.low_dose_value_var = tk.StringVar()
+        self.low_dose_value_entry = ttk.Entry(frame_dose_falloff, textvariable=self.low_dose_value_var)
+        self.low_dose_value_entry.grid(row=1, column=1, padx=5, pady=5)
+        ttk.Label(frame_dose_falloff, text="Low dose distance (cm):").grid(row=2, column=0, padx=5, pady=5)
+        self.low_dose_distance_var = tk.StringVar()
+        self.low_dose_distance_entry = ttk.Entry(frame_dose_falloff, textvariable=self.low_dose_distance_var)
+        self.low_dose_distance_entry.grid(row=2, column=1, padx=5, pady=5)
+        # Frame for Uniformity Constraint
+        frame_uniformity_constraint = ttk.Frame(add_adjustment_window)
+        ttk.Label(frame_uniformity_constraint, text="Rel.std.dev (%):").grid(row=0, column=0, padx=5, pady=5)
+        self.rel_std_dev_var = tk.StringVar()
+        self.rel_std_dev_entry = ttk.Entry(frame_uniformity_constraint, textvariable=self.rel_std_dev_var)
+        self.rel_std_dev_entry.grid(row=0, column=1, padx=5, pady=5)
+        
+        # ------------------------------------------------------------
+                                                            
+        def show_selected_frame(self):
+            """Show the relevant frame based on function type selection."""
+            frame_min_dose.grid_forget()
+            frame_max_dose.grid_forget()
+            frame_min_dvh.grid_forget()
+            frame_max_dvh.grid_forget()
+            frame_min_eud.grid_forget()
+            frame_max_eud.grid_forget()
+            frame_target_eud.grid_forget()
+            frame_uniform_dose.grid_forget()
+            frame_dose_falloff.grid_forget()
+            frame_uniformity_constraint.grid_forget()
+            selection = self.function_type_var.get()
+            if selection == "Min Dose":
+                frame_min_dose.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Max Dose":
+                frame_max_dose.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Min DVH":
+                frame_min_dvh.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Max DVH":
+                frame_max_dvh.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Min EUD":
+                frame_min_eud.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Max EUD":
+                frame_max_eud.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Target EUD":
+                frame_target_eud.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Uniform Dose":
+                frame_uniform_dose.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Dose fall-off":
+                frame_dose_falloff.grid(row=5, column=0, columnspan=2, pady=5)
+            elif selection == "Uniformity Constraint":
+                frame_uniformity_constraint.grid(row=5, column=0, columnspan=2, pady=5)
+        self.function_type_combo.bind("<<ComboboxSelected>>", lambda event: show_selected_frame(self))
+        # Initially show the relevant frame
+        show_selected_frame(self)
         
         ttk.Button(add_adjustment_window, text="Add", command=lambda: self.add_function_adjustment(add_adjustment_window)).grid(row=7, column=0, columnspan=2, pady=10)
     
     def add_function_adjustment(self, popup):
         """Save the new function adjustment to the list."""
         condition_true = self.condition_true_var.get().strip()
-        adjustment_type = "Add New Function"
+        make_adjustment = "Add NEW function"
         adjustment_tag = self.adjustment_tag_var.get().strip()
         function_type = self.function_type_var.get().strip()
         roi_name = self.roi_name_var.get().strip()
         weight = self.weight_var.get().strip()
-        dose_level = self.dose_value_var.get().strip()
-        volume_level = self.volume_value_var.get().strip()
+        
+        if function_type == "Min Dose":
+            min_dose = self.min_dose_value_var.get().strip()
+            description = f"Min Dose {min_dose} Gy"
+        elif function_type == "Max Dose":
+            max_dose = self.max_dose_value_var.get().strip()
+            description = f"Max Dose {max_dose} Gy"
+        elif function_type == "Min DVH":
+            dose_level = self.dose_value_min_dvh_var.get().strip()
+            volume_level = self.volume_value_min_dvh_var.get().strip()
+            volume_unit = self.volume_value_min_dvh_unit.get().strip()
+            description = f"Min DVH {dose_level} Gy to {volume_level}{volume_unit} volume"
+        elif function_type == "Max DVH":
+            dose_level = self.dose_value_max_dvh_var.get().strip()
+            volume_level = self.volume_value_max_dvh_var.get().strip()
+            volume_unit = self.volume_value_max_dvh_unit.get().strip()
+            description = f"Max DVH {dose_level} Gy to {volume_level}{volume_unit} volume"
+        elif function_type == "Min EUD":
+            min_eud = self.min_eud_value_var.get().strip()
+            a_param = self.a_param_min_eud_var.get().strip()
+            description = f"Min EUD {min_eud} Gy, Parameter A {a_param}"
+        elif function_type == "Max EUD":
+            max_eud = self.max_eud_value_var.get().strip()
+            a_param = self.a_param_max_eud_var.get().strip()
+            description = f"Max EUD {max_eud} Gy, Parameter A {a_param}"
+        elif function_type == "Target EUD":
+            target_eud = self.target_eud_value_var.get().strip()
+            a_param = self.a_param_target_eud_var.get().strip()
+            description = f"Target EUD {target_eud} Gy, Parameter A {a_param}"
+        elif function_type == "Uniform Dose":
+            uniform_dose = self.uniform_dose_value_var.get().strip()
+            description = f"Uniform Dose {uniform_dose} Gy"
+        elif function_type == "Dose fall-off":
+            high_dose = self.high_dose_value_var.get().strip()
+            low_dose = self.low_dose_value_var.get().strip()
+            low_distance = self.low_dose_distance_var.get().strip()
+            description = f"Dose fall-off [H] {high_dose} Gy [L] {low_dose} Gy, Low dose distance {low_distance} cm"
+        elif function_type == "Uniformity Constraint":
+            rel_std_dev = self.rel_std_dev_var.get().strip()
+            description = f"Uniformity Constraint Rel.std.dev {rel_std_dev} %"
+            
         # Here you would add the function adjustment to your data structure
-        self.function_adjustment_tree.insert("", "end", values=(condition_true, adjustment_type, adjustment_tag, roi_name, function_type, weight, dose_level, volume_level))
+        self.function_adjustment_tree.insert("", "end", values=(condition_true, make_adjustment, adjustment_tag, function_type, roi_name, description, weight))
         popup.destroy()
 
 class EndPlanningFlow_Window:
