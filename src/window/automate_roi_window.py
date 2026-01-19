@@ -39,7 +39,10 @@ class AutomateROI_Window:
         # Load existing data if available
         if self.designer.automate_roi_data:
             for item in self.designer.automate_roi_data:
-                self.roi_tree.insert("", "end", values=(item["order"], item["roi_name"]))
+                boolean_config = item.get("boolean_config")
+                item_id = self.roi_tree.insert("", "end", values=(item["order"], item["roi_name"]))
+                if boolean_config:
+                    self.roi_tree.item(item_id, tags=(str(boolean_config),))
 
         # Button Frame for New, Remove, Edit Function, and Save
         button_frame = ttk.Frame(self.roi_window)
@@ -128,8 +131,10 @@ class AutomateROI_Window:
         self.roi_name_var = tk.StringVar()
         self.roi_name_entry = ttk.Entry(new_roi_popup, textvariable=self.roi_name_var)
         self.roi_name_entry.pack(pady=5)
+        
+        self.current_boolean_data = None
 
-        ttk.Button(new_roi_popup, text="Add Function", command=self.open_boolean_window).pack(pady=5)
+        ttk.Button(new_roi_popup, text="Add Function", command=self.open_boolean_window_for_new).pack(pady=5)
 
         ttk.Button(new_roi_popup, text="Add", command=lambda: self.add_roi(new_roi_popup)).pack(pady=5)
     
@@ -138,10 +143,11 @@ class AutomateROI_Window:
         roi_name = self.roi_name_var.get().strip()
         if roi_name:
             order = len(self.roi_tree.get_children()) + 1
-            self.roi_tree.insert("", "end", values=(order, roi_name))
+            # Store boolean data in tree item
+            self.roi_tree.insert("", "end", values=(order, roi_name), tags=(str(self.current_boolean_data),))
             popup.destroy()
         else:
-            messagebox.showwarning("Input Error", "Both ROI Name and Function are required.")
+            messagebox.showwarning("Input Error", "ROI Name is required.")
 
     def remove_roi(self):
         """Remove selected ROI item from the treeview."""
@@ -153,8 +159,44 @@ class AutomateROI_Window:
         """Edit the function of the selected ROI item."""
         selected_item = self.roi_tree.selection()
         if selected_item:
-            item_values = self.roi_tree.item(selected_item, "values")
-            self.open_boolean_window()
+            item_values = self.roi_tree.item(selected_item[0], "values")
+            item_tags = self.roi_tree.item(selected_item[0], "tags")
+            current_boolean_data = eval(item_tags[0]) if item_tags and item_tags[0] != 'None' else None
+            
+            # Open edit popup
+            edit_popup = tk.Toplevel(self.roi_window)
+            edit_popup.title("Edit ROI")
+            edit_popup.geometry("300x150")
+            
+            ttk.Label(edit_popup, text="ROI Name:").pack(pady=5)
+            edit_roi_name_var = tk.StringVar(value=item_values[1])
+            edit_roi_name_entry = ttk.Entry(edit_popup, textvariable=edit_roi_name_var)
+            edit_roi_name_entry.pack(pady=5)
+            
+            # Store the current boolean data for editing
+            self.edit_boolean_data = current_boolean_data
+            
+            def open_boolean_for_edit():
+                """Open Boolean window with preloaded data and callback."""
+                def save_boolean_callback(boolean_data):
+                    self.edit_boolean_data = boolean_data
+                    messagebox.showinfo("Boolean Updated", "Boolean configuration updated!")
+                
+                Boolean_Window(edit_popup, self.designer, callback=save_boolean_callback, preload_data=self.edit_boolean_data)
+            
+            ttk.Button(edit_popup, text="Edit Boolean Function", command=open_boolean_for_edit).pack(pady=5)
+            
+            def save_edit():
+                """Save the edited ROI."""
+                new_name = edit_roi_name_var.get().strip()
+                if new_name:
+                    # Update tree item
+                    self.roi_tree.item(selected_item[0], values=(item_values[0], new_name), tags=(str(self.edit_boolean_data),))
+                    edit_popup.destroy()
+                else:
+                    messagebox.showwarning("Input Error", "ROI Name is required.")
+            
+            ttk.Button(edit_popup, text="Save", command=save_edit).pack(pady=5)
         else:
             messagebox.showwarning("Selection Error", "Please select a ROI item to edit.")
             
@@ -181,9 +223,12 @@ class AutomateROI_Window:
         roi_items = []
         for child in self.roi_tree.get_children():
             values = self.roi_tree.item(child, "values")
+            tags = self.roi_tree.item(child, "tags")
+            boolean_data = eval(tags[0]) if tags and tags[0] != 'None' else None
             roi_items.append({
                 "order": values[0],
-                "roi_name": values[1]
+                "roi_name": values[1],
+                "boolean_config": boolean_data
             })
         
         # Save to designer
@@ -194,6 +239,14 @@ class AutomateROI_Window:
         else:
             messagebox.showwarning("Save Error", "No ROI items to save.")
             
+    def open_boolean_window_for_new(self):
+        """Open a new window for Boolean function editing with callback."""
+        def save_boolean_callback(boolean_data):
+            self.current_boolean_data = boolean_data
+            messagebox.showinfo("Boolean Saved", "Boolean configuration saved!")
+        
+        Boolean_Window(self.roi_window, self.designer, callback=save_boolean_callback)
+    
     def open_boolean_window(self):
-        """Open a new window for Boolean function editing."""
+        """Open a new window for Boolean function editing (for edit function)."""
         Boolean_Window(self.roi_window, self.designer)

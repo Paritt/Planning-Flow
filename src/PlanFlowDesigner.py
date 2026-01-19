@@ -51,15 +51,21 @@ class PlanFlowDesigner:
         self.save_flow_btn.pack(padx=200,pady=10)
     
     def get_roi_list(self):
-        """Get list of ROI names from Match ROI data."""
+        """Get list of ROI names from Match ROI data and Automate ROI data."""
         roi_list = []
+        # Add ROIs from Match ROI
         for item in self.match_roi_data:
             roi_name = item.get("roi_name", "")
             if roi_name and roi_name not in roi_list:
                 roi_list.append(roi_name)
+        # Add ROIs from Automate ROI
+        for item in self.automate_roi_data:
+            created_roi = item.get("roi_name", "")
+            if created_roi and created_roi not in roi_list:
+                roi_list.append(created_roi)
         # If no ROIs defined yet, return a default list
         if not roi_list:
-            roi_list = ['Add in Match ROI step']
+            roi_list = ['Please add ROIs first']
         return roi_list
     
     def get_extended_roi_list(self):
@@ -70,14 +76,19 @@ class PlanFlowDesigner:
             roi_name = item.get("roi_name", "")
             if roi_name and roi_name not in roi_list:
                 roi_list.append(roi_name)
-        # Add ROIs from Condition ROI (created ROIs)
+        # Add ROIs from Automate ROI
+        for item in self.automate_roi_data:
+            created_roi = item.get("roi_name", "")
+            if created_roi and created_roi not in roi_list:
+                roi_list.append(created_roi)
+        # Add ROIs from Condition ROI
         for item in self.condition_rois_data:
-            created_roi = item.get("roi", "")
+            created_roi = item.get("roi_name", "")
             if created_roi and created_roi not in roi_list:
                 roi_list.append(created_roi)
         # If no ROIs defined yet, return a default list
         if not roi_list:
-            roi_list = ['Add in Match ROI or Condition ROI step']
+            roi_list = ['Please add ROIs first']
         return roi_list
     
     def get_condition_list(self):
@@ -89,7 +100,7 @@ class PlanFlowDesigner:
                 condition_list.append(condition_name)
         # If no conditions defined yet, return a default list
         if not condition_list:
-            condition_list = ['Add in Check Condition step']
+            condition_list = ['Please add conditions first']
         return condition_list
         
     def save_flow(self):

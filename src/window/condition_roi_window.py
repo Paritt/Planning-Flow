@@ -56,14 +56,17 @@ class ConditionROI_Window:
         self.move_down_condition_btn.pack(side="left", padx=5, pady=5)
         
         # Edit
-        self.edit_condition_btn = ttk.Button(self.condition_roi_window, text="Edit", command=lambda: self.show_step_info("Edit Condition"))
+        self.edit_condition_btn = ttk.Button(self.condition_roi_window, text="Edit", command=self.edit_condition_roi)
         self.edit_condition_btn.pack(side="left", padx=5, pady=5)
         
         
         # Load existing data if available
         if self.designer.condition_rois_data:
             for item in self.designer.condition_rois_data:
-                self.condition_roi_tree.insert("", "end", values=(item["order"], item["condition"], item["roi"], item["method"]))
+                boolean_config = item.get("boolean_config")
+                item_id = self.condition_roi_tree.insert("", "end", values=(item["order"], item["condition"], item["roi_name"], item["method"]))
+                if boolean_config:
+                    self.condition_roi_tree.item(item_id, tags=(str(boolean_config),))
         
         # Save Button
         self.save_condition_roi_btn = ttk.Button(self.condition_roi_window, text="Save", command=self.save_condition_rois)
@@ -77,11 +80,14 @@ class ConditionROI_Window:
         condition_rois = []
         for child in self.condition_roi_tree.get_children():
             values = self.condition_roi_tree.item(child, "values")
+            tags = self.condition_roi_tree.item(child, "tags")
+            boolean_data = eval(tags[0]) if tags and tags[0] != 'None' else None
             condition_rois.append({
                 "order": values[0],
                 "condition": values[1],
-                "roi": values[2],
-                "method": values[3]
+                "roi_name": values[2],
+                "method": values[3],
+                "boolean_config": boolean_data
             })
         
         self.designer.condition_rois_data = condition_rois
@@ -90,6 +96,14 @@ class ConditionROI_Window:
             messagebox.showinfo("Save Successful", f"Condition ROIs saved successfully. ({len(condition_rois)} items)")
         else:
             messagebox.showwarning("Save Error", "No condition ROIs to save.")
+    
+    def open_boolean_for_condition(self, parent):
+        """Open Boolean window with callback for condition ROI."""
+        def save_boolean_callback(boolean_data):
+            self.current_boolean_data = boolean_data
+            messagebox.showinfo("Boolean Saved", "Boolean configuration saved!")
+        
+        Boolean_Window(parent, self.designer, use_extended_list=True, callback=save_boolean_callback)
     
     def open_add_condition_roi_window(self):
         """Add a condition ROI to the list."""
@@ -115,9 +129,12 @@ class ConditionROI_Window:
                                         values=['Boolean operation', 'Convert Dose to ROI'], state="readonly")
         self.method_combo.grid(row=2, column=1, padx=5, pady=5)
         
+        # Store boolean configuration
+        self.current_boolean_data = None
+        
         # Boolean frame
         frame_boolean = ttk.Frame(add_condition_roi_window)
-        ttk.Button(frame_boolean, text="Boolean operation", command=lambda: Boolean_Window(add_condition_roi_window, self.designer, use_extended_list=True)).grid(row=0, column=0, padx=5, pady=5)
+        ttk.Button(frame_boolean, text="Boolean operation", command=lambda: self.open_boolean_for_condition(add_condition_roi_window)).grid(row=0, column=0, padx=5, pady=5)
         
         # Convert Dose to ROI frame
         frame_dose_to_roi = ttk.Frame(add_condition_roi_window)
@@ -147,8 +164,8 @@ class ConditionROI_Window:
         create_roi = self.create_roi_var.get().strip()
         method = self.method_var.get().strip()
         order = len(self.condition_roi_tree.get_children()) + 1
-        # Here you would add the condition ROI to your data structure
-        self.condition_roi_tree.insert("", "end", values=(order, condition_true, create_roi, method))
+        # Store boolean data in tree item tags
+        self.condition_roi_tree.insert("", "end", values=(order, condition_true, create_roi, method), tags=(str(self.current_boolean_data),))
         popup.destroy()
         
     def remove_condition_roi(self):
@@ -174,6 +191,66 @@ class ConditionROI_Window:
         for i, item in enumerate(items, start=1):
             values = self.condition_roi_tree.item(item, "values")
             self.condition_roi_tree.item(item, values=(i, values[1]))
+    
+    def edit_condition_roi(self):
+        """Edit the selected condition ROI."""
+        selected_item = self.condition_roi_tree.selection()
+        if selected_item:
+            item_values = self.condition_roi_tree.item(selected_item[0], "values")
+            item_tags = self.condition_roi_tree.item(selected_item[0], "tags")
+            current_boolean_data = eval(item_tags[0]) if item_tags and item_tags[0] != 'None' else None
+            
+            # Open edit popup
+            edit_popup = tk.Toplevel(self.condition_roi_window)
+            edit_popup.title("Edit Condition ROI")
+            edit_popup.geometry("350x250")
+            
+            condition_list = self.designer.get_condition_list()
+            
+            ttk.Label(edit_popup, text="If this condition TRUE:").grid(row=0, column=0, padx=5, pady=5)
+            edit_condition_var = tk.StringVar(value=item_values[1])
+            edit_condition_combo = ttk.Combobox(edit_popup, textvariable=edit_condition_var, values=condition_list, state="readonly")
+            edit_condition_combo.grid(row=0, column=1, padx=5, pady=5)
+            
+            ttk.Label(edit_popup, text="Create this ROI:").grid(row=1, column=0, padx=5, pady=5)
+            edit_roi_var = tk.StringVar(value=item_values[2])
+            edit_roi_entry = ttk.Entry(edit_popup, textvariable=edit_roi_var)
+            edit_roi_entry.grid(row=1, column=1, padx=5, pady=5)
+            
+            ttk.Label(edit_popup, text="By this method:").grid(row=2, column=0, padx=5, pady=5)
+            edit_method_var = tk.StringVar(value=item_values[3])
+            edit_method_combo = ttk.Combobox(edit_popup, textvariable=edit_method_var,
+                                            values=['Boolean operation', 'Convert Dose to ROI'], state="readonly")
+            edit_method_combo.grid(row=2, column=1, padx=5, pady=5)
+            
+            # Store the current boolean data for editing
+            self.edit_boolean_data = current_boolean_data
+            
+            def open_boolean_for_edit():
+                """Open Boolean window with preloaded data and callback."""
+                def save_boolean_callback(boolean_data):
+                    self.edit_boolean_data = boolean_data
+                    messagebox.showinfo("Boolean Updated", "Boolean configuration updated!")
+                
+                Boolean_Window(edit_popup, self.designer, use_extended_list=True, callback=save_boolean_callback, preload_data=self.edit_boolean_data)
+            
+            ttk.Button(edit_popup, text="Edit Boolean Function", command=open_boolean_for_edit).grid(row=3, column=0, columnspan=2, pady=10)
+            
+            def save_edit():
+                """Save the edited condition ROI."""
+                new_condition = edit_condition_var.get().strip()
+                new_roi = edit_roi_var.get().strip()
+                new_method = edit_method_var.get().strip()
+                if new_condition and new_roi and new_method:
+                    # Update tree item
+                    self.condition_roi_tree.item(selected_item[0], values=(item_values[0], new_condition, new_roi, new_method), tags=(str(self.edit_boolean_data),))
+                    edit_popup.destroy()
+                else:
+                    messagebox.showwarning("Input Error", "All fields are required.")
+            
+            ttk.Button(edit_popup, text="Save", command=save_edit).grid(row=4, column=0, columnspan=2, pady=5)
+        else:
+            messagebox.showwarning("Selection Error", "Please select a condition ROI to edit.")
             
     def show_step_info(self, message):
         """Display a message box with step information."""

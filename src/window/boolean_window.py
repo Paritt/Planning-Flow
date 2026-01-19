@@ -3,8 +3,10 @@ from tkinter import ttk
 
 class Boolean_Window:
     """Boolean operation window for ROI algebra."""
-    def __init__(self, parent, designer=None, use_extended_list=False):
+    def __init__(self, parent, designer=None, use_extended_list=False, callback=None, preload_data=None):
         self.designer = designer
+        self.callback = callback
+        self.boolean_data = preload_data
         self.boolean_window = tk.Toplevel(parent)
         self.boolean_window.title("ROI Algebra")
         self.boolean_window.geometry("900x330")
@@ -32,36 +34,38 @@ class Boolean_Window:
         
         margin_label_a = tk.Label(frame_a, text="Margin")
         margin_label_a.grid(row=1, column=0)
-        selected_value_a = tk.IntVar()
-        selected_value_a.set(1)
-        expand_a = tk.Radiobutton(frame_a, text="Expand", variable=selected_value_a, value=1)
+        self.selected_value_a = tk.IntVar()
+        self.selected_value_a.set(1)
+        expand_a = tk.Radiobutton(frame_a, text="Expand", variable=self.selected_value_a, value=1)
         expand_a.grid(row=2, column=0)
-        contract_a = tk.Radiobutton(frame_a, text="Contract", variable=selected_value_a, value=2)
+        contract_a = tk.Radiobutton(frame_a, text="Contract", variable=self.selected_value_a, value=2)
         contract_a.grid(row=2, column=1)
         
         # Directional input for ROI A
         directions = ['Superior', 'Inferior', 'Right', 'Left', 'Anterior', 'Posterior']
+        self.roi_a_margins = {}
         for i, direction in enumerate(directions):
             label = tk.Label(frame_a, text=f"{direction} (cm)")
             label.grid(row=i+3, column=0)
-            default_value = tk.StringVar()
-            default_value.set("0.00")
-            entry = tk.Entry(frame_a, textvariable=default_value)
+            margin_var = tk.StringVar()
+            margin_var.set("0.00")
+            self.roi_a_margins[direction] = margin_var
+            entry = tk.Entry(frame_a, textvariable=margin_var)
             entry.grid(row=i+3, column=1)
         
         # Operations (Union, Intersect, Subtract)
         
         operation_frame = tk.LabelFrame(frame_a_b, text="Select Operation:", padx=10, pady=10)
         operation_frame.grid(row=0, column=1, padx=5)
-        selected_operation = tk.IntVar()
-        selected_operation.set(1)
-        union_button = tk.Radiobutton(operation_frame, text="Union", variable=selected_operation,value=1)
+        self.selected_operation = tk.IntVar()
+        self.selected_operation.set(1)
+        union_button = tk.Radiobutton(operation_frame, text="Union", variable=self.selected_operation,value=1)
         union_button.grid(row=1, column=1)
-        intersect_button = tk.Radiobutton(operation_frame, text="Intersect", variable=selected_operation,value=2)
+        intersect_button = tk.Radiobutton(operation_frame, text="Intersect", variable=self.selected_operation,value=2)
         intersect_button.grid(row=2, column=1)
-        subtract_button = tk.Radiobutton(operation_frame, text="Subtract", variable=selected_operation,value=3)
+        subtract_button = tk.Radiobutton(operation_frame, text="Subtract", variable=self.selected_operation,value=3)
         subtract_button.grid(row=3, column=1)
-        none_button = tk.Radiobutton(operation_frame, text="None", variable=selected_operation,value=4)
+        none_button = tk.Radiobutton(operation_frame, text="None", variable=self.selected_operation,value=4)
         none_button.grid(row=4,column=1)
 
         # ROI B
@@ -75,20 +79,22 @@ class Boolean_Window:
         
         margin_label_b = tk.Label(frame_b, text="Margin")
         margin_label_b.grid(row=1, column=0)
-        selected_value_b = tk.IntVar()
-        selected_value_b.set(1)
-        expand_b = tk.Radiobutton(frame_b, text="Expand", variable=selected_value_b, value=1)
+        self.selected_value_b = tk.IntVar()
+        self.selected_value_b.set(1)
+        expand_b = tk.Radiobutton(frame_b, text="Expand", variable=self.selected_value_b, value=1)
         expand_b.grid(row=2, column=0)
-        contract_b = tk.Radiobutton(frame_b, text="Contract", variable=selected_value_b, value=2)
+        contract_b = tk.Radiobutton(frame_b, text="Contract", variable=self.selected_value_b, value=2)
         contract_b.grid(row=2, column=1)
 
         # Directional input for ROI B
+        self.roi_b_margins = {}
         for i, direction in enumerate(directions):
             label = tk.Label(frame_b, text=f"{direction} (cm)")
             label.grid(row=i+3, column=0)
-            default_value = tk.StringVar()
-            default_value.set("0.00")
-            entry = tk.Entry(frame_b, textvariable=default_value)
+            margin_var = tk.StringVar()
+            margin_var.set("0.00")
+            self.roi_b_margins[direction] = margin_var
+            entry = tk.Entry(frame_b, textvariable=margin_var)
             entry.grid(row=i+3, column=1)
             
         # Output section
@@ -98,20 +104,96 @@ class Boolean_Window:
         output_label = tk.Label(frame_output, text="Margin")
         output_label.grid(row=0, column=0)
 
-        expand_output = tk.Radiobutton(frame_output, text="Expand", value=1)
+        self.selected_output = tk.IntVar()
+        self.selected_output.set(1)
+        expand_output = tk.Radiobutton(frame_output, text="Expand", variable=self.selected_output, value=1)
         expand_output.grid(row=1, column=0)
-        contract_output = tk.Radiobutton(frame_output, text="Contract", value=2)
+        contract_output = tk.Radiobutton(frame_output, text="Contract", variable=self.selected_output, value=2)
         contract_output.grid(row=1, column=1)
 
         # Directional input for Output
+        self.output_margins = {}
         for i, direction in enumerate(directions):
             label = tk.Label(frame_output, text=f"{direction} (cm)")
             label.grid(row=i+2, column=0)
-            default_value = tk.StringVar()
-            default_value.set("0.00")
-            entry = tk.Entry(frame_output, textvariable=default_value)
+            margin_var = tk.StringVar()
+            margin_var.set("0.00")
+            self.output_margins[direction] = margin_var
+            entry = tk.Entry(frame_output, textvariable=margin_var)
             entry.grid(row=i+2, column=1)
             
+        # Preload data if provided
+        if preload_data:
+            self.load_boolean_data(preload_data)
+            
         # Save button
-        save_button = tk.Button(self.boolean_window, text="Save", command=self.boolean_window.destroy)
+        save_button = tk.Button(self.boolean_window, text="Save", command=self.save_boolean_config)
         save_button.pack(pady=10)
+    
+    def load_boolean_data(self, data):
+        """Load existing boolean configuration into the form."""
+        if not data:
+            return
+        
+        # Load ROI A data
+        if "roi_a" in data:
+            roi_a_data = data["roi_a"]
+            self.roi_a.set(roi_a_data.get("name", ""))
+            margin_type = roi_a_data.get("margin_type", "Expand")
+            self.selected_value_a.set(1 if margin_type == "Expand" else 2)
+            margins = roi_a_data.get("margins", {})
+            for direction, var in self.roi_a_margins.items():
+                var.set(margins.get(direction, "0.00"))
+        
+        # Load operation
+        operation = data.get("operation", "Union")
+        operation_map = {"Union": 1, "Intersect": 2, "Subtract": 3, "None": 4}
+        self.selected_operation.set(operation_map.get(operation, 1))
+        
+        # Load ROI B data
+        if "roi_b" in data:
+            roi_b_data = data["roi_b"]
+            self.roi_b.set(roi_b_data.get("name", ""))
+            margin_type = roi_b_data.get("margin_type", "Expand")
+            self.selected_value_b.set(1 if margin_type == "Expand" else 2)
+            margins = roi_b_data.get("margins", {})
+            for direction, var in self.roi_b_margins.items():
+                var.set(margins.get(direction, "0.00"))
+        
+        # Load output data
+        if "output" in data:
+            output_data = data["output"]
+            margin_type = output_data.get("margin_type", "Expand")
+            self.selected_output.set(1 if margin_type == "Expand" else 2)
+            margins = output_data.get("margins", {})
+            for direction, var in self.output_margins.items():
+                var.set(margins.get(direction, "0.00"))
+    
+    def save_boolean_config(self):
+        """Collect all boolean configuration and save it."""
+        operation_map = {1: "Union", 2: "Intersect", 3: "Subtract", 4: "None"}
+        margin_type_map = {1: "Expand", 2: "Contract"}
+        
+        self.boolean_data = {
+            "roi_a": {
+                "name": self.roi_a.get(),
+                "margin_type": margin_type_map.get(self.selected_value_a.get(), "Expand"),
+                "margins": {direction: var.get() for direction, var in self.roi_a_margins.items()}
+            },
+            "operation": operation_map.get(self.selected_operation.get(), "Union"),
+            "roi_b": {
+                "name": self.roi_b.get(),
+                "margin_type": margin_type_map.get(self.selected_value_b.get(), "Expand"),
+                "margins": {direction: var.get() for direction, var in self.roi_b_margins.items()}
+            },
+            "output": {
+                "margin_type": margin_type_map.get(self.selected_output.get(), "Expand"),
+                "margins": {direction: var.get() for direction, var in self.output_margins.items()}
+            }
+        }
+        
+        # Call the callback function if provided
+        if self.callback:
+            self.callback(self.boolean_data)
+        
+        self.boolean_window.destroy()

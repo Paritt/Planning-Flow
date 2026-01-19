@@ -29,7 +29,9 @@ class AutoPlanGUI(tk.Tk):
         ttk.Label(frame, text="Treatment Room:").grid(row=0, column=0, padx=5, pady=2)
         self.room_var = tk.StringVar()
         self.room_dropdown = ttk.Combobox(frame, textvariable=self.room_var,
-                                        values=['N3_VersaHD', 'N4_VersaHD', 'TrueBeam_L6', 'TrueBeam_L7', 'TrueBeam_N5'], state="readonly")
+                                        values=['Agility', 'P1'], state="readonly")
+        # self.room_dropdown = ttk.Combobox(frame, textvariable=self.room_var,
+        #                                 values=['N3_VersaHD', 'N4_VersaHD', 'TrueBeam_L6', 'TrueBeam_L7', 'TrueBeam_N5'], state="readonly")
         self.room_dropdown.grid(row=0, column=1, padx=5, pady=2)
 
         # Planning Flow (Read-only)
