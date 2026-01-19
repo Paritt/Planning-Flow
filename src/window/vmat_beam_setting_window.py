@@ -48,21 +48,176 @@ class VMAT_beam_setting_Window:
         beam_tree_frame.grid_columnconfigure(0, weight=1)
         
         # Add Beam Button
-        self.add_beam_btn = ttk.Button(self.beam_window, text="Add Beam", command=lambda: self.show_step_info("Add Beam"))
+        self.add_beam_btn = ttk.Button(self.beam_window, text="Add Beam", command=self.open_VMAT_add_beam_window)
         self.add_beam_btn.pack(side="left", padx=5, pady=5)
         # Remove Beam Button
-        self.remove_beam_btn = ttk.Button(self.beam_window, text="Remove Selected Beam", command=lambda: self.show_step_info("Remove Beam"))
+        self.remove_beam_btn = ttk.Button(self.beam_window, text="Remove Selected Beam", command=self.remove_beam)
         self.remove_beam_btn.pack(side="left", padx=5, pady=5)
         # Edit Beam Button
-        self.edit_beam_btn = ttk.Button(self.beam_window, text="Edit Selected Beam", command=lambda: self.show_step_info("Edit Beam"))
+        self.edit_beam_btn = ttk.Button(self.beam_window, text="Edit Selected Beam", command=self.edit_beam)
         self.edit_beam_btn.pack(side="left", padx=5, pady=5)
         # Save Button
-        self.save_beam_btn = ttk.Button(self.beam_window, text="Save", command=lambda: self.show_step_info("Beam Settings Saved"))
+        self.save_beam_btn = ttk.Button(self.beam_window, text="Save", command=self.save_beam_settings)
         self.save_beam_btn.pack(side="left", padx=5, pady=5)
         # Close Button
         close_btn = ttk.Button(self.beam_window, text="Close", command=self.beam_window.destroy)
         close_btn.pack(pady=10)
         
+        # Load existing beam data if available
+        if self.designer.vmat_beam_data:
+            for beam in self.designer.vmat_beam_data:
+                self.beam_tree.insert("", "end", values=(beam["beam_name"], beam["energy"], beam["gantry_start"], beam["gantry_stop"], beam["rotation"], beam["couch"]))
+    
+    def open_VMAT_add_beam_window(self):
+        """Open a new window to add a VMAT beam."""
+        self.add_beam_window = tk.Toplevel(self.beam_window)
+        self.add_beam_window.title("Add VMAT Beam")
+        self.add_beam_window.geometry("300x300")
+        # Bold Title Label
+        title_label = tk.Label(self.add_beam_window, text="Add VMAT Beam", font=("Arial", 14, "bold"))
+        title_label.grid(row=0, column=0, columnspan=2, pady=10)
+        
+        tk.Label(self.add_beam_window, text="Beam Name:").grid(row=1, column=0, padx=5, pady=5)
+        self.beam_name_var = tk.StringVar()
+        self.beam_name_entry = ttk.Entry(self.add_beam_window, textvariable=self.beam_name_var)
+        self.beam_name_entry.grid(row=1, column=1, padx=5, pady=5)
+        tk.Label(self.add_beam_window, text="Energy [MV]:").grid(row=2, column=0, padx=5, pady=5)
+        self.energy_var = tk.StringVar()
+        self.energy_combo = ttk.Combobox(self.add_beam_window, textvariable=self.energy_var, values=['6X', '10X', '15X'], state="readonly")
+        self.energy_combo.grid(row=2, column=1, padx=5, pady=5)
+        self.energy_combo.set('10X')
+        tk.Label(self.add_beam_window, text="Gantry Start [deg]:").grid(row=3, column=0, padx=5, pady=5)
+        self.gantry_start_var = tk.DoubleVar()
+        self.gantry_start_entry = ttk.Entry(self.add_beam_window, textvariable=self.gantry_start_var)
+        self.gantry_start_entry.grid(row=3, column=1, padx=5, pady=5)
+        tk.Label(self.add_beam_window, text="Gantry Stop [deg]:").grid(row=4, column=0, padx=5, pady=5)
+        self.gantry_stop_var = tk.DoubleVar()
+        self.gantry_stop_entry = ttk.Entry(self.add_beam_window, textvariable=self.gantry_stop_var)
+        self.gantry_stop_entry.grid(row=4, column=1, padx=5, pady=5)
+        tk.Label(self.add_beam_window, text="Rotation:").grid(row=5, column=0, padx=5, pady=5)
+        self.rotation_var = tk.StringVar()
+        self.rotation_combo = ttk.Combobox(self.add_beam_window, textvariable=self.rotation_var, values=['CW', 'CCW'], state="readonly")
+        self.rotation_combo.grid(row=5, column=1, padx=5, pady=5)
+        self.rotation_combo.set('CW')
+        tk.Label(self.add_beam_window, text="Couch [deg]:").grid(row=6, column=0, padx=5, pady=5)
+        self.couch_var = tk.DoubleVar()
+        self.couch_entry = ttk.Entry(self.add_beam_window, textvariable=self.couch_var)
+        self.couch_entry.grid(row=6, column=1, padx=5, pady=5)
+        
+        # Add Beam Button
+        add_beam_btn = ttk.Button(self.add_beam_window, text="Add Beam", command=lambda: self.add_beam(self.add_beam_window))
+        add_beam_btn.grid(row=7, column=0, pady=10)
+        
+        # Close Button
+        close_btn = ttk.Button(self.add_beam_window, text="Close", command=self.add_beam_window.destroy)
+        close_btn.grid(row=7, column=1, pady=10)
+    
+    def add_beam(self, popup):
+        """Add a new beam to the beam tree."""
+        beam_name = self.beam_name_var.get()
+        energy = self.energy_var.get()
+        gantry_start = self.gantry_start_var.get()
+        gantry_stop = self.gantry_stop_var.get()
+        rotation = self.rotation_var.get()
+        couch = self.couch_var.get()
+        
+        if not beam_name:
+            messagebox.showwarning("Input Error", "Please enter a Beam Name.")
+            return
+        
+        self.beam_tree.insert("", "end", values=(beam_name, energy, gantry_start, gantry_stop, rotation, couch))
+        popup.destroy()
+    
+    def remove_beam(self):
+        """Remove the selected beam from the beam tree."""
+        selected_item = self.beam_tree.selection()
+        if not selected_item:
+            messagebox.showwarning("Selection Error", "Please select a beam to remove.")
+            return
+        self.beam_tree.delete(selected_item)
+    
+    def edit_beam(self):
+        """Edit the selected beam in the beam tree."""
+        selected_item = self.beam_tree.selection()
+        if not selected_item:
+            messagebox.showwarning("Selection Error", "Please select a beam to edit.")
+            return
+        
+        beam_values = self.beam_tree.item(selected_item, "values")
+        
+        self.edit_beam_window = tk.Toplevel(self.beam_window)
+        self.edit_beam_window.title("Edit VMAT Beam")
+        self.edit_beam_window.geometry("300x300")
+        # Bold Title Label
+        title_label = tk.Label(self.edit_beam_window, text="Edit VMAT Beam", font=("Arial", 14, "bold"))
+        title_label.grid(row=0, column=0, columnspan=2, pady=10)
+        
+        tk.Label(self.edit_beam_window, text="Beam Name:").grid(row=1, column=0, padx=5, pady=5)
+        self.edit_beam_name_var = tk.StringVar(value=beam_values[0])
+        self.edit_beam_name_entry = ttk.Entry(self.edit_beam_window, textvariable=self.edit_beam_name_var)
+        self.edit_beam_name_entry.grid(row=1, column=1, padx=5, pady=5)
+        
+        tk.Label(self.edit_beam_window, text="Energy [MV]:").grid(row=2, column=0, padx=5, pady=5)
+        self.edit_energy_var = tk.StringVar(value=beam_values[1])
+        self.edit_energy_combo = ttk.Combobox(self.edit_beam_window, textvariable=self.edit_energy_var, values=['6X', '10X', '15X'], state="readonly")
+        self.edit_energy_combo.grid(row=2, column=1, padx=5, pady=5)
+        
+        tk.Label(self.edit_beam_window, text="Gantry Start [deg]:").grid(row=3, column=0, padx=5, pady=5)
+        self.edit_gantry_start_var = tk.DoubleVar(value=beam_values[2])
+        self.edit_gantry_start_entry = ttk.Entry(self.edit_beam_window, textvariable=self.edit_gantry_start_var)
+        self.edit_gantry_start_entry.grid(row=3, column=1, padx=5, pady=5)
+        
+        tk.Label(self.edit_beam_window, text="Gantry Stop [deg]:").grid(row=4, column=0, padx=5, pady=5)
+        self.edit_gantry_stop_var = tk.DoubleVar(value=beam_values[3])
+        self.edit_gantry_stop_entry = ttk.Entry(self.edit_beam_window, textvariable=self.edit_gantry_stop_var)
+        self.edit_gantry_stop_entry.grid(row=4, column=1, padx=5, pady=5)
+        tk.Label(self.edit_beam_window, text="Rotation:").grid(row=5, column=0, padx=5, pady=5)
+        self.edit_rotation_var = tk.StringVar(value=beam_values[4])
+        self.edit_rotation_combo = ttk.Combobox(self.edit_beam_window, textvariable=self.edit_rotation_var, values=['CW', 'CCW'], state="readonly")
+        self.edit_rotation_combo.grid(row=5, column=1, padx=5, pady=5)
+        tk.Label(self.edit_beam_window, text="Couch [deg]:").grid(row=6, column=0, padx=5, pady=5)
+        self.edit_couch_var = tk.DoubleVar(value=beam_values[5])
+        self.edit_couch_entry = ttk.Entry(self.edit_beam_window, textvariable=self.edit_couch_var)
+        self.edit_couch_entry.grid(row=6, column=1, padx=5, pady=5)
+        # Save Changes Button
+        save_changes_btn = ttk.Button(self.edit_beam_window, text="Save Changes", command=lambda: self.save_beam_changes(selected_item))
+        save_changes_btn.grid(row=7, column=0, pady=10)
+        # Close Button
+        close_btn = ttk.Button(self.edit_beam_window, text="Close", command=self.edit_beam_window.destroy)
+        close_btn.grid(row=7, column=1, pady=10)
+        
+    def save_beam_changes(self, item):
+        """Save the changes made to the selected beam."""
+        beam_name = self.edit_beam_name_var.get()
+        energy = self.edit_energy_var.get()
+        gantry_start = self.edit_gantry_start_var.get()
+        gantry_stop = self.edit_gantry_stop_var.get()
+        rotation = self.edit_rotation_var.get()
+        couch = self.edit_couch_var.get()
+        
+        if not beam_name:
+            messagebox.showwarning("Input Error", "Please enter a Beam Name.")
+            return
+        
+        self.beam_tree.item(item, values=(beam_name, energy, gantry_start, gantry_stop, rotation, couch))
+        self.edit_beam_window.destroy()
+        
+    def save_beam_settings(self):
+        """Save the current beam settings."""
+        beam_items = []
+        for child in self.beam_tree.get_children():
+            values = self.beam_tree.item(child, "values")
+            beam_items.append({
+                "beam_name": values[0],
+                "energy": values[1],
+                "gantry_start": values[2],
+                "gantry_stop": values[3],
+                "rotation": values[4],
+                "couch": values[5]
+            })
+        self.designer.vmat_beam_data = beam_items
+        messagebox.showinfo("Save Successful", "VMAT Beam settings have been saved.")
+    
     def show_step_info(self, message):
         """Display a message box with step information."""
         messagebox.showinfo("Step Information", message)

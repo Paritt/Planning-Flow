@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox
 from src.window.vmat_beam_setting_window import VMAT_beam_setting_Window
 from src.window.imrt_beam_setting_window import IMPT_beam_setting_Window
+from src.window.isocenter_setting_window import isocenter_setting_Window
 from src.window.match_roi_window import MatchROI_Window
 from src.window.automate_roi_window import AutomateROI_Window
 from src.window.initial_function_window import InitialFunction_Window
@@ -21,6 +22,8 @@ class PlanFlowDesigner:
         self.planning_window.geometry("550x450")
         
         # Initialize data storage for all steps
+        self.vmat_beam_data = []
+        self.impt_beam_data = []
         self.match_roi_data = []
         self.automate_roi_data = []
         self.initial_functions_data = []
@@ -102,6 +105,8 @@ class PlanFlowDesigner:
             "created_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
             "version": "1.0",
             "technique": self.technique_var.get(),
+            "vmat_beam": self.vmat_beam_data,
+            "impt_beam": self.impt_beam_data,
             "match_roi": self.match_roi_data,
             "automate_roi": self.automate_roi_data,
             "initial_functions": self.initial_functions_data,
@@ -148,7 +153,7 @@ class PlanFlowDesigner:
             self.condition_rois_data = data.get("condition_rois", [])
             self.function_adjustments_data = data.get("function_adjustments", [])
             self.end_flow_data = data.get("end_flow", {})
-            self.beam_settings_data = data.get("beam_settings", [])
+            self.vmat_beam_data = data.get("vmat_beam", [])
             self.isocenter_data = data.get("isocenter", {})
         except Exception as e:
             messagebox.showerror("Load Error", f"Failed to load flow data:\n{str(e)}")
@@ -178,26 +183,14 @@ class PlanFlowDesigner:
         self.technique_dropdown = ttk.Combobox(frame, textvariable=self.technique_var, values=['VMAT', 'IMPT'], state="readonly")
         self.technique_dropdown.pack(side="left", padx=5, pady=2)
         
-        beam_settings_btn = ttk.Button(frame, text="Beam Settings", command=lambda: VMAT_beam_setting_Window(self.planning_window, self) if self.technique_var.get() == "VMAT" else IMPT_beam_setting_Window(self.planning_window, self))
+        beam_settings_btn = ttk.Button(frame, text="Beam Settings", command=lambda: VMAT_beam_setting_Window(self.planning_window, self) if self.technique_var.get() == "VMAT" 
+                                                                            else IMPT_beam_setting_Window(self.planning_window, self) if self.technique_var.get() == "IMPT" 
+                                                                            else messagebox.showwarning("Technique Not Selected", 
+                                                                                                        "Please select a technique (VMAT or IMPT) before configuring beam settings."))
         beam_settings_btn.pack(side="left", padx=5, pady=2)
         
-        isocenter_settings_btn = ttk.Button(frame, text="Isocenter Settings", command=lambda: self.open_isocenter_settings_window())
+        isocenter_settings_btn = ttk.Button(frame, text="Isocenter Settings", command=lambda: isocenter_setting_Window(self.planning_window, self))
         isocenter_settings_btn.pack(side="left", padx=5, pady=2)
-    
-    def open_isocenter_settings_window(self):
-        """Open a new window for Isocenter Settings."""
-        isocenter_window = tk.Toplevel(self.planning_window)
-        isocenter_window.title("Isocenter Settings")
-        isocenter_window.geometry("400x300")
-        # Bold Title Label
-        title_label = tk.Label(isocenter_window, text="Isocenter Settings", font=("Arial", 14, "bold"))
-        title_label.pack(pady=10)
-        
-        # Content can be added here
-        
-        # Close Button
-        close_btn = ttk.Button(isocenter_window, text="Close", command=isocenter_window.destroy)
-        close_btn.pack(pady=10)
     
     def planning_flow(self, popup):
         """Create a section for designing flow steps with labels for flow/user and Save Flow button."""

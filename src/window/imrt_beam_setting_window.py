@@ -140,13 +140,15 @@ class IMPT_beam_setting_Window:
         self.snout_var = tk.StringVar()
         self.snout_combo = ttk.Combobox(self.add_beam_window, textvariable=self.snout_var, values=['SNOUT_M', 'NONE'], state="readonly")
         self.snout_combo.grid(row=4, column=1, padx=5, pady=5)
+        self.snout_combo.set('NONE')
         tk.Label(self.add_beam_window, text="Range shifter:").grid(row=5, column=0, padx=5, pady=5)
         self.range_shifter_var = tk.StringVar()
         self.range_shifter_combo = ttk.Combobox(self.add_beam_window, textvariable=self.range_shifter_var, values=['(None)', 'RS40', 'RS40-M'], state="readonly")
         self.range_shifter_combo.grid(row=5, column=1, padx=5, pady=5)
+        self.range_shifter_combo.set('(None)')
         
         # Beam Computational Settin button
-        beam_comp_setting_btn = ttk.Button(self.add_beam_window, text="Beam Computational Settings", command=lambda: messagebox.showinfo("Beam Computational Settings", "Open Beam Computational Settings window here."))
+        beam_comp_setting_btn = ttk.Button(self.add_beam_window, text="Beam Computational Settings", command=self.open_IMPT_beam_comp_setting_window)
         beam_comp_setting_btn.grid(row=6, column=0, columnspan=2, pady=10)
         
         # Add Beam Button
@@ -156,6 +158,32 @@ class IMPT_beam_setting_Window:
         # Close Button
         close_btn = ttk.Button(self.add_beam_window, text="Close", command=self.add_beam_window.destroy)
         close_btn.grid(row=7, column=1, pady=10)
+    
+    def open_IMPT_beam_comp_setting_window(self):
+        """Open a new window for IMPT beam computational settings."""
+        self.beam_comp_window = tk.Toplevel(self.add_beam_window)
+        self.beam_comp_window.title("IMPT Beam Computational Settings")
+        self.beam_comp_window.geometry("400x600")
+        # Bold Title Label
+        title_label = tk.Label(self.beam_comp_window, text="IMPT Beam Computational Settings", font=("Arial", 14, "bold"))
+        title_label.grid(row=0, column=0, columnspan=2, pady=10)
+        
+        # Add settings fields here
+        tk.Label(self.beam_comp_window, text="Range shifter selection:").grid(row=1, column=0, padx=5, pady=5)
+        self.range_shifter_selection_var = tk.StringVar()
+        self.range_shifter_selection_combo = ttk.Combobox(self.beam_comp_window, textvariable=self.range_shifter_selection_var, 
+                                                          values=['Manual', 'Automatic'], state="readonly")
+        self.range_shifter_selection_combo.grid(row=1, column=1, padx=5, pady=5)
+        
+        # TODO: Add more settings fields here
+        
+        # Save Button
+        save_btn = ttk.Button(self.beam_comp_window, text="Save Settings", command=lambda: self.show_step_info("Beam Computational Settings Saved"))
+        save_btn.grid(row=9, column=0, columnspan=2, pady=10)
+        
+        # Close Button
+        close_btn = ttk.Button(self.beam_comp_window, text="Close", command=self.beam_comp_window.destroy)
+        close_btn.grid(row=10, column=0, columnspan=2, pady=10)
     
     def add_beam(self,popup):
         """Add a new beam to the beam tree."""
