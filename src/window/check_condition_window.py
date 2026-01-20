@@ -47,7 +47,7 @@ class CheckCondition_Window:
         self.delete_condition_btn.pack(side="left", padx=5, pady=5)
         
         # Edit Condition Button
-        self.edit_condition_btn = ttk.Button(self.check_condition_window, text="Edit", command=lambda: self.show_step_info("Edit Condition"))
+        self.edit_condition_btn = ttk.Button(self.check_condition_window, text="Edit", command=self.open_edit_condition_window)
         self.edit_condition_btn.pack(side="left", padx=5, pady=5)
         
         # Load existing data if available
@@ -117,7 +117,7 @@ class CheckCondition_Window:
         self.roi_name_combo_max_dose = ttk.Combobox(frame_max_dose, textvariable=self.roi_name_var_max_dose,
                                         values=self.designer.get_roi_list(), state="readonly")
         self.roi_name_combo_max_dose.grid(row=0, column=1, padx=5, pady=5)
-        ttk.Label(frame_max_dose, text="Max Dose (Gy):").grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(frame_max_dose, text="Max Dose (cGy):").grid(row=1, column=0, padx=5, pady=5)
         self.max_dose_var = tk.StringVar()
         self.max_dose_entry = ttk.Entry(frame_max_dose, textvariable=self.max_dose_var)
         self.max_dose_entry.grid(row=1, column=1, padx=5, pady=5)
@@ -129,7 +129,7 @@ class CheckCondition_Window:
         self.roi_name_combo_min_dose = ttk.Combobox(frame_min_dose, textvariable=self.roi_name_var_min_dose,
                                         values=self.designer.get_roi_list(), state="readonly")
         self.roi_name_combo_min_dose.grid(row=0, column=1, padx=5, pady=5)
-        ttk.Label(frame_min_dose, text="Min Dose (Gy):").grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(frame_min_dose, text="Min Dose (cGy):").grid(row=1, column=0, padx=5, pady=5)
         self.min_dose_var = tk.StringVar()
         self.min_dose_entry = ttk.Entry(frame_min_dose, textvariable=self.min_dose_var)
         self.min_dose_entry.grid(row=1, column=1, padx=5, pady=5)
@@ -290,11 +290,11 @@ class CheckCondition_Window:
         elif condition_type == 'Max Dose':
             roi_name = self.roi_name_var_max_dose.get().strip()
             max_dose = self.max_dose_var.get().strip()
-            criteria = f"Dmax (Gy) ≥ {max_dose}"
+            criteria = f"Dmax (cGy) ≥ {max_dose}"
         elif condition_type == 'Min Dose':
             roi_name = self.roi_name_var_min_dose.get().strip()
             min_dose = self.min_dose_var.get().strip()
-            criteria = f"Dmin (Gy) ≤ {min_dose}"
+            criteria = f"Dmin (cGy) ≤ {min_dose}"
         elif condition_type == 'Max DaV':
             roi_name = self.roi_name_var_max_dav.get().strip()
             dose_max_dav = self.dose_max_dav_var.get().strip()
@@ -336,6 +336,337 @@ class CheckCondition_Window:
         selected_item = self.condition_tree.selection()
         for item in selected_item:
             self.condition_tree.delete(item)
+    
+    def open_edit_condition_window(self):
+        """Edit the selected condition."""
+        selected_item = self.condition_tree.selection()
+        if not selected_item:
+            messagebox.showwarning("No Selection", "Please select a condition to edit.")
+            return
+        
+        # Get values from selected item
+        item_values = self.condition_tree.item(selected_item[0], "values")
+        selected_name = item_values[0]
+        selected_roi = item_values[1]
+        selected_type = item_values[2]
+        selected_criteria = item_values[3]
+        
+        edit_condition_window = tk.Toplevel(self.check_condition_window)
+        edit_condition_window.title("Edit Condition")
+        edit_condition_window.geometry("350x220")
+        
+        ttk.Label(edit_condition_window, text="Condition Name:").grid(row=0, column=0, padx=5, pady=5)
+        self.condition_name_var = tk.StringVar(value=selected_name)
+        self.condition_name_entry = ttk.Entry(edit_condition_window, textvariable=self.condition_name_var)
+        self.condition_name_entry.grid(row=0, column=1, padx=5, pady=5)
+        
+        ttk.Label(edit_condition_window, text="Condition Type:").grid(row=1, column=0, padx=5, pady=5)
+        self.condition_type_var = tk.StringVar(value=selected_type)
+        self.condition_type_combo = ttk.Combobox(edit_condition_window, textvariable=self.condition_type_var,
+                                            values=['Optimization Round', 'Max Dose','Max DaV', 'Max VaD', 'Max Dmean', 'Min Dose','Min DaV', 'Min VaD', 'Min Dmean'], state="readonly")
+        self.condition_type_combo.grid(row=1, column=1, padx=5, pady=5)
+        
+        # --------------------
+        # Frame for each type
+        # --------------------
+        
+        # Frame for optimization round
+        frame_opt_round = ttk.Frame(edit_condition_window)
+        ttk.Label(frame_opt_round, text="Optimization Round ≥").grid(row=0, column=0, padx=5, pady=5)
+        self.opt_round_var = tk.StringVar()
+        self.opt_round_entry = ttk.Entry(frame_opt_round, textvariable=self.opt_round_var)
+        self.opt_round_entry.grid(row=0, column=1, padx=5, pady=5)
+
+        # Frame for Max Dose
+        frame_max_dose = ttk.Frame(edit_condition_window)
+        ttk.Label(frame_max_dose, text="ROI Name:").grid(row=0, column=0, padx=5, pady=5)
+        self.roi_name_var_max_dose = tk.StringVar()
+        self.roi_name_combo_max_dose = ttk.Combobox(frame_max_dose, textvariable=self.roi_name_var_max_dose,
+                                        values=self.designer.get_roi_list(), state="readonly")
+        self.roi_name_combo_max_dose.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_max_dose, text="Max Dose (cGy):").grid(row=1, column=0, padx=5, pady=5)
+        self.max_dose_var = tk.StringVar()
+        self.max_dose_entry = ttk.Entry(frame_max_dose, textvariable=self.max_dose_var)
+        self.max_dose_entry.grid(row=1, column=1, padx=5, pady=5)
+        
+        # Frame for Min Dose
+        frame_min_dose = ttk.Frame(edit_condition_window)
+        ttk.Label(frame_min_dose, text="ROI Name:").grid(row=0, column=0, padx=5, pady=5)
+        self.roi_name_var_min_dose = tk.StringVar()
+        self.roi_name_combo_min_dose = ttk.Combobox(frame_min_dose, textvariable=self.roi_name_var_min_dose,
+                                        values=self.designer.get_roi_list(), state="readonly")
+        self.roi_name_combo_min_dose.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_min_dose, text="Min Dose (cGy):").grid(row=1, column=0, padx=5, pady=5)
+        self.min_dose_var = tk.StringVar()
+        self.min_dose_entry = ttk.Entry(frame_min_dose, textvariable=self.min_dose_var)
+        self.min_dose_entry.grid(row=1, column=1, padx=5, pady=5)
+        
+        # Frame for Max DaV
+        frame_max_dav = ttk.Frame(edit_condition_window)
+        ttk.Label(frame_max_dav, text="ROI Name:").grid(row=0, column=0, padx=5, pady=5)
+        self.roi_name_var_max_dav = tk.StringVar()
+        self.roi_name_combo_max_dav = ttk.Combobox(frame_max_dav, textvariable=self.roi_name_var_max_dav,
+                                        values=self.designer.get_roi_list(), state="readonly")
+        self.roi_name_combo_max_dav.grid(row=0, column=1, padx=5, pady=5)
+        
+        ttk.Label(frame_max_dav, text="Dose (cGy) at most:").grid(row=1, column=0, padx=5, pady=5)
+        self.dose_max_dav_var = tk.StringVar()
+        self.dose_max_dav_entry = ttk.Entry(frame_max_dav, textvariable=self.dose_max_dav_var)
+        self.dose_max_dav_entry.grid(row=1, column=1, padx=5, pady=5)
+        
+        ttk.Label(frame_max_dav, text="at Volume:").grid(row=2, column=0, padx=5, pady=5)
+        self.volume_max_dav_var = tk.StringVar()
+        self.volume_max_dav_entry = ttk.Entry(frame_max_dav, textvariable=self.volume_max_dav_var)
+        self.volume_max_dav_entry.grid(row=2, column=1, padx=5, pady=5)
+        self.volume_max_dav_unit = tk.StringVar()
+        self.volume_max_dav_unit_combo = ttk.Combobox(frame_max_dav, textvariable=self.volume_max_dav_unit, values=['%', 'cc'], state="readonly", width=5)
+        self.volume_max_dav_unit_combo.grid(row=2, column=2, padx=5, pady=5)
+        
+        # Frame for Min DaV
+        frame_min_dav = ttk.Frame(edit_condition_window)
+        ttk.Label(frame_min_dav, text="ROI Name:").grid(row=0, column=0, padx=5, pady=5)
+        self.roi_name_var_min_dav = tk.StringVar()
+        self.roi_name_combo_min_dav = ttk.Combobox(frame_min_dav, textvariable=self.roi_name_var_min_dav,
+                                        values=self.designer.get_roi_list(), state="readonly")
+        self.roi_name_combo_min_dav.grid(row=0, column=1, padx=5, pady=5)
+        
+        ttk.Label(frame_min_dav, text="Dose (cGy) at least:").grid(row=1, column=0, padx=5, pady=5)
+        self.dose_min_dav_var = tk.StringVar()
+        self.dose_min_dav_entry = ttk.Entry(frame_min_dav, textvariable=self.dose_min_dav_var)
+        self.dose_min_dav_entry.grid(row=1, column=1, padx=5, pady=5)
+        
+        ttk.Label(frame_min_dav, text="at Volume:").grid(row=2, column=0, padx=5, pady=5)
+        self.volume_min_dav_var = tk.StringVar()
+        self.volume_min_dav_entry = ttk.Entry(frame_min_dav, textvariable=self.volume_min_dav_var)
+        self.volume_min_dav_entry.grid(row=2, column=1, padx=5, pady=5)
+        self.volume_min_dav_unit = tk.StringVar()
+        self.volume_min_dav_unit_combo = ttk.Combobox(frame_min_dav, textvariable=self.volume_min_dav_unit, values=['%', 'cc'], state="readonly", width=5)
+        self.volume_min_dav_unit_combo.grid(row=2, column=2, padx=5, pady=5)
+        
+        # Frame Max VaD
+        frame_max_vad = ttk.Frame(edit_condition_window)
+        ttk.Label(frame_max_vad, text="ROI Name:").grid(row=0, column=0, padx=5, pady=5)
+        self.roi_name_var_max_vad = tk.StringVar()
+        self.roi_name_combo_max_vad = ttk.Combobox(frame_max_vad, textvariable=self.roi_name_var_max_vad,
+                                        values=self.designer.get_roi_list(), state="readonly")
+        self.roi_name_combo_max_vad.grid(row=0, column=1, padx=5, pady=5)
+        
+        ttk.Label(frame_max_vad, text="Volume at most:").grid(row=1, column=0, padx=5, pady=5)
+        self.volume_max_vad_var = tk.StringVar()
+        self.volume_max_vad_entry = ttk.Entry(frame_max_vad, textvariable=self.volume_max_vad_var)
+        self.volume_max_vad_entry.grid(row=1, column=1, padx=5, pady=5)
+        self.volume_max_vad_unit = tk.StringVar()
+        self.volume_max_vad_unit_combo = ttk.Combobox(frame_max_vad, textvariable=self.volume_max_vad_unit, values=['%', 'cc'], state="readonly", width=5)
+        self.volume_max_vad_unit_combo.grid(row=1, column=2, padx=5, pady=5)
+        
+        ttk.Label(frame_max_vad, text="at Dose (cGy):").grid(row=2, column=0, padx=5, pady=5)
+        self.dose_max_vad_var = tk.StringVar()
+        self.dose_max_vad_entry = ttk.Entry(frame_max_vad, textvariable=self.dose_max_vad_var)
+        self.dose_max_vad_entry.grid(row=2, column=1, padx=5, pady=5)
+        
+        # Frame Min VaD
+        frame_min_vad = ttk.Frame(edit_condition_window)
+        ttk.Label(frame_min_vad, text="ROI Name:").grid(row=0, column=0, padx=5, pady=5)
+        self.roi_name_var_min_vad = tk.StringVar()
+        self.roi_name_combo_min_vad = ttk.Combobox(frame_min_vad, textvariable=self.roi_name_var_min_vad,
+                                        values=self.designer.get_roi_list(), state="readonly")
+        self.roi_name_combo_min_vad.grid(row=0, column=1, padx=5, pady=5)
+        
+        ttk.Label(frame_min_vad, text="Volume at most:").grid(row=1, column=0, padx=5, pady=5)
+        self.volume_min_vad_var = tk.StringVar()
+        self.volume_min_vad_entry = ttk.Entry(frame_min_vad, textvariable=self.volume_min_vad_var)
+        self.volume_min_vad_entry.grid(row=1, column=1, padx=5, pady=5)
+        self.volume_min_vad_unit = tk.StringVar()
+        self.volume_min_vad_unit_combo = ttk.Combobox(frame_min_vad, textvariable=self.volume_min_vad_unit, values=['%', 'cc'], state="readonly", width=5)
+        self.volume_min_vad_unit_combo.grid(row=1, column=2, padx=5, pady=5)
+        
+        ttk.Label(frame_min_vad, text="at Dose (cGy):").grid(row=2, column=0, padx=5, pady=5)
+        self.dose_min_vad_var = tk.StringVar()
+        self.dose_min_vad_entry = ttk.Entry(frame_min_vad, textvariable=self.dose_min_vad_var)
+        self.dose_min_vad_entry.grid(row=2, column=1, padx=5, pady=5)
+        
+        # Fram Max Dmean
+        frame_max_dmean = ttk.Frame(edit_condition_window)
+        ttk.Label(frame_max_dmean, text="ROI Name:").grid(row=0, column=0, padx=5, pady=5)
+        self.roi_name_var_max_dmean = tk.StringVar()
+        self.roi_name_combo_max_dmean = ttk.Combobox(frame_max_dmean, textvariable=self.roi_name_var_max_dmean,
+                                        values=self.designer.get_roi_list(), state="readonly")
+        self.roi_name_combo_max_dmean.grid(row=0, column=1, padx=5, pady=5)
+        
+        ttk.Label(frame_max_dmean, text="Max Dmean (cGy):").grid(row=1, column=0, padx=5, pady=5)
+        self.max_dmean_var = tk.StringVar()
+        self.max_dmean_entry = ttk.Entry(frame_max_dmean, textvariable=self.max_dmean_var)
+        self.max_dmean_entry.grid(row=1, column=1, padx=5, pady=5)
+        
+        # Frame Min Dmean
+        frame_min_dmean = ttk.Frame(edit_condition_window)
+        ttk.Label(frame_min_dmean, text="ROI Name:").grid(row=0, column=0, padx=5, pady=5)
+        self.roi_name_var_min_dmean = tk.StringVar()
+        self.roi_name_combo_min_dmean = ttk.Combobox(frame_min_dmean, textvariable=self.roi_name_var_min_dmean,
+                                        values=self.designer.get_roi_list(), state="readonly")
+        self.roi_name_combo_min_dmean.grid(row=0, column=1, padx=5, pady=5)
+        ttk.Label(frame_min_dmean, text="Min Dmean (cGy):").grid(row=1, column=0, padx=5, pady=5)
+        self.min_dmean_var = tk.StringVar()
+        self.min_dmean_entry = ttk.Entry(frame_min_dmean, textvariable=self.min_dmean_var)
+        self.min_dmean_entry.grid(row=1, column=1, padx=5, pady=5)
+        
+        # Parse criteria to pre-populate values
+        self._parse_and_populate_condition_values(selected_type, selected_roi, selected_criteria)
+        
+        def show_selected_frame(self):
+            """Show the relevant frame based on condition type selection."""
+            frame_opt_round.grid_forget()
+            frame_max_dose.grid_forget()
+            frame_min_dose.grid_forget()
+            frame_max_dav.grid_forget()
+            frame_min_dav.grid_forget()
+            frame_max_vad.grid_forget()
+            frame_min_vad.grid_forget()
+            frame_max_dmean.grid_forget()
+            frame_min_dmean.grid_forget()
+            selection = self.condition_type_var.get()
+            if selection == 'Optimization Round':
+                frame_opt_round.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+            elif selection == 'Max Dose':
+                frame_max_dose.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+            elif selection == 'Min Dose':
+                frame_min_dose.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+            elif selection == 'Max DaV':
+                frame_max_dav.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+            elif selection == 'Min DaV':
+                frame_min_dav.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+            elif selection == 'Max VaD':
+                frame_max_vad.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+            elif selection == 'Min VaD':
+                frame_min_vad.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+            elif selection == 'Max Dmean':
+                frame_max_dmean.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+            elif selection == 'Min Dmean':
+                frame_min_dmean.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+                
+        self.condition_type_combo.bind("<<ComboboxSelected>>", lambda event: show_selected_frame(self))
+        show_selected_frame(self)  # Show the initial frame based on the default selection
+        
+        def save_edited_condition():
+            """Save the edited condition."""
+            condition_name = self.condition_name_var.get().strip()
+            condition_type = self.condition_type_var.get().strip()
+            if condition_type == 'Optimization Round':
+                roi_name = 'N/A'
+                opt_round = self.opt_round_var.get().strip()
+                criteria = f"Round ≥ {opt_round}"
+            elif condition_type == 'Max Dose':
+                roi_name = self.roi_name_var_max_dose.get().strip()
+                max_dose = self.max_dose_var.get().strip()
+                criteria = f"Dmax (cGy) ≥ {max_dose}"
+            elif condition_type == 'Min Dose':
+                roi_name = self.roi_name_var_min_dose.get().strip()
+                min_dose = self.min_dose_var.get().strip()
+                criteria = f"Dmin (cGy) ≤ {min_dose}"
+            elif condition_type == 'Max DaV':
+                roi_name = self.roi_name_var_max_dav.get().strip()
+                dose_max_dav = self.dose_max_dav_var.get().strip()
+                volume_max_dav = self.volume_max_dav_var.get().strip()
+                volume_max_dav_unit = self.volume_max_dav_unit.get().strip()
+                criteria = f"D{volume_max_dav}{volume_max_dav_unit} ≥ {dose_max_dav} cGy"
+            elif condition_type == 'Min DaV':
+                roi_name = self.roi_name_var_min_dav.get().strip()
+                dose_min_dav = self.dose_min_dav_var.get().strip()
+                volume_min_dav = self.volume_min_dav_var.get().strip()
+                volume_min_dav_unit = self.volume_min_dav_unit.get().strip()
+                criteria = f"D{volume_min_dav}{volume_min_dav_unit} ≤ {dose_min_dav} cGy"
+            elif condition_type == 'Max VaD':
+                roi_name = self.roi_name_var_max_vad.get().strip()
+                volume_max_vad = self.volume_max_vad_var.get().strip()
+                volume_max_vad_unit = self.volume_max_vad_unit.get().strip()
+                dose_max_vad = self.dose_max_vad_var.get().strip()
+                criteria = f"V{dose_max_vad} cGy ≥ {volume_max_vad}{volume_max_vad_unit}"
+            elif condition_type == 'Min VaD':
+                roi_name = self.roi_name_var_min_vad.get().strip()
+                volume_min_vad = self.volume_min_vad_var.get().strip()
+                volume_min_vad_unit = self.volume_min_vad_unit.get().strip()
+                dose_min_vad = self.dose_min_vad_var.get().strip()
+                criteria = f"V{dose_min_vad} cGy ≤ {volume_min_vad}{volume_min_vad_unit}"
+            elif condition_type == 'Max Dmean':
+                roi_name = self.roi_name_var_max_dmean.get().strip()
+                max_dmean = self.max_dmean_var.get().strip()
+                criteria = f"Dmean (cGy) ≥ {max_dmean}"
+            elif condition_type == 'Min Dmean':
+                roi_name = self.roi_name_var_min_dmean.get().strip()
+                min_dmean = self.min_dmean_var.get().strip()
+                criteria = f"Dmean (cGy) ≤ {min_dmean}"
+            
+            # Update tree item
+            self.condition_tree.item(selected_item[0], values=(condition_name, roi_name, condition_type, criteria))
+            edit_condition_window.destroy()
+        
+        ttk.Button(edit_condition_window, text="Save Changes", command=save_edited_condition).grid(row=5, column=0, columnspan=2, pady=10)
+    
+    def _parse_and_populate_condition_values(self, condition_type, roi_name, criteria):
+        """Parse the criteria and populate the corresponding input fields."""
+        import re
+        
+        if condition_type == 'Optimization Round':
+            # "Round ≥ 3"
+            match = re.search(r'Round ≥ (\d+)', criteria)
+            if match:
+                self.opt_round_var.set(match.group(1))
+        elif condition_type == 'Max Dose':
+            # "Dmax (cGy) ≥ 5000"
+            self.roi_name_var_max_dose.set(roi_name)
+            match = re.search(r'Dmax \(cGy\) ≥ (\S+)', criteria)
+            if match:
+                self.max_dose_var.set(match.group(1))
+        elif condition_type == 'Min Dose':
+            # "Dmin (cGy) ≤ 4500"
+            self.roi_name_var_min_dose.set(roi_name)
+            match = re.search(r'Dmin \(cGy\) ≤ (\S+)', criteria)
+            if match:
+                self.min_dose_var.set(match.group(1))
+        elif condition_type == 'Max DaV':
+            # "D95% ≥ 4500 cGy"
+            self.roi_name_var_max_dav.set(roi_name)
+            match = re.search(r'D(\S+)(%)|(cc) ≥ (\S+) cGy', criteria)
+            if match:
+                self.volume_max_dav_var.set(match.group(1))
+                self.volume_max_dav_unit.set(match.group(2) if match.group(2) else match.group(3))
+                self.dose_max_dav_var.set(match.group(4))
+        elif condition_type == 'Min DaV':
+            # "D2% ≤ 5500 cGy"
+            self.roi_name_var_min_dav.set(roi_name)
+            match = re.search(r'D(\S+)(%)|(cc) ≤ (\S+) cGy', criteria)
+            if match:
+                self.volume_min_dav_var.set(match.group(1))
+                self.volume_min_dav_unit.set(match.group(2) if match.group(2) else match.group(3))
+                self.dose_min_dav_var.set(match.group(4))
+        elif condition_type == 'Max VaD':
+            # "V5000 cGy ≥ 95%"
+            self.roi_name_var_max_vad.set(roi_name)
+            match = re.search(r'V(\S+) cGy ≥ (\S+)(%)|(cc)', criteria)
+            if match:
+                self.dose_max_vad_var.set(match.group(1))
+                self.volume_max_vad_var.set(match.group(2))
+                self.volume_max_vad_unit.set(match.group(3) if match.group(3) else match.group(4))
+        elif condition_type == 'Min VaD':
+            # "V3000 cGy ≤ 10%"
+            self.roi_name_var_min_vad.set(roi_name)
+            match = re.search(r'V(\S+) cGy ≤ (\S+)(%)|(cc)', criteria)
+            if match:
+                self.dose_min_vad_var.set(match.group(1))
+                self.volume_min_vad_var.set(match.group(2))
+                self.volume_min_vad_unit.set(match.group(3) if match.group(3) else match.group(4))
+        elif condition_type == 'Max Dmean':
+            # "Dmean (cGy) ≥ 3000"
+            self.roi_name_var_max_dmean.set(roi_name)
+            match = re.search(r'Dmean \(cGy\) ≥ (\S+)', criteria)
+            if match:
+                self.max_dmean_var.set(match.group(1))
+        elif condition_type == 'Min Dmean':
+            # "Dmean (cGy) ≤ 2000"
+            self.roi_name_var_min_dmean.set(roi_name)
+            match = re.search(r'Dmean \(cGy\) ≤ (\S+)', criteria)
+            if match:
+                self.min_dmean_var.set(match.group(1))
     
     def show_step_info(self, message):
         """Display a message box with step information."""

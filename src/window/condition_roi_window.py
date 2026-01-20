@@ -21,7 +21,7 @@ class ConditionROI_Window:
         
         condition_roi_scroll_y = ttk.Scrollbar(condition_roi_frame, orient="vertical")
         
-        self.condition_roi_tree = ttk.Treeview(condition_roi_frame, columns=("Order","If this condition TRUE", "Create this ROI", "By this method"), show="headings",
+        self.condition_roi_tree = ttk.Treeview(condition_roi_frame, columns=("Order","If this condition TRUE", "Create this ROI", "By this method", "Convert Dose"), show="headings",
                                                 yscrollcommand=condition_roi_scroll_y.set)
         
         condition_roi_scroll_y.config(command=self.condition_roi_tree.yview)
@@ -30,12 +30,12 @@ class ConditionROI_Window:
         self.condition_roi_tree.heading("If this condition TRUE", text="If this condition TRUE")
         self.condition_roi_tree.heading("Create this ROI", text="Create this ROI")
         self.condition_roi_tree.heading("By this method", text="By this method")
-        
+        self.condition_roi_tree.heading("Convert Dose", text="Convert Dose")
         self.condition_roi_tree.column("Order", width=60)
         self.condition_roi_tree.column("If this condition TRUE", width=180)
         self.condition_roi_tree.column("Create this ROI", width=150)
         self.condition_roi_tree.column("By this method", width=180)
-        
+        self.condition_roi_tree.column("Convert Dose", width=120)
         self.condition_roi_tree.pack(side="left", fill="both", expand=True)
         condition_roi_scroll_y.pack(side="right", fill="y")
         
@@ -64,7 +64,7 @@ class ConditionROI_Window:
         if self.designer.condition_rois_data:
             for item in self.designer.condition_rois_data:
                 boolean_config = item.get("boolean_config")
-                item_id = self.condition_roi_tree.insert("", "end", values=(item["order"], item["condition"], item["roi_name"], item["method"]))
+                item_id = self.condition_roi_tree.insert("", "end", values=(item["order"], item["condition"], item["roi_name"], item["method"], item["convert_dose"]))
                 if boolean_config:
                     self.condition_roi_tree.item(item_id, tags=(str(boolean_config),))
         
@@ -87,7 +87,8 @@ class ConditionROI_Window:
                 "condition": values[1],
                 "roi_name": values[2],
                 "method": values[3],
-                "boolean_config": boolean_data
+                "boolean_config": boolean_data,
+                "convert_dose": values[4]
             })
         
         self.designer.condition_rois_data = condition_rois
@@ -138,7 +139,7 @@ class ConditionROI_Window:
         
         # Convert Dose to ROI frame
         frame_dose_to_roi = ttk.Frame(add_condition_roi_window)
-        ttk.Label(frame_dose_to_roi, text="Convert Dose (Gy) to ROI").grid(row=0, column=0, padx=5, pady=5)
+        ttk.Label(frame_dose_to_roi, text="Convert Dose (cGy) to ROI").grid(row=0, column=0, padx=5, pady=5)
         self.dose_to_roi_var = tk.StringVar()
         self.dose_to_roi_entry = ttk.Entry(frame_dose_to_roi, textvariable=self.dose_to_roi_var)
         self.dose_to_roi_entry.grid(row=0, column=1, padx=5, pady=5)
@@ -164,8 +165,13 @@ class ConditionROI_Window:
         create_roi = self.create_roi_var.get().strip()
         method = self.method_var.get().strip()
         order = len(self.condition_roi_tree.get_children()) + 1
+        if method == 'Convert Dose to ROI':
+            convert_dose = self.dose_to_roi_var.get().strip()
+        else:
+            convert_dose = '-'    
         # Store boolean data in tree item tags
-        self.condition_roi_tree.insert("", "end", values=(order, condition_true, create_roi, method), tags=(str(self.current_boolean_data),))
+        self.condition_roi_tree.insert("", "end", values=(order, condition_true, create_roi, method, convert_dose), tags=(str(self.current_boolean_data),))
+        # If Convert Dose to ROI, store that as well
         popup.destroy()
         
     def remove_condition_roi(self):
@@ -190,7 +196,7 @@ class ConditionROI_Window:
         items = self.condition_roi_tree.get_children()
         for i, item in enumerate(items, start=1):
             values = self.condition_roi_tree.item(item, "values")
-            self.condition_roi_tree.item(item, values=(i, values[1]))
+            self.condition_roi_tree.item(item, values=(i, values[1], values[2], values[3]))
     
     def edit_condition_roi(self):
         """Edit the selected condition ROI."""
@@ -234,16 +240,23 @@ class ConditionROI_Window:
                 
                 Boolean_Window(edit_popup, self.designer, use_extended_list=True, callback=save_boolean_callback, preload_data=self.edit_boolean_data)
             
-            ttk.Button(edit_popup, text="Edit Boolean Function", command=open_boolean_for_edit).grid(row=3, column=0, columnspan=2, pady=10)
+            if item_values[3] == 'Boolean operation':
+                ttk.Button(edit_popup, text="Edit Boolean Function", command=open_boolean_for_edit).grid(row=3, column=0, columnspan=2, pady=10)
+            elif item_values[3] == 'Convert Dose to ROI':
+                ttk.Label(edit_popup, text="Convert Dose (cGy) to ROI").grid(row=3, column=0, padx=5, pady=5)
+                self.edit_dose_to_roi_var = tk.StringVar(value=item_values[4] if item_values[4] else "-")
+                edit_dose_to_roi_entry = ttk.Entry(edit_popup, textvariable=self.edit_dose_to_roi_var)
+                edit_dose_to_roi_entry.grid(row=3, column=1, padx=5, pady=5)
             
             def save_edit():
                 """Save the edited condition ROI."""
                 new_condition = edit_condition_var.get().strip()
                 new_roi = edit_roi_var.get().strip()
                 new_method = edit_method_var.get().strip()
+                new_convert_dose = self.edit_dose_to_roi_var.get().strip() if new_method == 'Convert Dose to ROI' else '-'
                 if new_condition and new_roi and new_method:
                     # Update tree item
-                    self.condition_roi_tree.item(selected_item[0], values=(item_values[0], new_condition, new_roi, new_method), tags=(str(self.edit_boolean_data),))
+                    self.condition_roi_tree.item(selected_item[0], values=(item_values[0], new_condition, new_roi, new_method, new_convert_dose), tags=(str(self.edit_boolean_data),))
                     edit_popup.destroy()
                 else:
                     messagebox.showwarning("Input Error", "All fields are required.")
