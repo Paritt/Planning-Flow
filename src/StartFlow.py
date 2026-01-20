@@ -4,19 +4,15 @@ from raystation.v2025 import get_current
 import raystation.v2025.typing as rstype
 import tkinter as tk
 from tkinter import ttk, messagebox
-from Planning-Flow.src.window.planflow_designer import PlanFlowDesigner
 
-class StartFlow(self):
-    def __init__(self):
+
+class StartFlow:
+    def __init__(self, workflow_data=None):
         super().__init__()
         # Check is there is an open patient
         self.patient = get_current().get_current_patient()
         if not self.patient:
             messagebox.showerror("No Patient Open", "Please open a patient before starting Planning Flow.")
-            return
-        # Check is there loaded Planning Flow
-        if not hasattr(self, 'workflow_data') or not self.workflow_data:
-            messagebox.showwarning("No Flow Loaded", "Please load a Planning Flow before starting.")
             return
         else:
             # Start Planning
@@ -36,7 +32,7 @@ class StartFlow(self):
             self.isocenter_data = {}
             
             # 1. Load flow data from JSON file
-            self.load_flow_data(flow_data=self.workflow_data, plan_data=self.get_plan_data())
+            self.load_flow_data(flow_data=workflow_data, plan_data=self.get_plan_data())
             # 2. Create a Plan and add beam based on the loaded flow
             self.create_plan()
             # 3. Create Match ROI dictionary
@@ -85,3 +81,55 @@ class StartFlow(self):
         }
         
         return plan_data
+    
+    def create_plan(self):
+        """Create a new plan in the current patient."""
+        try:
+            # Create a new plan
+            self.plan = self.patient.add_new_plan(self.plan_name, self.machine)
+        except Exception as e:
+            messagebox.showerror("Plan Creation Error", f"Failed to create plan:\n{str(e)}")
+            
+    def create_match_roi_dict(self):
+        """Create Match ROI dictionary based on loaded data."""
+        try:
+            self.match_roi_dict = {}
+            for match in self.match_roi_data:
+                roi_name = match.get("roi_name")
+                match_params = match.get("match_params", {})
+                self.match_roi_dict[roi_name] = match_params
+        except Exception as e:
+            messagebox.showerror("Match ROI Error", f"Failed to create Match ROI dictionary:\n{str(e)}")
+            
+    def create_automate_roi(self):
+        """Create Automate ROI based on loaded data."""
+        try:
+            for automate in self.automate_roi_data:
+                roi_name = automate.get("roi_name")
+                automate_params = automate.get("automate_params", {})
+                # Implement the logic to create or modify ROI based on automate_params
+                # This is a placeholder for actual implementation
+        except Exception as e:
+            messagebox.showerror("Automate ROI Error", f"Failed to create Automate ROI:\n{str(e)}")
+    
+    def add_initial_objective(self):
+        """Add initial objectives to the plan based on loaded data."""
+        try:
+            for objective in self.initial_functions_data:
+                roi_name = objective.get("roi_name")
+                function_params = objective.get("function_params", {})
+                # Implement the logic to add objectives to the plan based on function_params
+                # This is a placeholder for actual implementation
+        except Exception as e:
+            messagebox.showerror("Initial Objective Error", f"Failed to add initial objectives:\n{str(e)}")
+    
+    def loop_optimization_steps(self):
+        """Loop through optimization steps based on loaded data."""
+        try:
+            for step in self.optimization_data.get("steps", []):
+                step_name = step.get("step_name")
+                step_params = step.get("step_params", {})
+                # Implement the logic to perform optimization steps based on step_params
+                # This is a placeholder for actual implementation
+        except Exception as e:
+            messagebox.showerror("Optimization Error", f"Failed during optimization steps:\n{str(e)}")

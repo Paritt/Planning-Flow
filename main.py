@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import ttk, messagebox, filedialog
 import json
 from src.PlanFlowDesigner import PlanFlowDesigner
+from src.StartFlow import StartFlow
 
 class AutoPlanGUI(tk.Tk):
     def __init__(self):
@@ -24,15 +25,21 @@ class AutoPlanGUI(tk.Tk):
         """Create treatment room and flow selection."""
         frame = ttk.LabelFrame(self, text="Treatment Settings")
         frame.pack(fill="x", padx=10, pady=5)
-
+        
+        # Plan Name Entry
+        ttk.Label(frame, text="Plan Name:").grid(row=0, column=0, padx=5, pady=2)
+        self.plan_name_var = tk.StringVar()
+        self.plan_name_entry = ttk.Entry(frame, textvariable=self.plan_name_var)
+        self.plan_name_entry.grid(row=0, column=1, padx=5, pady=2)
+        
         # Treatment Room Dropdown
-        ttk.Label(frame, text="Treatment Room:").grid(row=0, column=0, padx=5, pady=2)
+        ttk.Label(frame, text="Treatment Room:").grid(row=0, column=2, padx=5, pady=2)
         self.room_var = tk.StringVar()
         self.room_dropdown = ttk.Combobox(frame, textvariable=self.room_var,
                                         values=['Agility', 'P1'], state="readonly")
         # self.room_dropdown = ttk.Combobox(frame, textvariable=self.room_var,
         #                                 values=['N3_VersaHD', 'N4_VersaHD', 'TrueBeam_L6', 'TrueBeam_L7', 'TrueBeam_N5'], state="readonly")
-        self.room_dropdown.grid(row=0, column=1, padx=5, pady=2)
+        self.room_dropdown.grid(row=0, column=3, padx=5, pady=2)
 
         # Planning Flow (Read-only)
         ttk.Label(frame, text="Planning Flow:").grid(row=1, column=0, padx=5, pady=2)
@@ -104,7 +111,10 @@ class AutoPlanGUI(tk.Tk):
 
     def start_planning(self):
         """Start the automated planning process."""
-        messagebox.showinfo("Start Planning", "STARTING AUTOMATED PLANNING FROM SELECTED FLOW...")
+        if self.workflow_data:
+            StartFlow(self, workflow_data=self.workflow_data)
+        else:
+            messagebox.showwarning("Start Planning", "Please load a flow first using 'Load Flow' button.")
 
 if __name__ == "__main__":
     app = AutoPlanGUI()
