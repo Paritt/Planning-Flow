@@ -4,18 +4,27 @@ from raystation.v2025 import get_current
 import raystation.v2025.typing as rstype
 import tkinter as tk
 from tkinter import ttk, messagebox
+from .catwork import CatWork
 
 
 class StartFlow:
-    def __init__(self, workflow_data=None):
+    def __init__(self, workflow_data, plan_data):
         super().__init__()
-        # Check is there is an open patient
-        self.patient = get_current().get_current_patient()
-        if not self.patient:
-            messagebox.showerror("No Patient Open", "Please open a patient before starting Planning Flow.")
+        # Check is there is an open case
+        try:
+            self.case = get_current("Case")
+        except:
+            self.case = None
+        
+        if not self.case:
+            messagebox.showerror("No Case Open", "Please open a case before starting Planning Flow.")
             return
         else:
             # Start Planning
+            # Show cat_work.gif to indicate processing
+            catwork = CatWork(message="Starting Planning Flow...", gif_name='cat_work.gif')
+            catwork.start()
+            
             # 0. Initialize data storage for all steps
             self.vmat_beam_data = []
             self.impt_beam_data = []
@@ -32,7 +41,7 @@ class StartFlow:
             self.isocenter_data = {}
             
             # 1. Load flow data from JSON file
-            self.load_flow_data(flow_data=workflow_data, plan_data=self.get_plan_data())
+            self.load_flow_data(flow_data=workflow_data, plan_data=plan_data)
             # 2. Create a Plan and add beam based on the loaded flow
             self.create_plan()
             # 3. Create Match ROI dictionary
@@ -43,6 +52,8 @@ class StartFlow:
             self.add_initial_objective()
             # 6. Loop Optimization Steps
             self.loop_optimization_steps()
+            
+            catwork.stop()
             
     def load_flow_data(self, flow_data, plan_data):
         """Load the planning flow data to be a Dictionary format."""

@@ -111,10 +111,22 @@ class AutoPlanGUI(tk.Tk):
 
     def start_planning(self):
         """Start the automated planning process."""
-        if self.workflow_data:
-            StartFlow(self, workflow_data=self.workflow_data)
+        plan_data = {
+            'plan_name': self.plan_name_var.get(),
+            'machine': self.room_var.get()
+        }
+        if not self.workflow_data:
+            messagebox.showerror("Start Planning", "Please load a flow first using 'Load Flow' button.")
+            return
+        if plan_data['plan_name'] == "":
+            messagebox.showerror("Input Error", "Please enter a Plan Name.")
+            return
+        if plan_data['machine'] == "":
+            messagebox.showerror("Input Error", "Please select a Treatment Room.")
+            return
         else:
-            messagebox.showwarning("Start Planning", "Please load a flow first using 'Load Flow' button.")
+            StartFlow(workflow_data=self.workflow_data, plan_data=plan_data)
+            
 
 if __name__ == "__main__":
     app = AutoPlanGUI()
