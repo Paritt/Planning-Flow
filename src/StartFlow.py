@@ -7,6 +7,7 @@ from tkinter import ttk, messagebox
 from .flow.start_match_roi import MatchROI
 from .flow.plan_creater import PlanCreater
 from src.flow.automate_roi_creater import Automate_ROI_Creater
+from src.flow.objecitve_adder import ObjectiveAdder
 import time
 from datetime import datetime
 import warnings
@@ -128,8 +129,43 @@ class StartFlow:
             self.ui.Navigation.MenuItem['Plan optimization'].Click()
             self.ui.Navigation.MenuItem['Plan optimization'].Popup.MenuItem['Plan optimization'].Click()
             self.ui.Workspace.TabControl['Objectives/constraints'].TabItem['Objectives/constraints'].Select()
+            opjective_adder = ObjectiveAdder(
+                initial_functions_data=loaded_flow_data['initial_functions_data'],
+                case=self.case,
+                plan_name=plan_data['plan_name'],
+                matched_roi_dict=self.match_roi_dict
+            )
+            opjective_adder.add_initial_objectives()
+            self.step_times["Add Initial Objectives"] = time.time() - step_start
+            print(f"✅ Completed in {self.step_times['Add Initial Objectives']:.2f}s\n")
+            print('#' * 50 + '\n')
             
-            # 6. Loop Optimization Steps
+            # 6. Set Optimization Settings and Calculation algorithm
+            print("Setting Optimization and Calculation Settings...")
+            step_start = time.time()
+            # Optimization Settings
+            self.plan = self.case.TreatmentPlans[plan_name]
+            self.po = self.plan.PlanOptimizations[0]
+            self.po.OptimizationParameters.Algorithm.MaxNumberOfIterations = loaded_flow_data['optimization_data']['max_iterations']
+            self.po.OptimizationParameters.Algorithm.OptimalityTolerance = loaded_flow_data['optimization_data']['tolerance']
+            # Set Calculation algorithm
+            if loaded_flow_data['technique_data'] == 'VMAT':
+                print("[VMAT] Using default calculation algorithm -> Collapsed Cone...")
+            elif loaded_flow_data['technique_data'] == 'IMPT':
+                print("[IMPT] Setting calculation algorithm to Proton Pencil Beam...")
+            else:
+                print("Unknown technique type for calculation algorithm setting.")
+            self.step_times["Optimization and Calculation Settings"] = time.time() - step_start
+            print(f"✅ Completed in {self.step_times['Optimization and Calculation Settings']:.2f}s\n")
+            print('#' * 50 + '\n')
+                
+            # 7. First Optimization
+            print("Starting First Optimization...")
+            step_start = time.time()
+            self.po.RunOptimization()
+            self.step_times["First Optimization"] = time.time() - step_start
+            print(f"✅ Completed in {self.step_times['First Optimization']:.2f}s\n")
+            print('#' * 50 + '\n')
             
             # Print timing summary
             self.print_timing_summary()
