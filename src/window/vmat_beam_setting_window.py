@@ -165,7 +165,7 @@ class VMAT_beam_setting_Window:
         
         tk.Label(self.edit_beam_window, text="Energy [MV]:").grid(row=2, column=0, padx=5, pady=5)
         self.edit_energy_var = tk.StringVar(value=beam_values[1])
-        self.edit_energy_combo = ttk.Combobox(self.edit_beam_window, textvariable=self.edit_energy_var, values=['6X', '10X', '15X'], state="readonly")
+        self.edit_energy_combo = ttk.Combobox(self.edit_beam_window, textvariable=self.edit_energy_var, values=['6', '10', '15', '6 FFF', '10 FFF'], state="readonly")
         self.edit_energy_combo.grid(row=2, column=1, padx=5, pady=5)
         
         tk.Label(self.edit_beam_window, text="Gantry Start [deg]:").grid(row=3, column=0, padx=5, pady=5)

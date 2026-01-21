@@ -4,8 +4,8 @@ from raystation.v2025 import get_current
 import raystation.v2025.typing as rstype
 import tkinter as tk
 from tkinter import ttk, messagebox
-from .flow.catwork import CatWork
 from .flow.start_match_roi import MatchROI
+from .flow.plan_creater import PlanCreater
 
 
 class StartFlow:
@@ -22,24 +22,6 @@ class StartFlow:
             return
         else:
             # Start Planning
-            # Show cat_work.gif to indicate processing
-            catwork = CatWork(message="Starting Planning Flow...", gif_name='cat_work.gif')
-            
-            
-            # 0. Initialize data storage for all steps
-            self.vmat_beam_data = []
-            self.impt_beam_data = []
-            self.match_roi_data = []
-            self.automate_roi_data = []
-            self.initial_functions_data = []
-            self.optimization_data = {}
-            self.final_calc_data = {}
-            self.check_conditions_data = []
-            self.condition_rois_data = []
-            self.function_adjustments_data = []
-            self.end_flow_data = {}
-            self.beam_settings_data = []
-            self.isocenter_data = {}
             
             # 1. Load flow data from JSON file
             print("Loading flow data...")
@@ -47,64 +29,64 @@ class StartFlow:
             
             # 2. Check Match ROI if any not match open ROIs match window then create Match ROI dictionary
             print("Matching ROIs...")
-            catwork = CatWork(message="Matching ROIs...", gif_name='cat_work.gif', previous_cat=catwork)
-            matcher = MatchROI(self.match_roi_data, self.case)
+            matcher = MatchROI(loaded_flow_data['match_roi_data'], self.case)
             self.match_roi_dict = matcher.get_matched_dict()
             print("Matched ROI Dictionary:", self.match_roi_dict)
             
             # 3. Create a Plan and add beam based on the loaded flow
             print("Creating a Plan...")
-            catwork = CatWork(message="Creating a Plan...", gif_name='cat_work.gif', previous_cat=catwork)
-            PlanCreater(loaded_flow_data, self.case)
+            plan_creator = PlanCreater(loaded_flow_data, self.case)
+            if plan_creator.execute():
+                print("Success!")
             
             # 4. Create Automate ROI
-            self.create_automate_roi()
-            # 5. Add initial objective
-            self.add_initial_objective()
-            # 6. Loop Optimization Steps
-            self.loop_optimization_steps()
             
-            catwork.stop()
+            # 5. Add initial objective
+            
+            # 6. Loop Optimization Steps
+            
             
     def load_flow_data(self, flow_data, plan_data):
         """Load the planning flow data to be a Dictionary format."""
         try:
             # Load basic info
-            self.plan_name = plan_data['plan_name']
-            self.machine = plan_data['machine']
+            plan_name = plan_data['plan_name']
+            machine = plan_data['machine']
             
             # Load all step data
-            self.technique_data = flow_data.get("technique", {})
-            self.vmat_beam_data = flow_data.get("vmat_beam", [])
-            self.impt_beam_data = flow_data.get("impt_beam", [])
-            self.isocenter_data = flow_data.get("isocenter", {})
+            technique_data = flow_data.get("technique", {})
+            vmat_beam_data = flow_data.get("vmat_beam", [])
+            impt_beam_data = flow_data.get("impt_beam", [])
+            isocenter_data = flow_data.get("isocenter", {})
+            prescription_data = flow_data.get("prescription", {})
             
-            self.match_roi_data = flow_data.get("match_roi", [])
-            self.automate_roi_data = flow_data.get("automate_roi", [])
-            self.initial_functions_data = flow_data.get("initial_functions", [])
-            self.optimization_data = flow_data.get("optimization_settings", {})
-            self.final_calc_data = flow_data.get("final_calculation", {})
-            self.check_conditions_data = flow_data.get("check_conditions", [])
-            self.condition_rois_data = flow_data.get("condition_rois", [])
-            self.function_adjustments_data = flow_data.get("function_adjustments", [])
-            self.end_flow_data = flow_data.get("end_flow", {})
+            match_roi_data = flow_data.get("match_roi", [])
+            automate_roi_data = flow_data.get("automate_roi", [])
+            initial_functions_data = flow_data.get("initial_functions", [])
+            optimization_data = flow_data.get("optimization_settings", {})
+            final_calc_data = flow_data.get("final_calculation", {})
+            check_conditions_data = flow_data.get("check_conditions", [])
+            condition_rois_data = flow_data.get("condition_rois", [])
+            function_adjustments_data = flow_data.get("function_adjustments", [])
+            end_flow_data = flow_data.get("end_flow", {})
             
             loaded_flow_data = {
-                "plan_name": plan_data,
-                "machine": self.machine,
-                "technique_data": self.technique_data,
-                "vmat_beam_data": self.vmat_beam_data,
-                "impt_beam_data": self.impt_beam_data,
-                "isocenter_data": self.isocenter_data,
-                "match_roi_data": self.match_roi_data,
-                "automate_roi_data": self.automate_roi_data,
-                "initial_functions_data": self.initial_functions_data,
-                "optimization_data": self.optimization_data,
-                "final_calc_data": self.final_calc_data,
-                "check_conditions_data": self.check_conditions_data,
-                "condition_rois_data": self.condition_rois_data,
-                "function_adjustments_data": self.function_adjustments_data,
-                "end_flow_data": self.end_flow_data
+                "plan_name": plan_name,
+                "machine": machine,
+                "technique_data": technique_data,
+                "vmat_beam_data": vmat_beam_data,
+                "impt_beam_data": impt_beam_data,
+                "isocenter_data": isocenter_data,
+                "prescription_data": prescription_data,
+                "match_roi_data": match_roi_data,
+                "automate_roi_data": automate_roi_data,
+                "initial_functions_data": initial_functions_data,
+                "optimization_data": optimization_data,
+                "final_calc_data": final_calc_data,
+                "check_conditions_data": check_conditions_data,
+                "condition_rois_data": condition_rois_data,
+                "function_adjustments_data": function_adjustments_data,
+                "end_flow_data": end_flow_data
             }
             
             return loaded_flow_data
@@ -123,55 +105,3 @@ class StartFlow:
         }
         
         return plan_data
-    
-    def create_plan(self):
-        """Create a new plan in the current patient."""
-        try:
-            # Create a new plan
-            self.plan = self.patient.add_new_plan(self.plan_name, self.machine)
-        except Exception as e:
-            messagebox.showerror("Plan Creation Error", f"Failed to create plan:\n{str(e)}")
-            
-    def create_match_roi_dict(self):
-        """Create Match ROI dictionary based on loaded data."""
-        try:
-            self.match_roi_dict = {}
-            for match in self.match_roi_data:
-                roi_name = match.get("roi_name")
-                match_params = match.get("match_params", {})
-                self.match_roi_dict[roi_name] = match_params
-        except Exception as e:
-            messagebox.showerror("Match ROI Error", f"Failed to create Match ROI dictionary:\n{str(e)}")
-            
-    def create_automate_roi(self):
-        """Create Automate ROI based on loaded data."""
-        try:
-            for automate in self.automate_roi_data:
-                roi_name = automate.get("roi_name")
-                automate_params = automate.get("automate_params", {})
-                # Implement the logic to create or modify ROI based on automate_params
-                # This is a placeholder for actual implementation
-        except Exception as e:
-            messagebox.showerror("Automate ROI Error", f"Failed to create Automate ROI:\n{str(e)}")
-    
-    def add_initial_objective(self):
-        """Add initial objectives to the plan based on loaded data."""
-        try:
-            for objective in self.initial_functions_data:
-                roi_name = objective.get("roi_name")
-                function_params = objective.get("function_params", {})
-                # Implement the logic to add objectives to the plan based on function_params
-                # This is a placeholder for actual implementation
-        except Exception as e:
-            messagebox.showerror("Initial Objective Error", f"Failed to add initial objectives:\n{str(e)}")
-    
-    def loop_optimization_steps(self):
-        """Loop through optimization steps based on loaded data."""
-        try:
-            for step in self.optimization_data.get("steps", []):
-                step_name = step.get("step_name")
-                step_params = step.get("step_params", {})
-                # Implement the logic to perform optimization steps based on step_params
-                # This is a placeholder for actual implementation
-        except Exception as e:
-            messagebox.showerror("Optimization Error", f"Failed during optimization steps:\n{str(e)}")
