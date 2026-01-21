@@ -65,9 +65,11 @@ class MatchROI:
         # First, perform automatic matching
         self.auto_match()
         
-        # If there are unmatched ROIs or user wants to review, open GUI
-        if self.has_unmatched or True:  # Always show GUI for review
+        # If there are unmatched ROIs, open GUI
+        if self.has_unmatched:
             self._open_match_window()
+        else:
+            print("✅ All ROI are MATCH")
         
         # Filter out any None or --Not Match-- values before returning
         return {k: v for k, v in self.matched_dict.items() if v is not None}
@@ -122,16 +124,6 @@ class MatchROI:
         for idx, roi_entry in enumerate(self.match_roi_data):
             flow_roi_name = roi_entry.get("roi_name")
             create_row(match_window, flow_roi_name, idx)
-        
-        # Cancel button
-        def on_cancel():
-            # Keep existing matches, clear unmatched
-            self.matched_dict = {k: v for k, v in self.matched_dict.items() if v is not None}
-            match_window.destroy()
-        
-        button_cancel = Button(match_window, text='Cancel', command=on_cancel)
-        button_cancel.grid(column=0, row=len(self.match_roi_data), pady=15)
-        button_cancel.config(width=10)
         
         # Apply button
         def on_apply():

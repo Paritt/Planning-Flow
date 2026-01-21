@@ -18,6 +18,7 @@ class PlanFlowDesigner:
     """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
     """Open a new window for planning steps."""
     def __init__(self, parent, load_data=None):
+        self.parent = parent
         self.planning_window = tk.Toplevel(parent)
         self.planning_window.title("Planning flow")
         self.planning_window.geometry("550x450")
@@ -48,9 +49,17 @@ class PlanFlowDesigner:
         if load_data:
             self.load_flow_data(load_data)
         
+        # Button frame for Save and Use Without Saving
+        button_frame = ttk.Frame(self.planning_window)
+        button_frame.pack(pady=10)
+        
         # Save Flow Button
-        self.save_flow_btn = ttk.Button(self.planning_window, text="Save Flow", command=self.save_flow)
-        self.save_flow_btn.pack(padx=200,pady=10)
+        self.save_flow_btn = ttk.Button(button_frame, text="Save Flow", command=self.save_flow)
+        self.save_flow_btn.pack(side="left", padx=5)
+        
+        # Use Without Saving Button
+        self.use_flow_btn = ttk.Button(button_frame, text="Use Without Saving", command=self.use_flow_without_saving)
+        self.use_flow_btn.pack(side="left", padx=5)
     
     def get_roi_list(self):
         """Get list of ROI names from Match ROI data and Automate ROI data."""
@@ -148,6 +157,58 @@ class PlanFlowDesigner:
                 messagebox.showinfo("Save Flow", f"Planning flow saved successfully to:\n{file_path}")
             except Exception as e:
                 messagebox.showerror("Save Error", f"Failed to save flow:\n{str(e)}")
+    
+    def use_flow_without_saving(self):
+        """Use the flow without saving to a JSON file."""
+        from datetime import datetime
+        
+        # Collect all flow data
+        flow_data = {
+            "flow_name": self.flow_name_var.get().strip(),
+            "created_by": self.user_name_var.get().strip(),
+            "created_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "version": "1.0",
+            "technique": self.technique_var.get(),
+            "vmat_beam": self.vmat_beam_data,
+            "impt_beam": self.impt_beam_data,
+            "match_roi": self.match_roi_data,
+            "automate_roi": self.automate_roi_data,
+            "initial_functions": self.initial_functions_data,
+            "optimization_settings": self.optimization_data,
+            "final_calculation": self.final_calc_data,
+            "check_conditions": self.check_conditions_data,
+            "condition_rois": self.condition_rois_data,
+            "function_adjustments": self.function_adjustments_data,
+            "end_flow": self.end_flow_data,
+            "beam_settings": self.beam_settings_data,
+            "isocenter": self.isocenter_data,
+            "prescription": self.prescription_data
+        }
+        
+        # Validate flow has required data
+        if not flow_data["flow_name"]:
+            messagebox.showerror("Validation Error", "Please enter a Flow Name.")
+            return
+        
+        if not flow_data["technique"]:
+            messagebox.showerror("Validation Error", "Please select a Technique.")
+            return
+        
+        # Pass the flow data to parent (AutoPlanGUI)
+        if hasattr(self.parent, 'workflow_data'):
+            self.parent.workflow_data = flow_data
+            
+            # Update the flow entry in the parent
+            if hasattr(self.parent, 'flow_entry'):
+                self.parent.flow_entry.config(state="normal")
+                self.parent.flow_entry.delete(0, tk.END)
+                self.parent.flow_entry.insert(0, flow_data["flow_name"] + " (Temporary)")
+                self.parent.flow_entry.config(state="readonly")
+            
+            messagebox.showinfo("Flow Ready", f"Flow '{flow_data['flow_name']}' is ready to use.\nClose this window and click 'Start' to run the flow.")
+            self.planning_window.destroy()
+        else:
+            messagebox.showerror("Error", "Unable to pass flow data to main window.")
     
     def load_flow_data(self, data):
         """Load flow data from a dictionary."""

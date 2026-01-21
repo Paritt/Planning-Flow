@@ -7,20 +7,21 @@ from tkinter import messagebox
 class PlanCreater:
     """Create a plan and add beams based on loaded flow data."""
     
-    def __init__(self, loaded_flow_data, case):
+    def __init__(self, loaded_flow_data, case, examination):
         """
         Initialize PlanCreater with flow data and case.
         
         Args:
             loaded_flow_data: Dictionary containing all workflow configuration
             case: RayStation case object
+            examination_name: Name of the RayStation examination
         """
         self.flow_data = loaded_flow_data
         self.case = case
         self.patient = get_current('Patient')
         self.plan = None
         self.beam_set = None
-        self.examination = None
+        self.examination = examination
         self.structure_set = None
         self.iso_data = None
         
@@ -37,7 +38,6 @@ class PlanCreater:
         """Check if examination and structure set are available."""
         try:
             # Get current examination
-            self.examination = get_current("Examination")
             if not self.examination:
                 messagebox.showerror("No Examination", "Please open an examination before creating a plan.")
                 return False
@@ -55,7 +55,7 @@ class PlanCreater:
             if not self.structure_set:
                 messagebox.showerror("No Structure Set", f"No structure set found for examination '{examination_name}'.")
                 return False
-            print(f"Using structure set for: {examination_name}")
+            print(f"Using structure set for: {examination_name}\n")
         except:
             messagebox.showerror("No Structure Set", f"Please create a structure set for the current examination.")
             return False
