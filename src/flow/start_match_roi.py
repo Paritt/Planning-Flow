@@ -83,7 +83,7 @@ class MatchROI:
         match_window.focus_force()
         
         case_roi_names = self.get_case_roi_names()
-        case_roi_names_with_blank = ["----", "--Not Match--"] + case_roi_names
+        case_roi_names_with_blank = ["--Not Match--"] + case_roi_names
         
         # Calculate window height based on number of ROIs
         window_height = min(600, 50 + len(self.match_roi_data) * 35 + 60)
@@ -115,7 +115,7 @@ class MatchROI:
                                     textvariable=combo_var)
                 combo.grid(column=1, row=row_n, padx=5, pady=2)
                 combo.config(width=27)
-                combo.current(0)  # Set to "----" by default
+                combo.current(0)  # Set to "--Not Match--" by default
                 combo_boxes[flow_roi_name] = combo
         
         # Create rows for all ROIs in flow
@@ -145,7 +145,7 @@ class MatchROI:
                 else:
                     # Check if user selected something from combo box
                     selected = combo_or_string.get()
-                    if not selected or selected == "----":
+                    if not selected:
                         unmatched_rois.append(roi_name)
             
             # If there are unmatched ROIs, show error and don't close window

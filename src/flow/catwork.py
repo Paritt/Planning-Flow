@@ -13,7 +13,7 @@ except ImportError:
 class CatWork:
     """Display an animated GIF with a message in a popup window."""
     
-    def __init__(self, message="Working...", gif_name=None):
+    def __init__(self, message="Working...", gif_name=None, previous_cat=None):
         """Initialize CatWork with a custom message."""
         self.message = message
         self.gif_name = gif_name
@@ -22,6 +22,9 @@ class CatWork:
         self.gif_frames = []
         self.frame_index = 0
         self.frame_delay = 100
+        if previous_cat:
+            previous_cat.stop()
+        self.start()
         
     def start(self):
         """Show the popup window."""
@@ -55,6 +58,7 @@ class CatWork:
         
         # Load and display GIF
         gif_path = self._get_gif_path()
+        print("GIF Path:", gif_path)
         if os.path.exists(gif_path):
             try:
                 self._load_gif(gif_path)
@@ -90,9 +94,10 @@ class CatWork:
     
     def _get_gif_path(self):
         """Get the path to the GIF file."""
-        script_dir = os.path.dirname(os.path.abspath(__file__))
-        parent_dir = os.path.dirname(script_dir)
-        return os.path.join(parent_dir, "GIFs", self.gif_name) if self.gif_name else os.path.join(parent_dir, "GIFs", "cat_work.gif")
+        script_dir = os.path.dirname(os.path.abspath(__file__))  # src/flow/
+        parent_dir = os.path.dirname(script_dir)  # src/
+        grandparent_dir = os.path.dirname(parent_dir)  # Planning-Flow/
+        return os.path.join(grandparent_dir, "src\\flow\\GIFs", self.gif_name) if self.gif_name else os.path.join(grandparent_dir, "src\\flow\\GIFs", "cat_work.gif")
     
     def _load_gif(self, gif_path):
         """Load all frames from the GIF file."""

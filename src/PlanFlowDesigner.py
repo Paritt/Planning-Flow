@@ -12,6 +12,7 @@ from src.window.check_condition_window import CheckCondition_Window
 from src.window.condition_roi_window import ConditionROI_Window
 from src.window.function_adjustment_window import FunctionAdjustment_Window
 from src.window.end_planning_flow_window import EndPlanningFlow_Window
+from src.window.prescription_window import PrescriptionSetting_Window
 
 class PlanFlowDesigner:
     """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
@@ -35,6 +36,7 @@ class PlanFlowDesigner:
         self.end_flow_data = {}
         self.beam_settings_data = []
         self.isocenter_data = {}
+        self.prescription_data = {}
         
         self.name_configured(self.planning_window)
         
@@ -128,7 +130,8 @@ class PlanFlowDesigner:
             "function_adjustments": self.function_adjustments_data,
             "end_flow": self.end_flow_data,
             "beam_settings": self.beam_settings_data,
-            "isocenter": self.isocenter_data
+            "isocenter": self.isocenter_data,
+            "prescription": self.prescription_data
         }
         
         # Open file dialog to save
@@ -166,6 +169,7 @@ class PlanFlowDesigner:
             self.end_flow_data = data.get("end_flow", {})
             self.vmat_beam_data = data.get("vmat_beam", [])
             self.isocenter_data = data.get("isocenter", {})
+            self.prescription_data = data.get("prescription", {})
         except Exception as e:
             messagebox.showerror("Load Error", f"Failed to load flow data:\n{str(e)}")
     
@@ -183,6 +187,10 @@ class PlanFlowDesigner:
         self.user_name_var = tk.StringVar()
         self.user_name_entry = ttk.Entry(frame, textvariable=self.user_name_var)
         self.user_name_entry.pack(side="left", padx=5, pady=2)
+        
+        # Match ROI Button
+        self.match_roi_btn = ttk.Button(frame, text="Match ROI", command= lambda: MatchROI_Window(self.planning_window, self))
+        self.match_roi_btn.pack(side="left", padx=5, pady=2)
     
     def techniques_configured(self, popup):
         """For setting techniques and beams"""
@@ -194,14 +202,17 @@ class PlanFlowDesigner:
         self.technique_dropdown = ttk.Combobox(frame, textvariable=self.technique_var, values=['VMAT', 'IMPT'], state="readonly")
         self.technique_dropdown.pack(side="left", padx=5, pady=2)
         
-        beam_settings_btn = ttk.Button(frame, text="Beam Settings", command=lambda: VMAT_beam_setting_Window(self.planning_window, self) if self.technique_var.get() == "VMAT" 
+        beam_settings_btn = ttk.Button(frame, text="Beam", command=lambda: VMAT_beam_setting_Window(self.planning_window, self) if self.technique_var.get() == "VMAT" 
                                                                             else IMPT_beam_setting_Window(self.planning_window, self) if self.technique_var.get() == "IMPT" 
                                                                             else messagebox.showwarning("Technique Not Selected", 
                                                                                                         "Please select a technique (VMAT or IMPT) before configuring beam settings."))
         beam_settings_btn.pack(side="left", padx=5, pady=2)
         
-        isocenter_settings_btn = ttk.Button(frame, text="Isocenter Settings", command=lambda: isocenter_setting_Window(self.planning_window, self))
+        isocenter_settings_btn = ttk.Button(frame, text="Isocenter", command=lambda: isocenter_setting_Window(self.planning_window, self))
         isocenter_settings_btn.pack(side="left", padx=5, pady=2)
+        
+        prescription_settings_btn = ttk.Button(frame, text="Prescription", command=lambda: PrescriptionSetting_Window(self.planning_window, self))
+        prescription_settings_btn.pack(side="left", padx=5, pady=2)
     
     def planning_flow(self, popup):
         """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
@@ -210,8 +221,8 @@ class PlanFlowDesigner:
         frame.pack(fill="both", expand=True, padx=10, pady=5)
 
         # Steps Buttons
-        self.match_roi_btn = ttk.Button(frame, text="Match ROI", command=lambda: MatchROI_Window(self.planning_window, self))
-        self.match_roi_btn.place(x=50, y=40)
+        self.start_btn = ttk.Button(frame, text="Start", command=lambda: self.show_step_info("Planning flow start by\n1. Match ROI\n2. Create Plan with Beams"))
+        self.start_btn.place(x=60, y=40)
         
         self.automate_roi_btn = ttk.Button(frame, text="Create Automate ROI", command=lambda: AutomateROI_Window(self.planning_window, self))
         self.automate_roi_btn.place(x=200, y=40)

@@ -4,8 +4,8 @@ from raystation.v2025 import get_current
 import raystation.v2025.typing as rstype
 import tkinter as tk
 from tkinter import ttk, messagebox
-from .catwork import CatWork
-from .start_match_roi import MatchROI
+from .flow.catwork import CatWork
+from .flow.start_match_roi import MatchROI
 
 
 class StartFlow:
@@ -24,7 +24,7 @@ class StartFlow:
             # Start Planning
             # Show cat_work.gif to indicate processing
             catwork = CatWork(message="Starting Planning Flow...", gif_name='cat_work.gif')
-            catwork.start()
+            
             
             # 0. Initialize data storage for all steps
             self.vmat_beam_data = []
@@ -42,13 +42,21 @@ class StartFlow:
             self.isocenter_data = {}
             
             # 1. Load flow data from JSON file
-            self.load_flow_data(flow_data=workflow_data, plan_data=plan_data)
+            print("Loading flow data...")
+            loaded_flow_data = self.load_flow_data(flow_data=workflow_data, plan_data=plan_data)
+            
             # 2. Check Match ROI if any not match open ROIs match window then create Match ROI dictionary
+            print("Matching ROIs...")
+            catwork = CatWork(message="Matching ROIs...", gif_name='cat_work.gif', previous_cat=catwork)
             matcher = MatchROI(self.match_roi_data, self.case)
             self.match_roi_dict = matcher.get_matched_dict()
             print("Matched ROI Dictionary:", self.match_roi_dict)
+            
             # 3. Create a Plan and add beam based on the loaded flow
-            self.create_plan()
+            print("Creating a Plan...")
+            catwork = CatWork(message="Creating a Plan...", gif_name='cat_work.gif', previous_cat=catwork)
+            PlanCreater(loaded_flow_data, self.case)
+            
             # 4. Create Automate ROI
             self.create_automate_roi()
             # 5. Add initial objective
@@ -80,6 +88,26 @@ class StartFlow:
             self.condition_rois_data = flow_data.get("condition_rois", [])
             self.function_adjustments_data = flow_data.get("function_adjustments", [])
             self.end_flow_data = flow_data.get("end_flow", {})
+            
+            loaded_flow_data = {
+                "plan_name": plan_data,
+                "machine": self.machine,
+                "technique_data": self.technique_data,
+                "vmat_beam_data": self.vmat_beam_data,
+                "impt_beam_data": self.impt_beam_data,
+                "isocenter_data": self.isocenter_data,
+                "match_roi_data": self.match_roi_data,
+                "automate_roi_data": self.automate_roi_data,
+                "initial_functions_data": self.initial_functions_data,
+                "optimization_data": self.optimization_data,
+                "final_calc_data": self.final_calc_data,
+                "check_conditions_data": self.check_conditions_data,
+                "condition_rois_data": self.condition_rois_data,
+                "function_adjustments_data": self.function_adjustments_data,
+                "end_flow_data": self.end_flow_data
+            }
+            
+            return loaded_flow_data
             
         except Exception as e:
             messagebox.showerror("Load Error", f"Failed to load flow data:\n{str(e)}")
