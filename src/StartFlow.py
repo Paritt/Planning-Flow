@@ -5,6 +5,7 @@ import raystation.v2025.typing as rstype
 import tkinter as tk
 from tkinter import ttk, messagebox
 from .catwork import CatWork
+from .start_match_roi import MatchROI
 
 
 class StartFlow:
@@ -42,10 +43,12 @@ class StartFlow:
             
             # 1. Load flow data from JSON file
             self.load_flow_data(flow_data=workflow_data, plan_data=plan_data)
-            # 2. Create a Plan and add beam based on the loaded flow
+            # 2. Check Match ROI if any not match open ROIs match window then create Match ROI dictionary
+            matcher = MatchROI(self.match_roi_data, self.case)
+            self.match_roi_dict = matcher.get_matched_dict()
+            print("Matched ROI Dictionary:", self.match_roi_dict)
+            # 3. Create a Plan and add beam based on the loaded flow
             self.create_plan()
-            # 3. Create Match ROI dictionary
-            self.create_match_roi_dict()
             # 4. Create Automate ROI
             self.create_automate_roi()
             # 5. Add initial objective
