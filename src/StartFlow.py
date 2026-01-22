@@ -17,13 +17,25 @@ warnings.filterwarnings('ignore', category=DeprecationWarning, module='raystatio
 
 
 class StartFlow:
-    def __init__(self, workflow_data, plan_data):
+    def __init__(self, workflow_data, plan_data, selected_steps=None):
         super().__init__()
         # Initialize timing dictionary
         self.step_times = {}
         self.overall_start_time = time.time()
         self.ui = get_current("ui")
         self.case = get_current("Case")
+        
+        # Store selected steps (default: all enabled)
+        if selected_steps is None:
+            self.selected_steps = {
+                "create_plan_and_beams": True,
+                "automate_roi": True,
+                "add_objectives": True,
+                "first_optimization": True,
+                "loop_optimization": True
+            }
+        else:
+            self.selected_steps = selected_steps
         
         # Check is the Plan Name not Unique
         plan_name = plan_data.get('plan_name', '')
@@ -82,7 +94,8 @@ class StartFlow:
             step_start = time.time()
             loaded_flow_data = self.load_flow_data(flow_data=workflow_data, plan_data=plan_data)
             self.step_times["Load Flow Data"] = time.time() - step_start
-            print(f"✅ Completed in {self.step_times['Load Flow Data']:.2f}s\n")
+            elapsed = self._format_time(self.step_times["Load Flow Data"])
+            print(f"✅ Completed in {elapsed}\n")
             print('#' * 50 + '\n')
             
             # 2. Check Match ROI if any not match open ROIs match window then create Match ROI dictionary
@@ -92,80 +105,149 @@ class StartFlow:
             self.match_roi_dict = matcher.get_matched_dict()
             self.step_times["Match ROIs"] = time.time() - step_start
             print("Matched ROI Dictionary:", self.match_roi_dict)
-            print(f"✅ Completed in {self.step_times['Match ROIs']:.2f}s\n")
+            elapsed = self._format_time(self.step_times["Match ROIs"])
+            print(f"✅ Completed in {elapsed}\n")
             print('#' * 50 + '\n')
             
             # 3. Create a Plan and add beam based on the loaded flow
-            print("Plan creation...")
-            step_start = time.time()
-            self.ui.Navigation.MenuItem['Plan design'].Click()
-            self.ui.Navigation.MenuItem['Plan design'].Popup.MenuItem['Plan setup'].Click()
-            plan_creator = PlanCreater(loaded_flow_data, self.case, self.selected_examination)
-            plan_creator.execute()
-            self.step_times["Create Plan and Beams"] = time.time() - step_start
-            print(f"✅ Completed in {self.step_times['Create Plan and Beams']:.2f}s\n")
-            print('#' * 50 + '\n')
+            if self.selected_steps.get("create_plan_and_beams"):
+                print("Plan creation...")
+                step_start = time.time()
+                self.ui.Navigation.MenuItem['Plan design'].Click()
+                self.ui.Navigation.MenuItem['Plan design'].Popup.MenuItem['Plan setup'].Click()
+                plan_creator = PlanCreater(loaded_flow_data, self.case, self.selected_examination)
+                plan_creator.execute()
+                self.step_times["Create Plan and Beams"] = time.time() - step_start
+                elapsed = self._format_time(self.step_times["Create Plan and Beams"])
+                print(f"✅ Completed in {elapsed}\n")
+                print('#' * 50 + '\n')
+            else:
+                print("[SKIPPED] Plan creation - Using existing plan")
+                selected_plan_name = None
+                
+                # First, try to get currently open plan
+                try:
+                    current_plan = get_current("Plan")
+                    selected_plan_name = current_plan.Name
+                    print(f"Using currently open plan: {selected_plan_name}")
+                except:
+                    # No plan currently open, let user select from available plans
+                    available_plans = [plan.Name for plan in self.case.TreatmentPlans]
+                    
+                    if not available_plans:
+                        messagebox.showerror("No Plan Available", "No plans found in this case. Please enable 'Create Plan and Add Beams' option.")
+                        return
+                    elif len(available_plans) == 1:
+                        # Only one plan, use it
+                        selected_plan_name = available_plans[0]
+                        print(f"Using plan: {selected_plan_name}")
+                    else:
+                        # Multiple plans, let user choose
+                        selected_plan_var = tk.StringVar()
+                        
+                        def on_plan_select():
+                            nonlocal selected_plan_name
+                            selected_plan_name = selected_plan_var.get()
+                            plan_window.destroy()
+                        
+                        plan_window = tk.Toplevel()
+                        plan_window.title("Select Plan")
+                        tk.Label(plan_window, text="Multiple plans found. Please select one:").pack(pady=10)
+                        
+                        plan_combo = ttk.Combobox(plan_window, textvariable=selected_plan_var, values=available_plans, state="readonly")
+                        plan_combo.pack(pady=5)
+                        plan_combo.current(0)
+                        
+                        select_button = tk.Button(plan_window, text="Select", command=on_plan_select)
+                        select_button.pack(pady=10)
+                        
+                        plan_window.grab_set()
+                        plan_window.wait_window()
+                        
+                        if selected_plan_name:
+                            print(f"Using plan: {selected_plan_name}")
+                
+                # Update plan_data to reflect selected plan name
+                plan_data['plan_name'] = selected_plan_name
+                self.plan = self.case.TreatmentPlans[selected_plan_name]
+                print()
             
             # 4. Create Automate ROI
-            print("Creating Automate ROIs...")
-            self.ui.Navigation.MenuItem['Patient modeling'].Click()
-            self.ui.Navigation.MenuItem['Patient modeling'].Popup.MenuItem['Structure definition'].Click()
-            self.ui.ToolPanel.TabItem['ROIs'].Select()
-            step_start = time.time()
-            roi_creater = Automate_ROI_Creater(
-                automate_roi_data=loaded_flow_data['automate_roi_data'],
-                matched_roi_dict=self.match_roi_dict,
-                case=self.case,
-                examination=self.selected_examination
-            )
-            roi_creater.create_all_rois()
-            self.step_times["Create Automate ROIs"] = time.time() - step_start
-            print(f"✅ Completed in {self.step_times['Create Automate ROIs']:.2f}s\n")
-            print('#' * 50 + '\n')
+            if self.selected_steps.get("automate_roi"):
+                print("Creating Automate ROIs...")
+                self.ui.Navigation.MenuItem['Patient modeling'].Click()
+                self.ui.Navigation.MenuItem['Patient modeling'].Popup.MenuItem['Structure definition'].Click()
+                self.ui.ToolPanel.TabItem['ROIs'].Select()
+                step_start = time.time()
+                roi_creater = Automate_ROI_Creater(
+                    automate_roi_data=loaded_flow_data['automate_roi_data'],
+                    matched_roi_dict=self.match_roi_dict,
+                    case=self.case,
+                    examination=self.selected_examination
+                )
+                roi_creater.create_all_rois()
+                self.step_times["Create Automate ROIs"] = time.time() - step_start
+                elapsed = self._format_time(self.step_times["Create Automate ROIs"])
+                print(f"✅ Completed in {elapsed}\n")
+                print('#' * 50 + '\n')
+            else:
+                print("[SKIPPED] Automate ROI creation\n")
             
             # 5. Add initial objective
-            print("Adding Initial Objectives...")
-            step_start = time.time()
-            self.ui.Navigation.MenuItem['Plan optimization'].Click()
-            self.ui.Navigation.MenuItem['Plan optimization'].Popup.MenuItem['Plan optimization'].Click()
-            self.ui.Workspace.TabControl['Objectives/constraints'].TabItem['Objectives/constraints'].Select()
-            opjective_adder = ObjectiveAdder(
-                initial_functions_data=loaded_flow_data['initial_functions_data'],
-                case=self.case,
-                plan_name=plan_data['plan_name'],
-                matched_roi_dict=self.match_roi_dict
-            )
-            opjective_adder.add_initial_objectives()
-            self.step_times["Add Initial Objectives"] = time.time() - step_start
-            print(f"✅ Completed in {self.step_times['Add Initial Objectives']:.2f}s\n")
-            print('#' * 50 + '\n')
+            if self.selected_steps.get("add_objectives"):
+                print("Adding Initial Objectives...")
+                step_start = time.time()
+                self.ui.Navigation.MenuItem['Plan optimization'].Click()
+                self.ui.Navigation.MenuItem['Plan optimization'].Popup.MenuItem['Plan optimization'].Click()
+                self.ui.Workspace.TabControl['Objectives/constraints'].TabItem['Objectives/constraints'].Select()
+                opjective_adder = ObjectiveAdder(
+                    initial_functions_data=loaded_flow_data['initial_functions_data'],
+                    case=self.case,
+                    plan_name=plan_data['plan_name'],
+                    matched_roi_dict=self.match_roi_dict
+                )
+                opjective_adder.add_initial_objectives()
+                self.step_times["Add Initial Objectives"] = time.time() - step_start
+                elapsed = self._format_time(self.step_times["Add Initial Objectives"])
+                print(f"✅ Completed in {elapsed}\n")
+                print('#' * 50 + '\n')
+            else:
+                print("[SKIPPED] Add initial objectives\n")
             
             # 6. Set Optimization Settings and Calculation algorithm
-            print("Setting Optimization and Calculation Settings...")
-            step_start = time.time()
-            # Optimization Settings
-            self.plan = self.case.TreatmentPlans[plan_name]
-            self.po = self.plan.PlanOptimizations[0]
-            self.po.OptimizationParameters.Algorithm.MaxNumberOfIterations = loaded_flow_data['optimization_data']['max_iterations']
-            self.po.OptimizationParameters.Algorithm.OptimalityTolerance = loaded_flow_data['optimization_data']['tolerance']
-            # Set Calculation algorithm
-            if loaded_flow_data['technique_data'] == 'VMAT':
-                print("[VMAT] Using default calculation algorithm -> Collapsed Cone...")
-            elif loaded_flow_data['technique_data'] == 'IMPT':
-                print("[IMPT] Setting calculation algorithm to Proton Pencil Beam...")
+            if self.selected_steps.get("add_objectives") or self.selected_steps.get("first_optimization"):
+                print("Setting Optimization and Calculation Settings...")
+                step_start = time.time()
+                # Optimization Settings
+                self.plan = self.case.TreatmentPlans[plan_data['plan_name']]
+                self.po = self.plan.PlanOptimizations[0]
+                self.po.OptimizationParameters.Algorithm.MaxNumberOfIterations = loaded_flow_data['optimization_data']['max_iterations']
+                self.po.OptimizationParameters.Algorithm.OptimalityTolerance = loaded_flow_data['optimization_data']['tolerance']
+                # Set Calculation algorithm
+                if loaded_flow_data['technique_data'] == 'VMAT':
+                    print("[VMAT] Using default calculation algorithm -> Collapsed Cone...")
+                elif loaded_flow_data['technique_data'] == 'IMPT':
+                    print("[IMPT] Setting calculation algorithm to Proton Pencil Beam...")
+                else:
+                    print("Unknown technique type for calculation algorithm setting.")
+                self.step_times["Optimization and Calculation Settings"] = time.time() - step_start
+                elapsed = self._format_time(self.step_times["Optimization and Calculation Settings"])
+                print(f"✅ Completed in {elapsed}\n")
+                print('#' * 50 + '\n')
             else:
-                print("Unknown technique type for calculation algorithm setting.")
-            self.step_times["Optimization and Calculation Settings"] = time.time() - step_start
-            print(f"✅ Completed in {self.step_times['Optimization and Calculation Settings']:.2f}s\n")
-            print('#' * 50 + '\n')
+                print("[SKIPPED] Optimization settings\n")
                 
             # 7. First Optimization
-            print("Starting First Optimization...")
-            step_start = time.time()
-            self.po.RunOptimization()
-            self.step_times["First Optimization"] = time.time() - step_start
-            print(f"✅ Completed in {self.step_times['First Optimization']:.2f}s\n")
-            print('#' * 50 + '\n')
+            if self.selected_steps.get("first_optimization"):
+                print("Starting First Optimization...")
+                step_start = time.time()
+                self.po.RunOptimization()
+                self.step_times["First Optimization"] = time.time() - step_start
+                elapsed = self._format_time(self.step_times["First Optimization"])
+                print(f"✅ Completed in {elapsed}\n")
+                print('#' * 50 + '\n')
+            else:
+                print("[SKIPPED] First optimization\n")
             
             # Print timing summary
             self.print_timing_summary()
@@ -217,6 +299,13 @@ class StartFlow:
         except Exception as e:
             messagebox.showerror("Load Error", f"Failed to load flow data:\n{str(e)}")
     
+    def _format_time(self, seconds):
+        """Format time in seconds to HH:MM:SS format."""
+        hours = int(seconds // 3600)
+        minutes = int((seconds % 3600) // 60)
+        secs = int(seconds % 60)
+        return f"{hours:02d}:{minutes:02d}:{secs:02d}"
+    
     def print_timing_summary(self):
         """Print execution time summary."""
         total_time = time.time() - self.overall_start_time
@@ -227,10 +316,12 @@ class StartFlow:
         
         for step_name, step_time in self.step_times.items():
             percentage = (step_time / total_time) * 100
-            print(f"{step_name:<30} {step_time:>8.2f}s ({percentage:>5.1f}%)")
+            formatted_time = self._format_time(step_time)
+            print(f"{step_name:<30} {formatted_time:>10} ({percentage:>5.1f}%)")
         
         print("-" * 60)
-        print(f"{'TOTAL EXECUTION TIME':<30} {total_time:>8.2f}s (100.0%)")
+        total_formatted = self._format_time(total_time)
+        print(f"{'TOTAL EXECUTION TIME':<30} {total_formatted:>10} (100.0%)")
         print("=" * 60)
         print(f"Finished at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
         print("=" * 60 + "\n")

@@ -41,6 +41,15 @@ class AutoPlanGUI(tk.Tk):
         # Loaded Workflow Data
         self.workflow_data = {}
         self.planning_window = None
+        
+        # Selected workflow steps (default: all enabled)
+        self.selected_steps = {
+            "create_plan_and_beams": True,
+            "automate_roi": True,
+            "add_objectives": True,
+            "first_optimization": True,
+            "loop_optimization": True
+        }
 
     def create_treatment_settings(self):
         """Create treatment room and flow selection."""
@@ -79,6 +88,7 @@ class AutoPlanGUI(tk.Tk):
         ttk.Button(frame, text="New Flow", command=self.new_flow).pack(side="left", padx=5, pady=2)
         ttk.Button(frame, text="Edit Flow", command=self.edit_flow).pack(side="left", padx=5, pady=2)
         ttk.Button(frame, text="Start", command=self.start_planning).pack(side="right", padx=5, pady=2)
+        ttk.Button(frame, text="Select Steps", command=self.select_steps).pack(side="right", padx=5, pady=2)
     
     def create_console_output(self):
         """Create console output display."""
@@ -147,6 +157,53 @@ class AutoPlanGUI(tk.Tk):
         """Create a completely new blank planning flow."""
         # Open PlanFlowDesigner without any data (blank flow)
         PlanFlowDesigner(self)
+    
+    def select_steps(self):
+        """Open window to select which workflow steps to execute."""
+        step_window = tk.Toplevel(self)
+        step_window.title("Select Workflow Steps")
+        step_window.geometry("350x230")
+        step_window.attributes('-topmost', True)
+        
+        tk.Label(step_window, text="Select steps to execute:", font=("Arial", 10, "bold")).pack(pady=10)
+        
+        # Create checkbox variables
+        check_vars = {}
+        step_labels = [
+            ("create_plan_and_beams", "Create Plan and Add Beams"),
+            ("automate_roi", "Automate ROI"),
+            ("add_objectives", "Add Initial Objectives"),
+            ("first_optimization", "Run 1st Optimization"),
+            ("loop_optimization", "Run Loop Optimization")
+        ]
+        
+        for step_key, step_label in step_labels:
+            var = tk.BooleanVar(value=self.selected_steps[step_key])
+            check_vars[step_key] = var
+            ttk.Checkbutton(step_window, text=step_label, variable=var).pack(anchor="w", padx=30, pady=3)
+        
+        def apply_selection():
+            for step_key in check_vars:
+                self.selected_steps[step_key] = check_vars[step_key].get()
+            messagebox.showinfo("Steps Updated", "Workflow steps selection has been updated.")
+            step_window.destroy()
+        
+        def select_all():
+            for var in check_vars.values():
+                var.set(True)
+        
+        def deselect_all():
+            for var in check_vars.values():
+                var.set(False)
+        
+        # Button frame
+        btn_frame = ttk.Frame(step_window)
+        btn_frame.pack(pady=10)
+        
+        ttk.Button(btn_frame, text="Select All", command=select_all).pack(side="left", padx=5)
+        ttk.Button(btn_frame, text="Deselect All", command=deselect_all).pack(side="left", padx=5)
+        ttk.Button(btn_frame, text="Apply", command=apply_selection).pack(side="left", padx=5)
+        ttk.Button(btn_frame, text="Cancel", command=step_window.destroy).pack(side="left", padx=5)
 
     def start_planning(self):
         """Start the automated planning process."""
@@ -157,51 +214,55 @@ class AutoPlanGUI(tk.Tk):
         if not self.workflow_data:
             messagebox.showerror("Start Planning", "Please load a flow first using 'Load Flow' button.")
             return
-        if plan_data['plan_name'] == "":
-            messagebox.showerror("Input Error", "Please enter a Plan Name.")
-            return
-        if plan_data['machine'] == "":
-            messagebox.showerror("Input Error", "Please select a Treatment Room.")
-            return
-        else:
-            # Expand window and show console
-            self.geometry("570x500")
-            self.console_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        
+        # Only validate plan name and machine if creating new plan
+        if self.selected_steps.get("create_plan_and_beams"):
+            if plan_data['plan_name'] == "":
+                messagebox.showerror("Input Error", "Please enter a Plan Name.")
+                return
+            if plan_data['machine'] == "":
+                messagebox.showerror("Input Error", "Please select a Treatment Room.")
+                return
+        
+        
+        # Expand window and show console
+        self.geometry("570x500")
+        self.console_frame.pack(fill="both", expand=True, padx=10, pady=5)
+        
+        # Clear console
+        self.console_text.delete(1.0, tk.END)
+        self.console_text.insert(tk.END, f"Starting Planning Flow: {self.workflow_data.get('flow_name', 'Unnamed')}\n")
+        self.console_text.insert(tk.END, f"Plan: {plan_data['plan_name'] if plan_data['plan_name'] else 'Using existing plan'} | Machine: {plan_data['machine'] if plan_data['machine'] else 'N/A'}\n")
+        self.console_text.insert(tk.END, "=" * 60 + "\n\n")
+        
+        # Redirect stdout and stderr to console
+        sys.stdout = TextRedirector(self.console_text)
+        sys.stderr = TextRedirector(self.console_text)
+        self.update()
+        
+        try:
+            StartFlow(workflow_data=self.workflow_data, plan_data=plan_data, selected_steps=self.selected_steps)
+            print("\n" + "=" * 60)
+            print("✅ Planning Flow Completed Successfully!")
+            print("=" * 60 + "\n")
             
-            # Clear console
-            self.console_text.delete(1.0, tk.END)
-            self.console_text.insert(tk.END, f"Starting Planning Flow: {self.workflow_data.get('flow_name', 'Unnamed')}\n")
-            self.console_text.insert(tk.END, f"Plan: {plan_data['plan_name']} | Machine: {plan_data['machine']}\n")
-            self.console_text.insert(tk.END, "=" * 60 + "\n\n")
-            
-            # Redirect stdout and stderr to console
-            sys.stdout = TextRedirector(self.console_text)
-            sys.stderr = TextRedirector(self.console_text)
-            self.update()
-            
-            try:
-                StartFlow(workflow_data=self.workflow_data, plan_data=plan_data)
-                print("\n" + "=" * 60)
-                print("✅ Planning Flow Completed Successfully!")
-                print("=" * 60 + "\n")
+            # Show save log button on success
+            self.save_log_button.pack(side="bottom", pady=5)
                 
-                # Show save log button on success
-                self.save_log_button.pack(side="bottom", pady=5)
-                    
-            except Exception as e:
-                print("\n" + "=" * 60)
-                print(f"❌ Error during planning flow: {str(e)}")
-                print("=" * 60 + "\n")
-                messagebox.showerror("Planning Flow Error", f"An error occurred:\n{str(e)}")
+        except Exception as e:
+            print("\n" + "=" * 60)
+            print(f"❌ Error during planning flow: {str(e)}")
+            print("=" * 60 + "\n")
+            messagebox.showerror("Planning Flow Error", f"An error occurred:\n{str(e)}")
+            
+            # Ask if user wants to save error log (popup for errors)
+            if messagebox.askyesno("Save Error Log", "Would you like to save the error log?"):
+                self.save_log()
                 
-                # Ask if user wants to save error log (popup for errors)
-                if messagebox.askyesno("Save Error Log", "Would you like to save the error log?"):
-                    self.save_log()
-                    
-            finally:
-                # Restore stdout and stderr
-                sys.stdout = sys.__stdout__
-                sys.stderr = sys.__stderr__
+        finally:
+            # Restore stdout and stderr
+            sys.stdout = sys.__stdout__
+            sys.stderr = sys.__stderr__
     
     def save_log(self):
         """Save console log to a text file."""

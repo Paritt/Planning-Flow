@@ -69,7 +69,7 @@ class MatchROI:
         if self.has_unmatched:
             self._open_match_window()
         else:
-            print("✅ All ROI are MATCH")
+            print("✅ All ROIs are MATCHED")
         
         # Filter out any None or --Not Match-- values before returning
         return {k: v for k, v in self.matched_dict.items() if v is not None}
@@ -77,7 +77,7 @@ class MatchROI:
     def _open_match_window(self):
         """Open a window for manual ROI matching."""
         match_window = Toplevel()
-        match_window.title('Match ROI')
+        match_window.title('Manually Match ROIs')
         
         # Make window stay on top
         match_window.attributes('-topmost', True)
