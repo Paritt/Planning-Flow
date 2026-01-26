@@ -120,7 +120,7 @@ class StartFlow:
                 step_start = time.time()
                 self.ui.Navigation.MenuItem['Plan design'].Click()
                 self.ui.Navigation.MenuItem['Plan design'].Popup.MenuItem['Plan setup'].Click()
-                plan_creator = PlanCreater(loaded_flow_data, self.case, self.selected_examination)
+                plan_creator = PlanCreater(loaded_flow_data, self.case, self.selected_examination, self.match_roi_dict)
                 plan_creator.create_plan_step()
                 self.Patient.Save()
                 self.ui.Workspace.TabControl['Plan'].TabItem['Beams'].Select()

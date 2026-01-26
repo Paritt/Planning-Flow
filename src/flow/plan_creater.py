@@ -7,7 +7,7 @@ from tkinter import messagebox
 class PlanCreater:
     """Create a plan and add beams based on loaded flow data."""
     
-    def __init__(self, loaded_flow_data, case, examination):
+    def __init__(self, loaded_flow_data, case, examination, matched_roi_dict):
         """
         Initialize PlanCreater with flow data and case.
         
@@ -24,6 +24,7 @@ class PlanCreater:
         self.examination = examination
         self.structure_set = None
         self.iso_data = None
+        self.matched_roi_dict = matched_roi_dict
         
         # Extract data from flow
         self.plan_name = loaded_flow_data.get("plan_name")
@@ -135,6 +136,7 @@ class PlanCreater:
             
             primary_dose = self.prescription_data.get("primary_dose")
             prescription_roi = self.prescription_data.get("prescription_roi")
+            prescription_roi = self.matched_roi_dict.get(prescription_roi, prescription_roi)
             
             if not primary_dose or not prescription_roi:
                 print("No prescription data specified, skipping prescription")
@@ -171,6 +173,7 @@ class PlanCreater:
             
             if method == "Center of ROI":
                 roi_name = self.isocenter_data.get("roi_name")
+                roi_name = self.matched_roi_dict.get(roi_name, roi_name)
                 if not roi_name:
                     print("No ROI specified for isocenter, skipping")
                     return True
