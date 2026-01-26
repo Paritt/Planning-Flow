@@ -9,6 +9,8 @@ from src.flow.plan_creater import PlanCreater
 from src.flow.automate_roi_creater import Automate_ROI_Creater
 from src.flow.objecitve_adder import ObjectiveAdder
 from src.flow.condition_checker import ConditionChecker
+from src.flow.conditional_ROI_creater import ConditionalROICreator
+#from src.flow.objective_adjuster import ObjectiveAdjuster
 import time
 from datetime import datetime
 import warnings
@@ -264,12 +266,13 @@ class StartFlow:
                 )
                 
                 # 8.2 Create conditional ROIs
-                # conditional_roi_creator = ConditionalROICreator(
-                #     condition_rois_data=loaded_flow_data['condition_rois_data'],
-                #     case=self.case,
-                #     examination=self.selected_examination,
-                #     matched_roi_dict=self.match_roi_dict
-                # )
+                conditional_roi_creator = ConditionalROICreator(
+                    condition_rois_data=loaded_flow_data['condition_rois_data'],
+                    matched_roi_dict=self.match_roi_dict,
+                    case=self.case,
+                    examination=self.selected_examination,
+                    plan=self.plan
+                )
                 
                 # 8.3 Adjust objectives
                 # objective_adjuster = ObjectiveAdjuster(
@@ -285,12 +288,13 @@ class StartFlow:
                     print("  ---------------------")
                     print("  Checking conditions...")
                     met_condition = conditions_checker.check_all_conditions()
+                    print(f"  Met Condition: {met_condition}")
                     if not met_condition:
                         print("  No conditions met. Exiting optimization loop.\n")
                         break
                     else:
                         loop_start = time.time()
-                        # conditional_roi_creator.create_condition_rois(met_condition)
+                        conditional_roi_creator.create_all_conditional_rois(met_condition)
                         # objective_adjuster.adjust_objectives(met_condition)
                         # self.po.RunOptimization()
                         loop_time = time.time() - loop_start
