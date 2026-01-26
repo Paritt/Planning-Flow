@@ -59,7 +59,7 @@ class AutomateROI_Window:
         self.move_down_btn = ttk.Button(button_frame, text="Move Down", command=lambda: self.move_roi_order(1))
         self.move_down_btn.pack(side="left", padx=5)
 
-        self.edit_function_btn = ttk.Button(button_frame, text="Edit Function", command=self.edit_roi_function)
+        self.edit_function_btn = ttk.Button(button_frame, text="Edit", command=self.edit_roi_function)
         self.edit_function_btn.pack(side="left", padx=5)
 
         self.save_roi_btn = ttk.Button(button_frame, text="Save", command=self.save_roi_list)

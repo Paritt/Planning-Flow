@@ -10,7 +10,7 @@ from src.flow.automate_roi_creater import Automate_ROI_Creater
 from src.flow.objecitve_adder import ObjectiveAdder
 from src.flow.condition_checker import ConditionChecker
 from src.flow.conditional_ROI_creater import ConditionalROICreator
-#from src.flow.objective_adjuster import ObjectiveAdjuster
+from src.flow.objective_adjuster import ObjectiveAdjuster
 import time
 from datetime import datetime
 import warnings
@@ -220,7 +220,7 @@ class StartFlow:
             # 6. Set Optimization Settings and Calculation algorithm
             # TODO: Calculation setting for Proton plan
             if self.selected_steps.get("add_objectives") or self.selected_steps.get("first_optimization"):
-                print("Setting Optimization and Calculation Settings...")
+                print("Setting Opt. and Cal. Settings...")
                 step_start = time.time()
                 # Optimization Settings
                 self.plan = self.case.TreatmentPlans[plan_data['plan_name']]
@@ -234,8 +234,8 @@ class StartFlow:
                     print("[IMPT] Setting calculation algorithm to Proton Pencil Beam...")
                 else:
                     print("Unknown technique type for calculation algorithm setting.")
-                self.step_times["Optimization and Calculation Settings"] = time.time() - step_start
-                elapsed = self._format_time(self.step_times["Optimization and Calculation Settings"])
+                self.step_times["Opt. and Cal. Settings"] = time.time() - step_start
+                elapsed = self._format_time(self.step_times["Opt. and Cal. Settings"])
                 print(f"✅ Completed in {elapsed}\n")
                 print('#' * 50 + '\n')
             else:
@@ -275,18 +275,22 @@ class StartFlow:
                 )
                 
                 # 8.3 Adjust objectives
-                # objective_adjuster = ObjectiveAdjuster(
-                #     function_adjustments_data=loaded_flow_data['function_adjustments_data'],
-                #     case=self.case,
-                #     plan_name=plan_data['plan_name'],
-                #     matched_roi_dict=self.match_roi_dict
-                # )
+                objective_adjuster = ObjectiveAdjuster(
+                    function_adjustments_data=loaded_flow_data['function_adjustments_data'],
+                    matched_roi_dict=self.match_roi_dict,
+                    case=self.case,
+                    plan=self.plan
+                )
                 
                 # 8.4 Run optimization loop
                 for i in range(loaded_flow_data['end_flow_data']['max_optimize_rounds']):
+                    self.plan = self.case.TreatmentPlans[plan_data['plan_name']]
+                    self.po = self.plan.PlanOptimizations[0]
+                    print("  ---------------------")
                     print(f"  Optimization Loop {i+1}/{loaded_flow_data['end_flow_data']['max_optimize_rounds']}...")
                     print("  ---------------------")
                     print("  Checking conditions...")
+                    conditions_checker.set_optimization_round(i+1)
                     met_condition = conditions_checker.check_all_conditions()
                     print(f"  Met Condition: {met_condition}")
                     if not met_condition:
@@ -295,8 +299,9 @@ class StartFlow:
                     else:
                         loop_start = time.time()
                         conditional_roi_creator.create_all_conditional_rois(met_condition)
-                        # objective_adjuster.adjust_objectives(met_condition)
-                        # self.po.RunOptimization()
+                        objective_adjuster.adjust_objectives(met_condition)
+                        print("  Running optimization...")
+                        self.po.RunOptimization()
                         loop_time = time.time() - loop_start
                         formatted_loop_time = self._format_time(loop_time)
                         print(f"  ✅ Loop {i+1} completed in {formatted_loop_time}\n")
