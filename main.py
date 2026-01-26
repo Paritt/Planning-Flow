@@ -45,6 +45,7 @@ class AutoPlanGUI(tk.Tk):
         # Selected workflow steps (default: all enabled)
         self.selected_steps = {
             "create_plan_and_beams": True,
+            "add_clinical_goal": True,
             "automate_roi": True,
             "add_objectives": True,
             "first_optimization": True,
@@ -162,7 +163,7 @@ class AutoPlanGUI(tk.Tk):
         """Open window to select which workflow steps to execute."""
         step_window = tk.Toplevel(self)
         step_window.title("Select Workflow Steps")
-        step_window.geometry("350x230")
+        step_window.geometry("350x250")
         step_window.attributes('-topmost', True)
         
         tk.Label(step_window, text="Select steps to execute:", font=("Arial", 10, "bold")).pack(pady=10)
@@ -171,6 +172,7 @@ class AutoPlanGUI(tk.Tk):
         check_vars = {}
         step_labels = [
             ("create_plan_and_beams", "Create Plan and Add Beams"),
+            ("add_clinical_goal", "Add Clinical Goal"),
             ("automate_roi", "Automate ROI"),
             ("add_objectives", "Add Initial Objectives"),
             ("first_optimization", "Run 1st Optimization"),

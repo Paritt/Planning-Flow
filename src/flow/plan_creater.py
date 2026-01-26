@@ -310,7 +310,7 @@ class PlanCreater:
         except Exception as e:
             print(f"Warning: Could not edit setup beams: {str(e)}")
     
-    def execute(self):
+    def create_plan_step(self):
         """Execute the complete plan creation workflow."""
         # Create plan
         if not self.create_plan():
@@ -328,6 +328,7 @@ class PlanCreater:
         if not self.set_isocenter():
             return False
         
+    def add_beams_step(self):    
         # Add beams based on technique
         if self.technique == "VMAT":
             if not self.add_vmat_beams():

@@ -13,6 +13,7 @@ from src.window.condition_roi_window import ConditionROI_Window
 from src.window.function_adjustment_window import FunctionAdjustment_Window
 from src.window.end_planning_flow_window import EndPlanningFlow_Window
 from src.window.prescription_window import PrescriptionSetting_Window
+from src.window.add_clinical_goal_window import Clinical_Goal_Window
 
 class PlanFlowDesigner:
     """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
@@ -38,6 +39,7 @@ class PlanFlowDesigner:
         self.beam_settings_data = []
         self.isocenter_data = {}
         self.prescription_data = {}
+        self.clinical_goal_data = {}
         
         self.name_configured(self.planning_window)
         
@@ -140,7 +142,8 @@ class PlanFlowDesigner:
             "end_flow": self.end_flow_data,
             "beam_settings": self.beam_settings_data,
             "isocenter": self.isocenter_data,
-            "prescription": self.prescription_data
+            "prescription": self.prescription_data,
+            "clinical_goal": self.clinical_goal_data
         }
         
         # Open file dialog to save
@@ -182,7 +185,8 @@ class PlanFlowDesigner:
             "end_flow": self.end_flow_data,
             "beam_settings": self.beam_settings_data,
             "isocenter": self.isocenter_data,
-            "prescription": self.prescription_data
+            "prescription": self.prescription_data,
+            "clinical_goal": self.clinical_goal_data
         }
         
         # Validate flow has required data
@@ -231,6 +235,7 @@ class PlanFlowDesigner:
             self.vmat_beam_data = data.get("vmat_beam", [])
             self.isocenter_data = data.get("isocenter", {})
             self.prescription_data = data.get("prescription", {})
+            self.clinical_goal_data = data.get("clinical_goal", {})
         except Exception as e:
             messagebox.showerror("Load Error", f"Failed to load flow data:\n{str(e)}")
     
@@ -282,7 +287,8 @@ class PlanFlowDesigner:
         frame.pack(fill="both", expand=True, padx=10, pady=5)
 
         # Steps Buttons
-        self.add_clinical_goal_btn = ttk.Button(frame, text="Add Clinical Goal", command=lambda: self.show_step_info("Open add clinical goal window"))
+        # TODO: Add "Add Clinical Goal" button when functionality is ready
+        self.add_clinical_goal_btn = ttk.Button(frame, text="Add Clinical Goal", command=lambda: Clinical_Goal_Window(self.planning_window, self))
         self.add_clinical_goal_btn.place(x=380, y=220)
         
         self.start_btn = ttk.Button(frame, text="Start", command=lambda: self.show_step_info("Planning flow start by\n1. Match ROI\n2. Create Plan with Beams"))

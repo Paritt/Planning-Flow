@@ -11,6 +11,7 @@ from src.flow.objecitve_adder import ObjectiveAdder
 from src.flow.condition_checker import ConditionChecker
 from src.flow.conditional_ROI_creater import ConditionalROICreator
 from src.flow.objective_adjuster import ObjectiveAdjuster
+from src.flow.ClinicalGoalAdder import ClinicalGoalAdder
 import time
 from datetime import datetime
 import warnings
@@ -27,6 +28,7 @@ class StartFlow:
         self.overall_start_time = time.time()
         self.ui = get_current("ui")
         self.case = get_current("Case")
+        self.Patient = get_current("Patient")
         
         # Store selected steps (default: all enabled)
         if selected_steps is None:
@@ -119,7 +121,11 @@ class StartFlow:
                 self.ui.Navigation.MenuItem['Plan design'].Click()
                 self.ui.Navigation.MenuItem['Plan design'].Popup.MenuItem['Plan setup'].Click()
                 plan_creator = PlanCreater(loaded_flow_data, self.case, self.selected_examination)
-                plan_creator.execute()
+                plan_creator.create_plan_step()
+                self.Patient.Save()
+                self.ui.Workspace.TabControl['Plan'].TabItem['Beams'].Select()
+                plan_creator.add_beams_step()
+                self.Patient.Save()
                 self.step_times["Create Plan and Beams"] = time.time() - step_start
                 elapsed = self._format_time(self.step_times["Create Plan and Beams"])
                 print(f"✅ Completed in {elapsed}\n")
@@ -175,6 +181,28 @@ class StartFlow:
                 self.plan = self.case.TreatmentPlans[selected_plan_name]
                 print()
             
+            # 3.5 Add Clinical Goals from Template
+            if self.selected_steps.get("add_clinical_goal"):
+                print("Adding Clinical Goals from Template...")
+                step_start = time.time()
+                self.ui.Navigation.MenuItem['Plan optimization'].Click()
+                self.ui.Navigation.MenuItem['Plan optimization'].Popup.MenuItem['Plan optimization'].Click()
+                self.ui.Workspace.TabControl['DVH'].TabItem['Clinical goals'].Select()
+                clinical_goal_adder = ClinicalGoalAdder(
+                    clinical_goal_data=loaded_flow_data['clinical_goal_data'],
+                    matched_roi_dict=self.match_roi_dict,
+                    case=self.case,
+                    plan_name=plan_data['plan_name']
+                )
+                clinical_goal_adder.add_clinical_goals()
+                self.Patient.Save()
+                self.step_times["Add Clinical Goals"] = time.time() - step_start
+                elapsed = self._format_time(self.step_times["Add Clinical Goals"])
+                print(f"✅ Completed in {elapsed}\n")
+                print('#' * 50 + '\n')
+            else:
+                print("[SKIPPED] Adding Clinical Goals\n")
+            
             # 4. Create Automate ROI
             if self.selected_steps.get("automate_roi"):
                 print("Creating Automate ROIs...")
@@ -189,6 +217,7 @@ class StartFlow:
                     examination=self.selected_examination
                 )
                 roi_creater.create_all_rois()
+                self.Patient.Save()
                 self.step_times["Create Automate ROIs"] = time.time() - step_start
                 elapsed = self._format_time(self.step_times["Create Automate ROIs"])
                 print(f"✅ Completed in {elapsed}\n")
@@ -210,6 +239,7 @@ class StartFlow:
                     matched_roi_dict=self.match_roi_dict
                 )
                 opjective_adder.add_initial_objectives()
+                self.Patient.Save()
                 self.step_times["Add Initial Objectives"] = time.time() - step_start
                 elapsed = self._format_time(self.step_times["Add Initial Objectives"])
                 print(f"✅ Completed in {elapsed}\n")
@@ -246,6 +276,7 @@ class StartFlow:
                 print("Starting First Optimization...")
                 step_start = time.time()
                 self.po.RunOptimization()
+                self.Patient.Save()
                 self.step_times["First Optimization"] = time.time() - step_start
                 elapsed = self._format_time(self.step_times["First Optimization"])
                 print(f"✅ Completed in {elapsed}\n")
@@ -302,6 +333,7 @@ class StartFlow:
                         objective_adjuster.adjust_objectives(met_condition)
                         print("  Running optimization...")
                         self.po.RunOptimization()
+                        self.Patient.Save()
                         loop_time = time.time() - loop_start
                         formatted_loop_time = self._format_time(loop_time)
                         print(f"  ✅ Loop {i+1} completed in {formatted_loop_time}\n")
@@ -338,6 +370,7 @@ class StartFlow:
             condition_rois_data = flow_data.get("condition_rois", [])
             function_adjustments_data = flow_data.get("function_adjustments", [])
             end_flow_data = flow_data.get("end_flow", {})
+            clinical_goal_data = flow_data.get("clinical_goal", {})
             
             loaded_flow_data = {
                 "plan_name": plan_name,
@@ -355,7 +388,8 @@ class StartFlow:
                 "check_conditions_data": check_conditions_data,
                 "condition_rois_data": condition_rois_data,
                 "function_adjustments_data": function_adjustments_data,
-                "end_flow_data": end_flow_data
+                "end_flow_data": end_flow_data,
+                "clinical_goal_data": clinical_goal_data
             }
             
             return loaded_flow_data
