@@ -4,10 +4,11 @@ from raystation.v2025 import get_current
 import raystation.v2025.typing as rstype
 import tkinter as tk
 from tkinter import ttk, messagebox
-from .flow.start_match_roi import MatchROI
-from .flow.plan_creater import PlanCreater
+from src.flow.start_match_roi import MatchROI
+from src.flow.plan_creater import PlanCreater
 from src.flow.automate_roi_creater import Automate_ROI_Creater
 from src.flow.objecitve_adder import ObjectiveAdder
+from src.flow.condition_checker import ConditionChecker
 import time
 from datetime import datetime
 import warnings
@@ -215,6 +216,7 @@ class StartFlow:
                 print("[SKIPPED] Add initial objectives\n")
             
             # 6. Set Optimization Settings and Calculation algorithm
+            # TODO: Calculation setting for Proton plan
             if self.selected_steps.get("add_objectives") or self.selected_steps.get("first_optimization"):
                 print("Setting Optimization and Calculation Settings...")
                 step_start = time.time()
@@ -248,6 +250,59 @@ class StartFlow:
                 print('#' * 50 + '\n')
             else:
                 print("[SKIPPED] First optimization\n")
+                
+            # 8. Loop Optimization
+            if self.selected_steps.get("loop_optimization"):
+                print("Starting Loop Optimization...")
+                step_start = time.time()
+                # 8.1 Check Conditions
+                conditions_checker = ConditionChecker(
+                    check_conditions_data=loaded_flow_data['check_conditions_data'],
+                    case=self.case,
+                    plan_name=plan_data['plan_name'],
+                    matched_roi_dict=self.match_roi_dict
+                )
+                
+                # 8.2 Create conditional ROIs
+                # conditional_roi_creator = ConditionalROICreator(
+                #     condition_rois_data=loaded_flow_data['condition_rois_data'],
+                #     case=self.case,
+                #     examination=self.selected_examination,
+                #     matched_roi_dict=self.match_roi_dict
+                # )
+                
+                # 8.3 Adjust objectives
+                # objective_adjuster = ObjectiveAdjuster(
+                #     function_adjustments_data=loaded_flow_data['function_adjustments_data'],
+                #     case=self.case,
+                #     plan_name=plan_data['plan_name'],
+                #     matched_roi_dict=self.match_roi_dict
+                # )
+                
+                # 8.4 Run optimization loop
+                for i in range(loaded_flow_data['end_flow_data']['max_optimize_rounds']):
+                    print(f"  Optimization Loop {i+1}/{loaded_flow_data['end_flow_data']['max_optimize_rounds']}...")
+                    print("  ---------------------")
+                    print("  Checking conditions...")
+                    met_condition = conditions_checker.check_all_conditions()
+                    if not met_condition:
+                        print("  No conditions met. Exiting optimization loop.\n")
+                        break
+                    else:
+                        loop_start = time.time()
+                        # conditional_roi_creator.create_condition_rois(met_condition)
+                        # objective_adjuster.adjust_objectives(met_condition)
+                        # self.po.RunOptimization()
+                        loop_time = time.time() - loop_start
+                        formatted_loop_time = self._format_time(loop_time)
+                        print(f"  ✅ Loop {i+1} completed in {formatted_loop_time}\n")
+                    
+                self.step_times["Loop Optimization"] = time.time() - step_start
+                elapsed = self._format_time(self.step_times["Loop Optimization"])
+                print(f"✅ Completed in {elapsed}\n")
+                print('#' * 50 + '\n')
+            else:
+                print("[SKIPPED] Loop optimization\n")
             
             # Print timing summary
             self.print_timing_summary()
