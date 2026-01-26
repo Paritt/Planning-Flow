@@ -6,6 +6,9 @@ import sys
 from src.PlanFlowDesigner import PlanFlowDesigner
 from src.StartFlow import StartFlow
 
+machine_options = ['Agility', 'P1']
+# machine_options = ['N3_VersaHD', 'N4_VersaHD', 'TrueBeam_L6', 'TrueBeam_L7', 'TrueBeam_N5']
+beam_energy_list = ['6', '10', '6 FFF', '10 FFF']
 
 class TextRedirector:
     """Redirect stdout/stderr to a text widget."""
@@ -67,9 +70,7 @@ class AutoPlanGUI(tk.Tk):
         ttk.Label(frame, text="Treatment Room:").grid(row=0, column=2, padx=5, pady=2)
         self.room_var = tk.StringVar()
         self.room_dropdown = ttk.Combobox(frame, textvariable=self.room_var,
-                                        values=['Agility', 'P1'], state="readonly")
-        # self.room_dropdown = ttk.Combobox(frame, textvariable=self.room_var,
-        #                                 values=['N3_VersaHD', 'N4_VersaHD', 'TrueBeam_L6', 'TrueBeam_L7', 'TrueBeam_N5'], state="readonly")
+                                        values=machine_options, state="readonly")
         self.room_dropdown.grid(row=0, column=3, padx=5, pady=2)
 
         # Planning Flow (Read-only)
@@ -150,14 +151,14 @@ class AutoPlanGUI(tk.Tk):
             self.flow_entry.config(state="readonly")
             
             # Open PlanFlowDesigner with loaded data
-            PlanFlowDesigner(self, load_data=self.workflow_data)
+            PlanFlowDesigner(self, load_data=self.workflow_data, beam_energy_list=beam_energy_list)
         else:
             messagebox.showwarning("Edit Flow", "Please load a flow first using 'Load Flow' button.")
     
     def new_flow(self):
         """Create a completely new blank planning flow."""
         # Open PlanFlowDesigner without any data (blank flow)
-        PlanFlowDesigner(self)
+        PlanFlowDesigner(self, beam_energy_list=beam_energy_list)
     
     def select_steps(self):
         """Open window to select which workflow steps to execute."""

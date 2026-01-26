@@ -18,8 +18,9 @@ from src.window.add_clinical_goal_window import Clinical_Goal_Window
 class PlanFlowDesigner:
     """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
     """Open a new window for planning steps."""
-    def __init__(self, parent, load_data=None):
+    def __init__(self, parent, load_data=None, beam_energy_list=None):
         self.parent = parent
+        self.beam_energy_list = beam_energy_list if beam_energy_list is not None else ['6', '10', '15', '6 FFF', '10 FFF']
         self.planning_window = tk.Toplevel(parent)
         self.planning_window.title("Planning flow")
         self.planning_window.geometry("550x450")
@@ -268,7 +269,7 @@ class PlanFlowDesigner:
         self.technique_dropdown = ttk.Combobox(frame, textvariable=self.technique_var, values=['VMAT', 'IMPT'], state="readonly")
         self.technique_dropdown.pack(side="left", padx=5, pady=2)
         
-        beam_settings_btn = ttk.Button(frame, text="Beam", command=lambda: VMAT_beam_setting_Window(self.planning_window, self) if self.technique_var.get() == "VMAT" 
+        beam_settings_btn = ttk.Button(frame, text="Beam", command=lambda: VMAT_beam_setting_Window(self.planning_window, self, self.beam_energy_list) if self.technique_var.get() == "VMAT" 
                                                                             else IMPT_beam_setting_Window(self.planning_window, self) if self.technique_var.get() == "IMPT" 
                                                                             else messagebox.showwarning("Technique Not Selected", 
                                                                                                         "Please select a technique (VMAT or IMPT) before configuring beam settings."))

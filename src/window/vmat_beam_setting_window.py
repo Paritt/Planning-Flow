@@ -5,8 +5,9 @@ from tkinter import messagebox
 class VMAT_beam_setting_Window:
     """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
     """Open a new window for VMAT beam settings."""
-    def __init__(self, parent, designer):
+    def __init__(self, parent, designer, beam_energy_list=None):
         self.designer = designer
+        self.beam_energy_list = beam_energy_list if beam_energy_list is not None else ['6', '10', '15', '6 FFF', '10 FFF']
         self.beam_window = tk.Toplevel(parent)
         self.beam_window.title("VMAT Beam Settings")
         self.beam_window.geometry("800x400")
@@ -85,9 +86,9 @@ class VMAT_beam_setting_Window:
         self.beam_name_entry.grid(row=1, column=1, padx=5, pady=5)
         tk.Label(self.add_beam_window, text="Energy [MV]:").grid(row=2, column=0, padx=5, pady=5)
         self.energy_var = tk.StringVar()
-        self.energy_combo = ttk.Combobox(self.add_beam_window, textvariable=self.energy_var, values=['6X', '10X', '15X'], state="readonly")
+        self.energy_combo = ttk.Combobox(self.add_beam_window, textvariable=self.energy_var, values=self.beam_energy_list, state="readonly")
         self.energy_combo.grid(row=2, column=1, padx=5, pady=5)
-        self.energy_combo.set('10X')
+        self.energy_combo.set('10')
         tk.Label(self.add_beam_window, text="Gantry Start [deg]:").grid(row=3, column=0, padx=5, pady=5)
         self.gantry_start_var = tk.DoubleVar()
         self.gantry_start_entry = ttk.Entry(self.add_beam_window, textvariable=self.gantry_start_var)
@@ -165,7 +166,7 @@ class VMAT_beam_setting_Window:
         
         tk.Label(self.edit_beam_window, text="Energy [MV]:").grid(row=2, column=0, padx=5, pady=5)
         self.edit_energy_var = tk.StringVar(value=beam_values[1])
-        self.edit_energy_combo = ttk.Combobox(self.edit_beam_window, textvariable=self.edit_energy_var, values=['6', '10', '15', '6 FFF', '10 FFF'], state="readonly")
+        self.edit_energy_combo = ttk.Combobox(self.edit_beam_window, textvariable=self.edit_energy_var, values=self.beam_energy_list, state="readonly")
         self.edit_energy_combo.grid(row=2, column=1, padx=5, pady=5)
         
         tk.Label(self.edit_beam_window, text="Gantry Start [deg]:").grid(row=3, column=0, padx=5, pady=5)
