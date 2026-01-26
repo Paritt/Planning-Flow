@@ -170,13 +170,13 @@ class FunctionAdjustment_Window:
         
         ttk.Label(adjust_window, text="Function tag:").grid(row=1, column=0, padx=5, pady=5)
         self.adjustment_tag_var = tk.StringVar(value=selected_tag)
-        self.adjustment_tag_entry = ttk.Entry(adjust_window, textvariable=self.adjustment_tag_var)
+        self.adjustment_tag_entry = ttk.Entry(adjust_window, textvariable=self.adjustment_tag_var, state="disabled")
         self.adjustment_tag_entry.grid(row=1, column=1, padx=5, pady=5)
         
         ttk.Label(adjust_window, text="ROI Name:").grid(row=2, column=0, padx=5, pady=5)
         self.roi_name_var = tk.StringVar(value=selected_roi)
         self.roi_name_combo = ttk.Combobox(adjust_window, textvariable=self.roi_name_var,
-                                        values=self.designer.get_extended_roi_list(), state="readonly")
+                                        values=self.designer.get_extended_roi_list(), state="disabled")
         self.roi_name_combo.grid(row=2, column=1, padx=5, pady=5)
         
         ttk.Label(adjust_window, text="Weight:").grid(row=3, column=0, padx=5, pady=5)
@@ -187,7 +187,7 @@ class FunctionAdjustment_Window:
         ttk.Label(adjust_window, text="Function type:").grid(row=4, column=0, padx=5, pady=5)
         self.function_type_var = tk.StringVar(value=selected_type)
         self.function_type_combo = ttk.Combobox(adjust_window, textvariable=self.function_type_var,
-                                            values=['Min Dose', 'Max Dose', 'Min DVH', 'Max DVH', 'Uniform Dose', 'Min EUD', 'Max EUD', 'Target EUD', 'Dose fall-off', 'Uniformity Constraint'], state="readonly")
+                                            values=['Min Dose', 'Max Dose', 'Min DVH', 'Max DVH', 'Uniform Dose', 'Min EUD', 'Max EUD', 'Target EUD', 'Dose fall-off', 'Uniformity Constraint'], state="disabled")
         self.function_type_combo.grid(row=4, column=1, padx=5, pady=5)
         
         # --------------------
@@ -338,6 +338,12 @@ class FunctionAdjustment_Window:
     def adjust_old_function(self, popup):
         """Save the adjusted function to the adjustment list."""
         condition_true = self.condition_true_var.get().strip()
+        
+        # Validate that a condition is selected
+        if not condition_true:
+            messagebox.showwarning("No Condition", "Please select a condition before adjusting the function.")
+            return
+        
         make_adjustment = "Adjust OLD Function"
         adjustment_tag = self.adjustment_tag_var.get().strip()
         roi_name = self.roi_name_var.get().strip()
@@ -634,6 +640,10 @@ class FunctionAdjustment_Window:
     def add_function_adjustment(self, popup):
         """Save the new function adjustment to the list."""
         condition_true = self.condition_true_var.get().strip()
+        # Validate that a condition is selected
+        if not condition_true:
+            messagebox.showwarning("No Condition", "Please select a condition before adding the function.")
+            return
         make_adjustment = "Add NEW function"
         adjustment_tag = self.adjustment_tag_var.get().strip()
         function_type = self.function_type_var.get().strip()
@@ -715,13 +725,15 @@ class FunctionAdjustment_Window:
         
         ttk.Label(edit_adjustment_window, text="Function tag:").grid(row=1, column=0, padx=5, pady=5)
         self.adjustment_tag_var = tk.StringVar(value=selected_tag)
-        self.adjustment_tag_entry = ttk.Entry(edit_adjustment_window, textvariable=self.adjustment_tag_var)
+        tag_state = "disabled" if selected_adjustment == "Adjust OLD Function" else "normal"
+        self.adjustment_tag_entry = ttk.Entry(edit_adjustment_window, textvariable=self.adjustment_tag_var, state=tag_state)
         self.adjustment_tag_entry.grid(row=1, column=1, padx=5, pady=5)
         
         ttk.Label(edit_adjustment_window, text="ROI Name:").grid(row=2, column=0, padx=5, pady=5)
         self.roi_name_var = tk.StringVar(value=selected_roi)
+        roi_state = "disabled" if selected_adjustment == "Adjust OLD Function" else "readonly"
         self.roi_name_combo = ttk.Combobox(edit_adjustment_window, textvariable=self.roi_name_var,
-                                        values=self.designer.get_extended_roi_list(), state="readonly")
+                                        values=self.designer.get_extended_roi_list(), state=roi_state)
         self.roi_name_combo.grid(row=2, column=1, padx=5, pady=5)
         
         ttk.Label(edit_adjustment_window, text="Weight:").grid(row=3, column=0, padx=5, pady=5)
@@ -731,8 +743,9 @@ class FunctionAdjustment_Window:
         
         ttk.Label(edit_adjustment_window, text="Function type:").grid(row=4, column=0, padx=5, pady=5)
         self.function_type_var = tk.StringVar(value=selected_type)
+        func_type_state = "disabled" if selected_adjustment == "Adjust OLD Function" else "readonly"
         self.function_type_combo = ttk.Combobox(edit_adjustment_window, textvariable=self.function_type_var,
-                                            values=['Min Dose', 'Max Dose', 'Min DVH', 'Max DVH', 'Uniform Dose', 'Min EUD', 'Max EUD', 'Target EUD', 'Dose fall-off', 'Uniformity Constraint'], state="readonly")
+                                            values=['Min Dose', 'Max Dose', 'Min DVH', 'Max DVH', 'Uniform Dose', 'Min EUD', 'Max EUD', 'Target EUD', 'Dose fall-off', 'Uniformity Constraint'], state=func_type_state)
         self.function_type_combo.grid(row=4, column=1, padx=5, pady=5)
         
         # --------------------
@@ -885,6 +898,11 @@ class FunctionAdjustment_Window:
             function_type = self.function_type_var.get().strip()
             roi_name = self.roi_name_var.get().strip()
             weight = self.weight_var.get().strip()
+            
+            # Validate that a condition is selected
+            if not condition_true:
+                messagebox.showwarning("No Condition", "Please select a condition before saving the function.")
+                return
             
             # Determine adjustment type based on whether it's adding new or adjusting old
             # Keep the original adjustment type

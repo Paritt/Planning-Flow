@@ -282,6 +282,9 @@ class PlanFlowDesigner:
         frame.pack(fill="both", expand=True, padx=10, pady=5)
 
         # Steps Buttons
+        self.add_clinical_goal_btn = ttk.Button(frame, text="Add Clinical Goal", command=lambda: self.show_step_info("Open add clinical goal window"))
+        self.add_clinical_goal_btn.place(x=380, y=220)
+        
         self.start_btn = ttk.Button(frame, text="Start", command=lambda: self.show_step_info("Planning flow start by\n1. Match ROI\n2. Create Plan with Beams"))
         self.start_btn.place(x=60, y=40)
         
