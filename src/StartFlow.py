@@ -1,7 +1,3 @@
-from raystation import *
-import raystation.v2025 as rs
-from raystation.v2025 import get_current
-import raystation.v2025.typing as rstype
 import tkinter as tk
 from tkinter import ttk, messagebox
 from src.flow.start_match_roi import MatchROI
@@ -16,8 +12,13 @@ import time
 from datetime import datetime
 import warnings
 
-# Suppress RayStation's deprecation warnings about CLR module loading
-warnings.filterwarnings('ignore', category=DeprecationWarning, module='raystation.v2025.__api__')
+try:
+    from raystation import *
+    import raystation.v2025 as rs
+    from raystation.v2025 import get_current
+    import raystation.v2025.typing as rstype
+except:
+    from connect import *
 
 
 class StartFlow:

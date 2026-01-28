@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
 from src.window.vmat_beam_setting_window import VMAT_beam_setting_Window
-from src.window.imrt_beam_setting_window import IMPT_beam_setting_Window
+from src.window.IMPT_beam_setting_window import IMPT_beam_setting_Window
 from src.window.isocenter_setting_window import isocenter_setting_Window
 from src.window.match_roi_window import MatchROI_Window
 from src.window.automate_roi_window import AutomateROI_Window
@@ -234,6 +234,7 @@ class PlanFlowDesigner:
             self.function_adjustments_data = data.get("function_adjustments", [])
             self.end_flow_data = data.get("end_flow", {})
             self.vmat_beam_data = data.get("vmat_beam", [])
+            self.impt_beam_data = data.get("impt_beam", [])
             self.isocenter_data = data.get("isocenter", {})
             self.prescription_data = data.get("prescription", {})
             self.clinical_goal_data = data.get("clinical_goal", {})

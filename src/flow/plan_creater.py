@@ -1,7 +1,11 @@
-from raystation import *
-import raystation.v2025 as rs
-from raystation.v2025 import get_current
 from tkinter import messagebox
+try:
+    from raystation import *
+    import raystation.v2025 as rs
+    from raystation.v2025 import get_current
+    import raystation.v2025.typing as rstype
+except:
+    from connect import *
 
 
 class PlanCreater:

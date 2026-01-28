@@ -1,9 +1,13 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
-from raystation import *
-import raystation.v2025 as rs
-from raystation.v2025 import get_current
+try:
+    from raystation import *
+    import raystation.v2025 as rs
+    from raystation.v2025 import get_current
+    import raystation.v2025.typing as rstype
+except:
+    from connect import *
 
 class Clinical_Goal_Window:
     """Open a new window for adding clinical goals from template."""

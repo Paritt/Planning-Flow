@@ -6,6 +6,13 @@ import sys
 from src.PlanFlowDesigner import PlanFlowDesigner
 from src.StartFlow import StartFlow
 
+try:
+    from raystation import *
+except ImportError:
+    from connect import *
+except ImportError:
+    messagebox.showerror("RayStation API not found", "Please run this script within RayStation.")
+
 machine_options = ['Agility', 'P1']
 # machine_options = ['N3_VersaHD', 'N4_VersaHD', 'TrueBeam_L6', 'TrueBeam_L7', 'TrueBeam_N5']
 beam_energy_list = ['6', '10', '6 FFF', '10 FFF']

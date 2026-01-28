@@ -1,9 +1,12 @@
-from raystation import *
-import raystation.v2025 as rs
-from raystation.v2025 import get_current
 import tkinter as tk
 from tkinter import ttk, StringVar, Label, Button, Toplevel, messagebox
-
+try:
+    from raystation import *
+    import raystation.v2025 as rs
+    from raystation.v2025 import get_current
+    import raystation.v2025.typing as rstype
+except:
+    from connect import *
 
 class MatchROI:
     def __init__(self, match_roi_data, case):
