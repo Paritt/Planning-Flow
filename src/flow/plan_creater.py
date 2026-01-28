@@ -103,7 +103,7 @@ class PlanCreater:
                 treatment_technique = "VMAT"
             elif self.technique == "IMPT":
                 modality = "Protons"
-                treatment_technique = "IMPT"
+                treatment_technique = "ProtonPencilBeamScanning"
             else:
                 modality = "Photons"
                 treatment_technique = "VMAT"
@@ -233,7 +233,7 @@ class PlanCreater:
             
             for idx, beam_config in enumerate(self.vmat_beam_data):
                 beam_name = beam_config.get("beam_name", f"Beam_{idx+1}")
-                energy = beam_config.get("energy", "6X")
+                energy = beam_config.get("energy", "10")
                 gantry_start = float(beam_config.get("gantry_start", 181))
                 gantry_stop = float(beam_config.get("gantry_stop", 179))
                 rotation = beam_config.get("rotation", "CW")
@@ -286,9 +286,120 @@ class PlanCreater:
             return False
     
     def add_impt_beams(self):
-        """Add IMPT beams based on flow data. (To be implemented)"""
-        messagebox.showinfo("IMPT Beams", "IMPT beam creation is not yet implemented.")
-        return False
+        """Add IMPT beams based on flow data."""
+        try:
+            print("Adding IMPT beams...")
+            
+            if not self.impt_beam_data:
+                print("No IMPT beam data found")
+                return True
+            
+            if not self.iso_data:
+                messagebox.showerror("Isocenter Error", "Isocenter must be set before adding beams")
+                return False
+            
+            for idx, beam_config in enumerate(self.impt_beam_data):
+                beam_name = beam_config.get("beam_name", f"Beam_{idx+1}")
+                gantry = float(beam_config.get("gantry", 0))
+                couch = float(beam_config.get("couch", 0))
+                snout = beam_config.get("snout", "NONE")
+                range_shifter = beam_config.get("range_shifter", "(None)")
+                
+                # Convert range_shifter to None if "(None)" or empty
+                if range_shifter == "(None)" or not range_shifter:
+                    range_shifter = None
+                
+                # Get computational settings
+                comp_settings = beam_config.get("comp_settings", {})
+                
+                # Create PBS Ion beam
+                self.beam_set.CreatePBSIonBeam(
+                    ArcRotationDirection="None",
+                    ArcStopGantryAngle=None,
+                    SnoutId=snout,
+                    RangeShifter=range_shifter,
+                    MinimumAirGap=None,
+                    MetersetRateSetting="",
+                    IsocenterData=self.iso_data,
+                    Name=str(idx + 1),
+                    Description=beam_name,
+                    GantryAngle=gantry,
+                    CouchRotationAngle=couch,
+                    CouchPitchAngle=0,
+                    CouchRollAngle=0,
+                    CollimatorAngle=0
+                )
+                
+                print(f"Created IMPT beam {idx + 1}: {beam_name}")
+                
+                # Configure beam optimization settings if comp_settings exist
+                if comp_settings:
+                    beam_settings = self.plan.PlanOptimizations[0].OptimizationParameters.TreatmentSetupSettings[0].BeamSettings[idx]
+                    
+                    # Set range shifter selection (Automatic or Manual)
+                    range_shifter_selection = comp_settings.get('range_shifter_selection', 'Automatic')
+                    beam_settings.AutoSelectRangeShifter = (range_shifter_selection == 'Automatic')
+                    
+                    # Set optimization types
+                    beam_settings.OptimizationTypes = ["SpotWeights"]
+                    
+                    # Configure spot pattern properties
+                    scanned_props = beam_settings.ScannedBeamProperties
+                    
+                    # Energy layer spacing
+                    energy_spacing_scale = float(comp_settings.get('energy_layer_spacing_scale', 1.0))
+                    scanned_props.EnergyLayerSeparationFactor = energy_spacing_scale
+                    
+                    # Spot spacing
+                    spot_spacing_scale = float(comp_settings.get('spot_spacing_scale', 1.0))
+                    scanned_props.SpotSpacingSeparationFactor = spot_spacing_scale
+                    
+                    # Scan direction angle
+                    angle = float(comp_settings.get('angle', 0.0))
+                    scanned_props.ScanDirectionAngle = angle
+                    
+                    # Spot pattern
+                    spot_pattern = comp_settings.get('spot_pattern', 'Hexagonal')
+                    scanned_props.SpotPattern = spot_pattern
+                    
+                    # Lateral margin scale
+                    lateral_margin_scale = float(comp_settings.get('lateral_margin_scale', 1.0))
+                    scanned_props.SpotSelectionLateralMarginScaleFactor = lateral_margin_scale
+                    
+                    # Distal and proximal margins
+                    distal_margin = int(comp_settings.get('distal_margin', 1))
+                    proximal_margin = int(comp_settings.get('proximal_margin', 1))
+                    scanned_props.SpotSelectionDistalTargetLayerMargin = distal_margin
+                    scanned_props.SpotSelectionProximalTargetLayerMargin = proximal_margin
+                    
+                    # Minimum radiologic depth
+                    min_radiologic_depth = float(comp_settings.get('min_radiologic_depth', 0.0))
+                    beam_settings.MinimumRadiologicDepthMargin = min_radiologic_depth
+                    
+                    # Layer repainting
+                    layer_repainting_value = int(comp_settings.get('layer_repainting_value', 1))
+                    scanned_props.RepaintingSettings.FixedNumberOfPaintings = layer_repainting_value
+                    
+                    # Set avoidance structures
+                    avoidance_rois = comp_settings.get('avoidance_rois', [])
+                    if avoidance_rois:
+                        # Map ROI names using matched_roi_dict
+                        mapped_rois = [self.matched_roi_dict.get(roi, roi) for roi in avoidance_rois]
+                        beam_settings.SetAvoidanceStructures(RoiNames=mapped_rois)
+                        print(f"  - Set avoidance ROIs: {mapped_rois}")
+                    
+                    print(f"  - Configured beam optimization settings")
+            
+            # Edit setup beam names
+            self.edit_setup_beams()
+            
+            self.patient.Save()
+            print("All IMPT beams added successfully")
+            return True
+            
+        except Exception as e:
+            messagebox.showerror("Beam Addition Error", f"Failed to add IMPT beams:\n{str(e)}")
+            return False
     
     def edit_setup_beams(self):
         """Edit setup beam names and descriptions."""
