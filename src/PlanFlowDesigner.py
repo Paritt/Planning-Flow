@@ -14,6 +14,7 @@ from src.window.function_adjustment_window import FunctionAdjustment_Window
 from src.window.end_planning_flow_window import EndPlanningFlow_Window
 from src.window.prescription_window import PrescriptionSetting_Window
 from src.window.add_clinical_goal_window import Clinical_Goal_Window
+from src.window.robust_setting_window import RoustSetting_Window
 
 class PlanFlowDesigner:
     """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
@@ -23,7 +24,7 @@ class PlanFlowDesigner:
         self.beam_energy_list = beam_energy_list if beam_energy_list is not None else ['6', '10', '15', '6 FFF', '10 FFF']
         self.planning_window = tk.Toplevel(parent)
         self.planning_window.title("Planning flow")
-        self.planning_window.geometry("550x450")
+        self.planning_window.geometry("550x500")
         
         # Initialize data storage for all steps
         self.vmat_beam_data = []
@@ -45,6 +46,8 @@ class PlanFlowDesigner:
         self.name_configured(self.planning_window)
         
         self.techniques_configured(self.planning_window)
+        
+        self.plan_configured(self.planning_window)
         
         self.planning_flow(self.planning_window)
         
@@ -282,6 +285,17 @@ class PlanFlowDesigner:
         prescription_settings_btn = ttk.Button(frame, text="Prescription", command=lambda: PrescriptionSetting_Window(self.planning_window, self))
         prescription_settings_btn.pack(side="left", padx=5, pady=2)
     
+    def plan_configured(self, popup):
+        """For setting plan configurations"""
+        frame = ttk.LabelFrame(popup, text="Plan Configuration")
+        frame.pack(fill='x', padx=10, pady=5)
+        
+        self.add_clinical_goal_btn = ttk.Button(frame, text="Clinical Goal", command=lambda: Clinical_Goal_Window(self.planning_window, self))
+        self.add_clinical_goal_btn.pack(side="left", padx=5, pady=2)
+        
+        self.robust_setting_btn = ttk.Button(frame, text="Robust Setting", command=lambda: RoustSetting_Window(self.planning_window, self))
+        self.robust_setting_btn.pack(side="left", padx=5, pady=2)
+    
     def planning_flow(self, popup):
         """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
         # Planning Flow Steps Frame
@@ -289,49 +303,46 @@ class PlanFlowDesigner:
         frame.pack(fill="both", expand=True, padx=10, pady=5)
 
         # Steps Buttons
-        # TODO: Add "Add Clinical Goal" button when functionality is ready
-        self.add_clinical_goal_btn = ttk.Button(frame, text="Add Clinical Goal", command=lambda: Clinical_Goal_Window(self.planning_window, self))
-        self.add_clinical_goal_btn.place(x=380, y=220)
         
         self.start_btn = ttk.Button(frame, text="Start", command=lambda: self.show_step_info("Planning flow start by\n1. Match ROI\n2. Create Plan with Beams"))
-        self.start_btn.place(x=60, y=40)
+        self.start_btn.place(x=60, y=20)
         
         self.automate_roi_btn = ttk.Button(frame, text="Create Automate ROI", command=lambda: AutomateROI_Window(self.planning_window, self))
-        self.automate_roi_btn.place(x=200, y=40)
+        self.automate_roi_btn.place(x=200, y=20)
         
         self.initial_function_btn = ttk.Button(frame, text="Initial function", command=lambda: InitialFunction_Window(self.planning_window, self))
-        self.initial_function_btn.place(x=380, y=40)
+        self.initial_function_btn.place(x=380, y=20)
         
         self.optimization_btn = ttk.Button(frame, text="Optimization", command=lambda: OptimizationSetting_Window(self.planning_window, self))
-        self.optimization_btn.place(x=380, y=100)
+        self.optimization_btn.place(x=380, y=80)
         
         self.final_calc_btn = ttk.Button(frame, text="Final Calculation", command=lambda: FinalCalculationSetting_Window(self.planning_window, self))
-        self.final_calc_btn.place(x=200, y=100)
+        self.final_calc_btn.place(x=200, y=80)
         
         self.check_condition_btn = ttk.Button(frame, text="Check Condition", command=lambda: CheckCondition_Window(self.planning_window, self))
-        self.check_condition_btn.place(x=40, y=100)
+        self.check_condition_btn.place(x=40, y=80)
         
         self.condition_roi_btn = ttk.Button(frame, text="Create Condition ROI", command=lambda: ConditionROI_Window(self.planning_window, self))
-        self.condition_roi_btn.place(x=110, y=160)
+        self.condition_roi_btn.place(x=110, y=140)
         
         self.function_adjustment_btn = ttk.Button(frame, text="Conditionally Function Adjustment", command=lambda: FunctionAdjustment_Window(self.planning_window, self))
-        self.function_adjustment_btn.place(x=270, y=160)
+        self.function_adjustment_btn.place(x=270, y=140)
         
         self.end_flow_btn = ttk.Button(frame, text="End Planning Flow", command=lambda: EndPlanningFlow_Window(self.planning_window, self))
-        self.end_flow_btn.place(x=20, y=220)
+        self.end_flow_btn.place(x=20, y=200)
 
         # Arrows between steps
-        self.add_arrow(frame, "→", 150, 35)
-        self.add_arrow(frame, "→", 340, 35)
-        self.add_arrow(frame, "↓", 430, 65)
-        self.add_arrow(frame, "←", 330, 95)
-        self.add_arrow(frame, "←", 150, 95)
-        self.add_arrow(frame, "↓", 115, 130)
-        self.add_arrow(frame, "→", 240, 155)
-        self.add_arrow(frame, "↑", 430, 130)
-        self.add_arrow(frame, "↓", 60, 130)
-        self.add_arrow(frame, "↓", 60, 160)
-        self.add_arrow(frame, "↓", 60, 190)
+        self.add_arrow(frame, "→", 150, 15)
+        self.add_arrow(frame, "→", 340, 15)
+        self.add_arrow(frame, "↓", 430, 45)
+        self.add_arrow(frame, "←", 330, 75)
+        self.add_arrow(frame, "←", 150, 75)
+        self.add_arrow(frame, "↓", 115, 110)
+        self.add_arrow(frame, "→", 240, 135)
+        self.add_arrow(frame, "↑", 430, 110)
+        self.add_arrow(frame, "↓", 60, 110)
+        self.add_arrow(frame, "↓", 60, 140)
+        self.add_arrow(frame, "↓", 60, 170)
 
     def add_arrow(self, parent, symbol, x, y):
         """Helper function to add arrows between steps."""
