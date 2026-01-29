@@ -42,6 +42,7 @@ class PlanFlowDesigner:
         self.isocenter_data = {}
         self.prescription_data = {}
         self.clinical_goal_data = {}
+        self.robust_settings_data = {}
         
         self.name_configured(self.planning_window)
         
@@ -147,7 +148,8 @@ class PlanFlowDesigner:
             "beam_settings": self.beam_settings_data,
             "isocenter": self.isocenter_data,
             "prescription": self.prescription_data,
-            "clinical_goal": self.clinical_goal_data
+            "clinical_goal": self.clinical_goal_data,
+            "robust_settings": self.robust_settings_data
         }
         
         # Open file dialog to save
@@ -190,7 +192,8 @@ class PlanFlowDesigner:
             "beam_settings": self.beam_settings_data,
             "isocenter": self.isocenter_data,
             "prescription": self.prescription_data,
-            "clinical_goal": self.clinical_goal_data
+            "clinical_goal": self.clinical_goal_data,
+            "robust_settings": self.robust_settings_data
         }
         
         # Validate flow has required data
@@ -241,6 +244,7 @@ class PlanFlowDesigner:
             self.isocenter_data = data.get("isocenter", {})
             self.prescription_data = data.get("prescription", {})
             self.clinical_goal_data = data.get("clinical_goal", {})
+            self.robust_settings_data = data.get("robust_settings", {})
         except Exception as e:
             messagebox.showerror("Load Error", f"Failed to load flow data:\n{str(e)}")
     
@@ -293,7 +297,7 @@ class PlanFlowDesigner:
         self.add_clinical_goal_btn = ttk.Button(frame, text="Clinical Goal", command=lambda: Clinical_Goal_Window(self.planning_window, self))
         self.add_clinical_goal_btn.pack(side="left", padx=5, pady=2)
         
-        self.robust_setting_btn = ttk.Button(frame, text="Robust Setting", command=lambda: RoustSetting_Window(self.planning_window, self))
+        self.robust_setting_btn = ttk.Button(frame, text="Robustness", command=lambda: RoustSetting_Window(self.planning_window, self))
         self.robust_setting_btn.pack(side="left", padx=5, pady=2)
     
     def planning_flow(self, popup):
@@ -352,3 +356,7 @@ class PlanFlowDesigner:
     def show_step_info(self, message):
         """Display information about the selected step."""
         messagebox.showinfo("Step Information", message)
+    
+    def set_robust_settings(self, robust_data):
+        """Receive and store robust settings data from RoustSetting_Window."""
+        self.robust_settings_data = robust_data
