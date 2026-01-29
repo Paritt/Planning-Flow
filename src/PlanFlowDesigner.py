@@ -46,6 +46,8 @@ class PlanFlowDesigner:
         
         self.techniques_configured(self.planning_window)
         
+        self.plan_configured(self.planning_window)
+        
         self.planning_flow(self.planning_window)
         
         # Load existing data if provided
@@ -281,6 +283,18 @@ class PlanFlowDesigner:
         prescription_settings_btn = ttk.Button(frame, text="Prescription", command=lambda: PrescriptionSetting_Window(self.planning_window, self))
         prescription_settings_btn.pack(side="left", padx=5, pady=2)
     
+    def plan_configured(self, popup):
+        """For setting plan configurations"""
+        frame = ttk.LabelFrame(popup, text="Plan Configuration")
+        frame.pack(fill='x', padx=10, pady=5)
+        
+        self.add_clinical_goal_btn = ttk.Button(frame, text="Clinical Goal", command=lambda: Clinical_Goal_Window(self.planning_window, self))
+        self.add_clinical_goal_btn.pack(side="left", padx=5, pady=2)
+        
+        self.robust_setting_btn = ttk.Button(frame, text="Robust Setting", command=lambda: messagebox.showinfo("Robust Setting", "Robust Setting configuration window would open here."))
+        self.robust_setting_btn.pack(side="left", padx=5, pady=2)
+        
+    
     def planning_flow(self, popup):
         """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
         # Planning Flow Steps Frame
@@ -288,9 +302,6 @@ class PlanFlowDesigner:
         frame.pack(fill="both", expand=True, padx=10, pady=5)
 
         # Steps Buttons
-        # TODO: Add "Add Clinical Goal" button when functionality is ready
-        self.add_clinical_goal_btn = ttk.Button(frame, text="Add Clinical Goal", command=lambda: Clinical_Goal_Window(self.planning_window, self))
-        self.add_clinical_goal_btn.place(x=380, y=220)
         
         self.start_btn = ttk.Button(frame, text="Start", command=lambda: self.show_step_info("Planning flow start by\n1. Match ROI\n2. Create Plan with Beams"))
         self.start_btn.place(x=60, y=40)
