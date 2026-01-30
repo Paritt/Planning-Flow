@@ -233,7 +233,7 @@ class FunctionAdjustment_Window:
         config_frame = FunctionConfigFrame(
             adjust_window, self.designer, mode="edit",
             selected_data=selected_data,
-            disable_fields=["type", "roi"]
+            disable_fields=["tag"]
         )
         config_frame.pack(padx=10, pady=10)
         

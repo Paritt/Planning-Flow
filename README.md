@@ -2,9 +2,7 @@
 Planning-Flow: a flowchart-like GUI to design and run radiotherapy planning scripts for automated planning.
 
 ## TODO
-- IMPT Beam adder
-- Robust setting/Opt/Eval
-- Restrict function to beam
+- Robust Opt/Eval
 - Function Value as condition
 - AND OR condition
 - Round >,<,>=,<=,= to condition

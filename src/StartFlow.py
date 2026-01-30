@@ -204,8 +204,8 @@ class StartFlow:
             else:
                 print("[SKIPPED] Automate ROI creation\n")
                 
-            # 3.5 Add Clinical Goals from Template
-            if self.selected_steps.get("add_clinical_goal"):
+            # 5 Add Clinical Goals from Template
+            if self.selected_steps.get("add_clinical_goal") and loaded_flow_data['clinical_goal_data']:
                 print("Adding Clinical Goals from Template...")
                 step_start = time.time()
                 self.ui.Navigation.MenuItem['Plan optimization'].Click()
@@ -226,9 +226,7 @@ class StartFlow:
             else:
                 print("[SKIPPED] Adding Clinical Goals\n")
             
-            
-            
-            # 5. Add initial objective
+            # 6. Add initial objective
             if self.selected_steps.get("add_objectives"):
                 print("Adding Initial Objectives...")
                 step_start = time.time()
@@ -251,7 +249,7 @@ class StartFlow:
             else:
                 print("[SKIPPED] Add initial objectives\n")
             
-            # 6. Set Optimization Settings and Calculation algorithm
+            # 7. Set Optimization Settings and Calculation algorithm
             # TODO: Calculation setting for Proton plan
             if self.selected_steps.get("add_objectives") or self.selected_steps.get("first_optimization"):
                 print("Setting Opt. and Cal. Settings...")
@@ -275,7 +273,7 @@ class StartFlow:
             else:
                 print("[SKIPPED] Optimization settings\n")
                 
-            # 7. First Optimization
+            # 8. First Optimization
             if self.selected_steps.get("first_optimization"):
                 print("Starting First Optimization...")
                 step_start = time.time()
@@ -288,11 +286,11 @@ class StartFlow:
             else:
                 print("[SKIPPED] First optimization\n")
                 
-            # 8. Loop Optimization
+            # 9. Loop Optimization
             if self.selected_steps.get("loop_optimization"):
                 print("Starting Loop Optimization...")
                 step_start = time.time()
-                # 8.1 Check Conditions
+                # 9.1 Check Conditions
                 conditions_checker = ConditionChecker(
                     check_conditions_data=loaded_flow_data['check_conditions_data'],
                     case=self.case,
@@ -300,7 +298,7 @@ class StartFlow:
                     matched_roi_dict=self.match_roi_dict
                 )
                 
-                # 8.2 Create conditional ROIs
+                # 9.2 Create conditional ROIs
                 conditional_roi_creator = ConditionalROICreator(
                     condition_rois_data=loaded_flow_data['condition_rois_data'],
                     matched_roi_dict=self.match_roi_dict,
@@ -309,7 +307,7 @@ class StartFlow:
                     plan=self.plan
                 )
                 
-                # 8.3 Adjust objectives
+                # 9.3 Adjust objectives
                 objective_adjuster = ObjectiveAdjuster(
                     function_adjustments_data=loaded_flow_data['function_adjustments_data'],
                     matched_roi_dict=self.match_roi_dict,
@@ -317,7 +315,7 @@ class StartFlow:
                     plan=self.plan
                 )
                 
-                # 8.4 Run optimization loop
+                # 9.4 Run optimization loop
                 for i in range(loaded_flow_data['end_flow_data']['max_optimize_rounds']):
                     self.plan = self.case.TreatmentPlans[plan_data['plan_name']]
                     self.po = self.plan.PlanOptimizations[0]
@@ -375,6 +373,7 @@ class StartFlow:
             function_adjustments_data = flow_data.get("function_adjustments", [])
             end_flow_data = flow_data.get("end_flow", {})
             clinical_goal_data = flow_data.get("clinical_goal", {})
+            robust_settings = flow_data.get("robust_settings", {})
             
             loaded_flow_data = {
                 "plan_name": plan_name,
@@ -393,7 +392,8 @@ class StartFlow:
                 "condition_rois_data": condition_rois_data,
                 "function_adjustments_data": function_adjustments_data,
                 "end_flow_data": end_flow_data,
-                "clinical_goal_data": clinical_goal_data
+                "clinical_goal_data": clinical_goal_data,
+                "robust_settings": robust_settings
             }
             
             return loaded_flow_data

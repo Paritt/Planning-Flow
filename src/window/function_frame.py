@@ -120,10 +120,10 @@ class FunctionConfigFrame:
         # Robust checkbox
         
         self.vars["is_robust"] = tk.BooleanVar(value=self.selected_data.get("is_robust", False))
-        robust_check = ttk.Checkbutton(
+        self.robust_check = ttk.Checkbutton(
             self.config_frame, text="Robust", variable=self.vars["is_robust"]
         )
-        robust_check.pack(anchor="w", padx=5, pady=2)
+        self.robust_check.pack(anchor="w", padx=5, pady=2)
         
         # Restrict function to beam checkbox
         self.vars["restrict_to_beam"] = tk.BooleanVar(value=self.selected_data.get("restrict_to_beam", False))
@@ -370,17 +370,28 @@ class FunctionConfigFrame:
         self._enforce_uniformity_constraint()
 
     def _enforce_uniformity_constraint(self):
-        """Force Constraint mode for Uniformity Constraint function type."""
-        is_uniformity = self.vars["type"].get() == "Uniformity Constraint"
+        """Force Constraint mode for Uniformity Constraint function type and disable Constraint for Uniform Dose."""
+        function_type = self.vars["type"].get()
+        is_uniformity_constraint = function_type == "Uniformity Constraint"
+        is_uniform_dose = function_type == "Uniform Dose"
         
-        if is_uniformity:
+        if is_uniformity_constraint:
             self.vars["objective_constraint"].set("Constraint")
             self.vars["objective_radio"].config(state="disabled")
             self.vars["constraint_radio"].config(state="disabled")
             self.weight_entry.config(state="disabled")
+            self.vars["is_robust"].set(False)
+            self.robust_check.config(state="disabled")
+        elif is_uniform_dose:
+            self.vars["objective_constraint"].set("Objective")
+            self.vars["constraint_radio"].config(state="disabled")
+            self.vars["objective_radio"].config(state="normal")
+            self.robust_check.config(state="normal")
+            self._on_objective_constraint_change()
         else:
             self.vars["objective_radio"].config(state="normal")
             self.vars["constraint_radio"].config(state="normal")
+            self.robust_check.config(state="normal")
             self._on_objective_constraint_change()
 
     def _parse_and_populate_values(self, function_type, description):
