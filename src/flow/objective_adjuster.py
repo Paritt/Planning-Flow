@@ -15,7 +15,7 @@ class ObjectiveAdjuster:
     Supports two adjustment types: "Add NEW function" and "Adjust OLD Function".
     """
     
-    def __init__(self, function_adjustments_data, matched_roi_dict, case, plan):
+    def __init__(self, function_adjustments_data, matched_roi_dict, case, plan, robust_settings):
         """
         Initialize the ObjectiveAdjuster.
         
@@ -24,11 +24,13 @@ class ObjectiveAdjuster:
             matched_roi_dict: Dictionary mapping flow ROI names to case ROI names
             case: RayStation case object
             plan: RayStation plan object
+            robust_settings: Robust settings for the plan
         """
         self.function_adjustments_data = function_adjustments_data
         self.matched_roi_dict = matched_roi_dict
         self.case = case
         self.plan = plan
+        self.robust_settings = robust_settings
         
         # Get plan optimization
         self.po = self.plan.PlanOptimizations[0]
@@ -87,7 +89,7 @@ class ObjectiveAdjuster:
                     
                 elif adjustment_type == "Adjust OLD Function":
                     print(f"  Adjusting existing function '{tag}'...", end=" ")
-                    self._adjust_existing_function(tag, func_type, actual_roi_name, description, weight, is_constraint, restrict_all_beams_individually, restrict_to_beams, robust, restrict_to_beamset)
+                    self._adjust_existing_function(tag, actual_roi_name, func_type, description, weight, is_constraint, restrict_all_beams_individually, restrict_to_beams, robust, restrict_to_beamset)
                     print("✓")
                     adjusted_count += 1
                     
@@ -100,6 +102,50 @@ class ObjectiveAdjuster:
                 skipped_count += 1
         
         print(f"\nFunction Adjustment Summary: {adjusted_count} adjusted, {skipped_count} skipped")
+        self.check_and_set_robustness()
+    
+    def check_and_set_robustness(self):
+        """
+        Check if any function requires robustness settings and set them if needed.
+        """
+        requires_robustness = False
+        for c in self.po.Constraints:
+            if c.UseRobustness:
+                requires_robustness = True
+                break
+        for f in self.po.Objective.ConstituentFunctions:
+            if f.UseRobustness:
+                requires_robustness = True
+                break
+        
+        if requires_robustness:
+            print("Setting robustness parameters for plan optimization...", end=" ")
+            self._set_robustness()
+            print("✓")
+    
+    def _set_robustness(self):
+        """
+        Placeholder for adding robustness settings if needed.
+        Currently not implemented.
+        """
+        self.po.OptimizationParameters.SaveRobustnessParameters(PositionUncertaintyAnterior=self.robust_settings['positioning_uncertainty']['anterior'],
+                                                                        PositionUncertaintyPosterior=self.robust_settings['positioning_uncertainty']['posterior'],
+                                                                        PositionUncertaintySuperior=self.robust_settings['positioning_uncertainty']['superior'],
+                                                                        PositionUncertaintyInferior=self.robust_settings['positioning_uncertainty']['inferior'],
+                                                                        PositionUncertaintyLeft=self.robust_settings['positioning_uncertainty']['left'], 
+                                                                        PositionUncertaintyRight=self.robust_settings['positioning_uncertainty']['right'], 
+                                                                        DensityUncertainty=self.robust_settings['density_uncertainty']/100, 
+                                                                        UseReducedSetOfDensityShifts=False, 
+                                                                        PositionUncertaintySetting="Universal", IndependentLeftRight=True, 
+                                                                        IndependentAnteriorPosterior=True, IndependentSuperiorInferior=True, 
+                                                                        ComputeExactScenarioDoses=False, NamesOfNonPlanningExaminations=[], 
+                                                                        PatientGeometryUncertaintyType="PerTreatmentCourse", 
+                                                                        PositionUncertaintyType="PerTreatmentCourse", 
+                                                                        TreatmentCourseScenariosFactor=1000, 
+                                                                        PositionUncertaintyList=None, 
+                                                                        PositionUncertaintyFormation="Automatic", 
+                                                                        RobustMethodPerTreatmentCourse="WeightedPowerMean" if self.robust_settings.get('method', '') == 'Composite worst cases (minimax)' else "VoxelwiseWorstCase")
+    
     
     def _add_new_function(self, tag, func_type, roi_name, description, weight, is_constraint, restrict_all_beams_individually, restrict_to_beams, robust, restrict_to_beamset):
         """
@@ -184,7 +230,21 @@ class ObjectiveAdjuster:
             weight = float(weight)
         
         # Edit the function to update basic properties
+        func_type_dict = {
+            "Max Dose": "MaxDose",
+            "Min Dose": "MinDose",
+            "Max EUD": "MaxEud",
+            "Min EUD": "MinEud",
+            "Target EUD": "TargetEud",
+            "Uniform Dose": "UniformDose",
+            "Dose fall-off": "DoseFallOff",
+            "Max DVH": "MaxDvh",
+            "Min DVH": "MinDvh",
+            "Uniformity Constraint": "UniformityConstraint"
+        }
+        func_type = func_type_dict.get(func_type, func_type)
         self._edit_function(target_function, func_type, roi_name, is_constraint, restrict_all_beams_individually, restrict_to_beams, robust, restrict_to_beamset)
+        print("Edited. Now adjusting parameters...", end=" ")
         
         # Route to appropriate adjustment based on function type
         if func_type == "MaxDose":
@@ -214,7 +274,7 @@ class ObjectiveAdjuster:
                 target_function.DoseFunctionParameters.DoseLevel = dose_level
             except:
                 pass
-        
+        print("✓")
     # ========== Helper methods to adjust existing functions ==========
     
     def _edit_function(self, target_function, func_type, roi_name, is_constraint, restrict_all_beams_individually, restrict_to_beams, robust, restrict_to_beamset):

@@ -129,7 +129,7 @@ class FunctionAdjustment_Window:
         self.edit_adjustment_btn = ttk.Button(adjusted_function_label_frame, text="Edit Selected Adjustment", command=self.open_edit_function_adjustment_window)
         self.edit_adjustment_btn.pack(side="left", padx=5, pady=5)
         # Delete Adjustment Button
-        self.delete_adjustment_btn = ttk.Button(adjusted_function_label_frame, text="Remove Adjustment", command=lambda: self.show_step_info("Remove Function Adjustment"))
+        self.delete_adjustment_btn = ttk.Button(adjusted_function_label_frame, text="Remove Adjustment", command=lambda: self.remove_function_adjustment(self.function_adjustment_tree))
         self.delete_adjustment_btn.pack(side="left", padx=5, pady=5)
         # Load existing data if available
         if self.designer.function_adjustments_data:
@@ -159,6 +159,16 @@ class FunctionAdjustment_Window:
         # Close Button
         self.close_btn = ttk.Button(self.function_adjustment_window, text="Close", command=self.function_adjustment_window.destroy)
         self.close_btn.pack(side="left", padx=5, pady=5)
+    
+    def remove_function_adjustment(self, tree):
+        """Remove the selected function adjustment from the list."""
+        selected_item = tree.selection()
+        if not selected_item:
+            messagebox.showwarning("No Selection", "Please select a function adjustment to remove.")
+            return
+        
+        for item in selected_item:
+            tree.delete(item)
     
     def save_function_adjustments(self):
         """Save the current list of function adjustments."""
@@ -215,7 +225,7 @@ class FunctionAdjustment_Window:
         # Open adjustment window
         adjust_window = tk.Toplevel(self.function_adjustment_window)
         adjust_window.title("Adjust Function")
-        adjust_window.geometry("650x350")
+        adjust_window.geometry("680x350")
         
         # Condition selector frame
         condition_frame = ttk.Frame(adjust_window)
@@ -267,7 +277,7 @@ class FunctionAdjustment_Window:
         """Add a function adjustment to the list."""
         add_adjustment_window = tk.Toplevel(self.function_adjustment_window)
         add_adjustment_window.title("Add Function Adjustment")
-        add_adjustment_window.geometry("650x350")
+        add_adjustment_window.geometry("680x350")
         
         # Condition selector frame
         condition_frame = ttk.Frame(add_adjustment_window)
@@ -341,7 +351,7 @@ class FunctionAdjustment_Window:
         
         edit_adjustment_window = tk.Toplevel(self.function_adjustment_window)
         edit_adjustment_window.title("Edit Function Adjustment")
-        edit_adjustment_window.geometry("650x350")
+        edit_adjustment_window.geometry("680x350")
         
         # Condition selector frame
         condition_frame = ttk.Frame(edit_adjustment_window)
@@ -356,7 +366,7 @@ class FunctionAdjustment_Window:
         condition_combo.pack(side="left", padx=5, fill="x", expand=True)
         
         # Create function config frame in edit mode with conditional disabled fields
-        disable_fields = ["type", "roi"] if selected_adjustment == "Adjust OLD Function" else None
+        disable_fields = ["tag"] if selected_adjustment == "Adjust OLD Function" else None
         config_frame = FunctionConfigFrame(
             edit_adjustment_window, self.designer, mode="edit",
             selected_data=selected_data,

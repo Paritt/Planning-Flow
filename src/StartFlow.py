@@ -312,7 +312,8 @@ class StartFlow:
                     function_adjustments_data=loaded_flow_data['function_adjustments_data'],
                     matched_roi_dict=self.match_roi_dict,
                     case=self.case,
-                    plan=self.plan
+                    plan=self.plan,
+                    robust_settings=loaded_flow_data['robust_settings']
                 )
                 
                 # 9.4 Run optimization loop

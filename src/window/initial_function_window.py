@@ -131,7 +131,7 @@ class InitialFunction_Window:
         """Add an optimization function to the list."""
         add_function_window = tk.Toplevel(self.initial_function_window)
         add_function_window.title("Add Opt. Function")
-        add_function_window.geometry("650x350")
+        add_function_window.geometry("680x350")
         
         # Create function config frame
         config_frame = FunctionConfigFrame(add_function_window, self.designer, mode="add")
@@ -196,7 +196,7 @@ class InitialFunction_Window:
         
         edit_function_window = tk.Toplevel(self.initial_function_window)
         edit_function_window.title("Edit Opt. Function")
-        edit_function_window.geometry("650x350")
+        edit_function_window.geometry("680x350")
         
         # Create function config frame in edit mode
         config_frame = FunctionConfigFrame(
