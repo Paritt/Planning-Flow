@@ -14,7 +14,7 @@ class ObjectiveAdder:
     Parses initial_functions data and adds them to the plan optimization.
     """
     
-    def __init__(self, initial_functions_data, case, plan_name, matched_roi_dict):
+    def __init__(self, initial_functions_data, case, plan_name, matched_roi_dict, robust_settings):
         """
         Initialize the ObjectiveAdder.
         
@@ -23,11 +23,13 @@ class ObjectiveAdder:
             case: RayStation case object
             plan_name: Name of the plan to add objectives to
             matched_roi_dict: Dictionary mapping flow ROI names to case ROI names
+            robust_settings: Dictionary of robustness settings
         """
         self.initial_functions_data = initial_functions_data
         self.case = case
         self.plan_name = plan_name
         self.matched_roi_dict = matched_roi_dict
+        self.robust_settings = robust_settings
         
         # Get plan and plan optimization
         self.plan = self.case.TreatmentPlans[plan_name]
@@ -60,6 +62,46 @@ class ObjectiveAdder:
                 print("✓")
             except Exception as e:
                 print(f"✗ Error: {str(e)}")
+                
+        if have_robustness := getattr(self.plan, 'RobustSettings', None):
+            print("Configuring robustness settings...", end=" ")
+            self._set_robustness()
+            print("✓")
+    
+    def _set_robustness(self):
+        """
+        Placeholder for adding robustness settings if needed.
+        Currently not implemented.
+        """
+        self.po.OptimizationParameters.SaveRobustnessParameters(PositionUncertaintyAnterior=self.robust_settings.get('anterior', 0.0),
+                                                                        PositionUncertaintyPosterior=self.robust_settings.get('posterior', 0.0),
+                                                                        PositionUncertaintySuperior=self.robust_settings.get('superior', 0.0),
+                                                                        PositionUncertaintyInferior=self.robust_settings.get('inferior', 0.0),
+                                                                        PositionUncertaintyLeft=self.robust_settings.get('left', 0.0), 
+                                                                        PositionUncertaintyRight=self.robust_settings.get('right', 0.0), 
+                                                                        DensityUncertainty=self.robust_settings.get('density', 0.0)/100, 
+                                                                        UseReducedSetOfDensityShifts=False, 
+                                                                        PositionUncertaintySetting="Universal", IndependentLeftRight=True, 
+                                                                        IndependentAnteriorPosterior=True, IndependentSuperiorInferior=True, 
+                                                                        ComputeExactScenarioDoses=False, NamesOfNonPlanningExaminations=[], 
+                                                                        PatientGeometryUncertaintyType="PerTreatmentCourse", 
+                                                                        PositionUncertaintyType="PerTreatmentCourse", 
+                                                                        TreatmentCourseScenariosFactor=1000, 
+                                                                        PositionUncertaintyList=None, 
+                                                                        PositionUncertaintyFormation="Automatic", 
+                                                                        RobustMethodPerTreatmentCourse="WeightedPowerMean" if self.robust_settings.get('method', '') == 'Composite worst cases (minimax)' else "VoxelwiseWorstCase")
+        self.Patient.Save()
+    
+    def _check_robust_function(self):
+        """
+        Check if there is robust function.
+        
+        Args:
+            func_type: Type of function (string)
+        Returns:
+            bool: True if robustness function, False otherwise
+        """
+        pass
     
     def _add_single_function(self, tag, func_type, roi_name, description, weight):
         """

@@ -181,7 +181,29 @@ class StartFlow:
                 plan_data['plan_name'] = selected_plan_name
                 self.plan = self.case.TreatmentPlans[selected_plan_name]
                 print()
-            
+                
+            # 4. Create Automate ROI
+            if self.selected_steps.get("automate_roi"):
+                print("Creating Automate ROIs...")
+                self.ui.Navigation.MenuItem['Patient modeling'].Click()
+                self.ui.Navigation.MenuItem['Patient modeling'].Popup.MenuItem['Structure definition'].Click()
+                self.ui.ToolPanel.TabItem['ROIs'].Select()
+                step_start = time.time()
+                roi_creater = Automate_ROI_Creater(
+                    automate_roi_data=loaded_flow_data['automate_roi_data'],
+                    matched_roi_dict=self.match_roi_dict,
+                    case=self.case,
+                    examination=self.selected_examination
+                )
+                roi_creater.create_all_rois()
+                self.Patient.Save()
+                self.step_times["Create Automate ROIs"] = time.time() - step_start
+                elapsed = self._format_time(self.step_times["Create Automate ROIs"])
+                print(f"✅ Completed in {elapsed}\n")
+                print('#' * 50 + '\n')
+            else:
+                print("[SKIPPED] Automate ROI creation\n")
+                
             # 3.5 Add Clinical Goals from Template
             if self.selected_steps.get("add_clinical_goal"):
                 print("Adding Clinical Goals from Template...")
@@ -204,27 +226,7 @@ class StartFlow:
             else:
                 print("[SKIPPED] Adding Clinical Goals\n")
             
-            # 4. Create Automate ROI
-            if self.selected_steps.get("automate_roi"):
-                print("Creating Automate ROIs...")
-                self.ui.Navigation.MenuItem['Patient modeling'].Click()
-                self.ui.Navigation.MenuItem['Patient modeling'].Popup.MenuItem['Structure definition'].Click()
-                self.ui.ToolPanel.TabItem['ROIs'].Select()
-                step_start = time.time()
-                roi_creater = Automate_ROI_Creater(
-                    automate_roi_data=loaded_flow_data['automate_roi_data'],
-                    matched_roi_dict=self.match_roi_dict,
-                    case=self.case,
-                    examination=self.selected_examination
-                )
-                roi_creater.create_all_rois()
-                self.Patient.Save()
-                self.step_times["Create Automate ROIs"] = time.time() - step_start
-                elapsed = self._format_time(self.step_times["Create Automate ROIs"])
-                print(f"✅ Completed in {elapsed}\n")
-                print('#' * 50 + '\n')
-            else:
-                print("[SKIPPED] Automate ROI creation\n")
+            
             
             # 5. Add initial objective
             if self.selected_steps.get("add_objectives"):
@@ -237,7 +239,8 @@ class StartFlow:
                     initial_functions_data=loaded_flow_data['initial_functions_data'],
                     case=self.case,
                     plan_name=plan_data['plan_name'],
-                    matched_roi_dict=self.match_roi_dict
+                    matched_roi_dict=self.match_roi_dict,
+                    robust_settings=loaded_flow_data['robust_settings']
                 )
                 opjective_adder.add_initial_objectives()
                 self.Patient.Save()

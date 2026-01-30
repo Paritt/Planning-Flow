@@ -120,6 +120,27 @@ class PlanFlowDesigner:
         if not condition_list:
             condition_list = ['Please add conditions first']
         return condition_list
+    
+    def get_beam_list(self):
+        """Get list of beam names from VMAT and IMPT beam data."""
+        beam_list = []
+        if self.technique_var.get() == 'VMAT':
+            for beam in self.vmat_beam_data:
+                beam_name = beam.get("beam_name", "")
+                if beam_name and beam_name not in beam_list:
+                    beam_list.append(beam_name)
+        elif self.technique_var.get() == 'IMPT':
+            for beam in self.impt_beam_data:
+                beam_name = beam.get("beam_name", "")
+                if beam_name and beam_name not in beam_list:
+                    beam_list.append(beam_name)
+        else:
+            beam_list = []
+        # If no beams defined yet, return a default list
+        if not beam_list:
+            beam_list = ['Please add beams first']
+        return beam_list
+    
         
     def save_flow(self):
         """Save the workflow to a JSON file."""

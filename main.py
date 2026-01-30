@@ -55,8 +55,8 @@ class AutoPlanGUI(tk.Tk):
         # Selected workflow steps (default: all enabled)
         self.selected_steps = {
             "create_plan_and_beams": True,
-            "add_clinical_goal": True,
             "automate_roi": True,
+            "add_clinical_goal": True,
             "add_objectives": True,
             "first_optimization": True,
             "loop_optimization": True
@@ -180,8 +180,8 @@ class AutoPlanGUI(tk.Tk):
         check_vars = {}
         step_labels = [
             ("create_plan_and_beams", "Create Plan and Add Beams"),
-            ("add_clinical_goal", "Add Clinical Goal"),
             ("automate_roi", "Automate ROI"),
+            ("add_clinical_goal", "Add Clinical Goal"),
             ("add_objectives", "Add Initial Objectives"),
             ("first_optimization", "Run 1st Optimization"),
             ("loop_optimization", "Run Loop Optimization")
