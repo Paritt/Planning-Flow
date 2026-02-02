@@ -47,7 +47,7 @@ class MatchROI_Window:
         self.remove_roi_btn = ttk.Button(match_roi_window, text="Remove Selected ROI", command=self.remove_match_roi)
         self.remove_roi_btn.pack(side="left", pady=5)
         # Edit ROI Button
-        self.edit_roi_btn = ttk.Button(match_roi_window, text="Edit Selected ROI", command=lambda: self.show_step_info("Edit ROI"))
+        self.edit_roi_btn = ttk.Button(match_roi_window, text="Edit Selected ROI", command=self.edit_match_roi)
         self.edit_roi_btn.pack(side="left", pady=5)
         # Save ROI List Button
         self.save_roi_list = ttk.Button(match_roi_window, text="Save", command=lambda: self.save_match_roi_list())
@@ -56,6 +56,30 @@ class MatchROI_Window:
         self.close_btn = ttk.Button(match_roi_window, text="Close", command=match_roi_window.destroy)
         self.close_btn.pack(pady=5)
         
+    def edit_match_roi(self):
+        """Edit selected ROI item in the treeview."""
+        selected_item = self.roi_tree.selection()
+        if not selected_item:
+            messagebox.showwarning("Selection Error", "No ROI item selected for editing.")
+            return
+        
+        item_values = self.roi_tree.item(selected_item, "values")
+        edit_roi_popup = tk.Toplevel()
+        edit_roi_popup.title("Edit ROI")
+        edit_roi_popup.geometry("250x100")
+
+        ttk.Label(edit_roi_popup, text="ROI Name:").grid(row=0, column=0, pady=5, padx=5)
+        self.edit_roi_name_var = tk.StringVar(value=item_values[0])
+        self.edit_roi_name_entry = ttk.Entry(edit_roi_popup, textvariable=self.edit_roi_name_var)
+        self.edit_roi_name_entry.grid(row=0, column=1, pady=5)
+
+        ttk.Label(edit_roi_popup, text="Possible ROI Name:").grid(row=1, column=0, pady=5, padx=5)
+        self.edit_possible_roi_name_var = tk.StringVar(value=item_values[1])
+        self.edit_possible_roi_name_entry = ttk.Entry(edit_roi_popup, textvariable=self.edit_possible_roi_name_var)
+        self.edit_possible_roi_name_entry.grid(row=1, column=1, pady=5)
+
+        ttk.Button(edit_roi_popup, text="Save", command=lambda: self.save_edited_match_roi(selected_item, edit_roi_popup)).grid(row=2, column=0, columnspan=2, pady=5)
+    
     def open_add_roi_popup(self, parent):
         """Open a popup window to add ROI."""
         add_roi_popup = tk.Toplevel(parent)

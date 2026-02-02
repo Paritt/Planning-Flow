@@ -2,6 +2,9 @@
 Planning-Flow: a flowchart-like GUI to design and run radiotherapy planning scripts for automated planning.
 
 ## TODO
+- Edit ROI in ROI match
+- Defualt boolean to None
+- Auto function tag
 - Early stop opt
 - Robust Eval
 - Function Value as condition

@@ -67,7 +67,7 @@ class Boolean_Window:
         operation_frame = tk.LabelFrame(frame_a_b, text="Select Operation:", padx=10, pady=10)
         operation_frame.grid(row=0, column=1, padx=5)
         self.selected_operation = tk.IntVar()
-        self.selected_operation.set(1)
+        self.selected_operation.set(4)  # Default to None
         union_button = tk.Radiobutton(operation_frame, text="Union", variable=self.selected_operation,value=1)
         union_button.grid(row=1, column=1)
         intersect_button = tk.Radiobutton(operation_frame, text="Intersect", variable=self.selected_operation,value=2)
