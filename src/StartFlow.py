@@ -263,7 +263,23 @@ class StartFlow:
                 if loaded_flow_data['technique_data'] == 'VMAT':
                     print("[VMAT] Using default calculation algorithm -> Collapsed Cone...")
                 elif loaded_flow_data['technique_data'] == 'IMPT':
-                    print("[IMPT] Setting calculation algorithm to Proton Pencil Beam...")
+                    if loaded_flow_data['final_calc_data']['algorithm'] == 'MonteCarlo':
+                        print("[IMPT] Setting calculation algorithm to Monte Carlo...")
+                        self.plan.BeamSets[0].FractionDose.InputSettingsForFinalDose.DoseAlgorithm = "IonMonteCarlo"
+                        if loaded_flow_data['final_calc_data']['uncer_or_spot'] == 'Uncert[%]':
+                            self.plan.BeamSets[0].FractionDose.InputSettingsForFinalDose.IonMCUseStatisticalUncertaintyInsteadOfHistoriesForFinalDose = True
+                            self.plan.BeamSets[0].FractionDose.InputSettingsForFinalDose.MCStatisticalUncertaintyForFinalDose = float(loaded_flow_data['final_calc_data']['uncer_spot_value'])/100.0
+                        elif loaded_flow_data['final_calc_data']['uncer_or_spot'] == 'Ions/spot':
+                            self.plan.BeamSets[0].FractionDose.InputSettingsForFinalDose.IonMCUseStatisticalUncertaintyInsteadOfHistoriesForFinalDose = False
+                            self.plan.BeamSets[0].FractionDose.InputSettingsForFinalDose.IonMCMeanHistoriesPerSpotForFinalDose = float(loaded_flow_data['final_calc_data']['uncer_spot_value'])
+                        else:
+                            print("[IMPT] Unknown uncertainty/spot setting. Using default settings...")
+                            pass
+                    elif loaded_flow_data['final_calc_data']['algorithm'] == 'Pencil beam':
+                        print("[IMPT] Setting calculation algorithm to Pencil Beam...")
+                        self.plan.BeamSets[0].FractionDose.InputSettingsForFinalDose.DoseAlgorithm = "SpotWeightPencilBeam"
+                    else:
+                        print("[IMPT] Unknown calculation algorithm. Using default calculation algorithm -> MonteCarlo...")
                 else:
                     print("Unknown technique type for calculation algorithm setting.")
                 self.step_times["Opt. and Cal. Settings"] = time.time() - step_start
