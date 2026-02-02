@@ -86,29 +86,38 @@ class CheckCondition_Window:
         """Add a condition to the list."""
         add_condition_window = tk.Toplevel(self.check_condition_window)
         add_condition_window.title("Add Condition")
-        add_condition_window.geometry("350x220")
+        add_condition_window.geometry("380x220")
         
         ttk.Label(add_condition_window, text="Condition Name:").grid(row=0, column=0, padx=5, pady=5)
         self.condition_name_var = tk.StringVar()
         self.condition_name_entry = ttk.Entry(add_condition_window, textvariable=self.condition_name_var)
-        self.condition_name_entry.grid(row=0, column=1, padx=5, pady=5)
+        self.condition_name_entry.grid(row=0, column=1, columnspan=2, padx=5, pady=5)
         
-        ttk.Label(add_condition_window, text="Condition Type:").grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(add_condition_window, text="Active Round:").grid(row=1, column=0, padx=5, pady=5)
+        self.active_round_symbol_var = tk.StringVar()
+        self.active_round_symbol_combo = ttk.Combobox(add_condition_window, textvariable=self.active_round_symbol_var,
+                                            values=['≥', '>', '=', '<', '≤'], state="readonly", width=5)
+        self.active_round_symbol_combo.grid(row=1, column=1, padx=5, pady=5)
+        self.active_round_symbol_var.set('≥')
+
+        self.active_round_var = tk.IntVar()
+        self.active_round_entry = ttk.Entry(add_condition_window, textvariable=self.active_round_var, width=10)
+        self.active_round_entry.grid(row=1, column=2, padx=5, pady=5)
+        self.active_round_var.set(1)
+        
+        ttk.Label(add_condition_window, text="Condition Type:").grid(row=2, column=0, padx=5, pady=5)
         self.condition_type_var = tk.StringVar()
         self.condition_type_combo = ttk.Combobox(add_condition_window, textvariable=self.condition_type_var,
-                                            values=['Optimization Round', 'Max Dose','Max DaV', 'Max VaD', 'Max Dmean', 'Min Dose','Min DaV', 'Min VaD', 'Min Dmean'], state="readonly")
-        self.condition_type_combo.grid(row=1, column=1, padx=5, pady=5)
+                                            values=['Alway TRUE', 'Max Dose','Max DaV', 'Max VaD', 'Max Dmean', 'Min Dose','Min DaV', 'Min VaD', 'Min Dmean'], state="readonly")
+        self.condition_type_combo.grid(row=2, column=1, columnspan=2, padx=5, pady=5)
         
         # --------------------
         # Frame for each type
         # --------------------
         
         # Frame for optimization round
-        frame_opt_round = ttk.Frame(add_condition_window)
-        ttk.Label(frame_opt_round, text="Optimization Round ≥").grid(row=0, column=0, padx=5, pady=5)
-        self.opt_round_var = tk.StringVar()
-        self.opt_round_entry = ttk.Entry(frame_opt_round, textvariable=self.opt_round_var)
-        self.opt_round_entry.grid(row=0, column=1, padx=5, pady=5)
+        frame_alway = ttk.Frame(add_condition_window)
+        ttk.Label(frame_alway, text="This condition is always TRUE in active round").grid(row=0, column=0,columnspan=2, padx=5, pady=5)
 
         # Frame for Max Dose
         frame_max_dose = ttk.Frame(add_condition_window)
@@ -245,7 +254,7 @@ class CheckCondition_Window:
         
         def show_selected_frame(self):
             """Show the relevant frame based on condition type selection."""
-            frame_opt_round.grid_forget()
+            frame_alway.grid_forget()
             frame_max_dose.grid_forget()
             frame_min_dose.grid_forget()
             frame_max_dav.grid_forget()
@@ -255,24 +264,24 @@ class CheckCondition_Window:
             frame_max_dmean.grid_forget()
             frame_min_dmean.grid_forget()
             selection = self.condition_type_var.get()
-            if selection == 'Optimization Round':
-                frame_opt_round.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+            if selection == 'Alway TRUE':
+                frame_alway.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
             elif selection == 'Max Dose':
-                frame_max_dose.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+                frame_max_dose.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
             elif selection == 'Min Dose':
-                frame_min_dose.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+                frame_min_dose.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
             elif selection == 'Max DaV':
-                frame_max_dav.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+                frame_max_dav.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
             elif selection == 'Min DaV':
-                frame_min_dav.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+                frame_min_dav.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
             elif selection == 'Max VaD':
-                frame_max_vad.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+                frame_max_vad.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
             elif selection == 'Min VaD':
-                frame_min_vad.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+                frame_min_vad.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
             elif selection == 'Max Dmean':
-                frame_max_dmean.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+                frame_max_dmean.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
             elif selection == 'Min Dmean':
-                frame_min_dmean.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+                frame_min_dmean.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
                 
         self.condition_type_combo.bind("<<ComboboxSelected>>", lambda event: show_selected_frame(self))
         show_selected_frame(self)  # Show the initial frame based on the default selection
@@ -283,10 +292,9 @@ class CheckCondition_Window:
         """Save the new condition to the list."""
         condition_name = self.condition_name_var.get().strip()
         condition_type = self.condition_type_var.get().strip()
-        if condition_type == 'Optimization Round':
+        if condition_type == 'Alway TRUE':
             roi_name = 'N/A'
-            opt_round = self.opt_round_var.get().strip()
-            criteria = f"Round ≥ {opt_round}"
+            criteria = f"Alway TRUE in active round"
         elif condition_type == 'Max Dose':
             roi_name = self.roi_name_var_max_dose.get().strip()
             max_dose = self.max_dose_var.get().strip()
