@@ -242,39 +242,43 @@ class ObjectiveAdjuster:
             "Min DVH": "MinDvh",
             "Uniformity Constraint": "UniformityConstraint"
         }
-        func_type = func_type_dict.get(func_type, func_type)
-        self._edit_function(target_function, func_type, roi_name, is_constraint, restrict_all_beams_individually, restrict_to_beams, robust, restrict_to_beamset)
-        print("Edited. Now adjusting parameters...", end=" ")
+        actual_func_type = func_type_dict[func_type]
+        self._edit_function(target_function, actual_func_type, roi_name, is_constraint, restrict_all_beams_individually, restrict_to_beams, robust, restrict_to_beamset)
+        
+        # Find the function by tag AGAIN after editing
+        target_function = None
+        for f in self.po.Objective.ConstituentFunctions:
+            if f.Tag == tag:
+                target_function = f
+                break
+        
+        if target_function is None:
+            for f in self.po.Constraints:
+                if f.Tag == tag:
+                    target_function = f
+                    break
         
         # Route to appropriate adjustment based on function type
-        if func_type == "MaxDose":
+        if actual_func_type == "MaxDose":
             self._adjust_max_dose(target_function, description, weight, is_constraint)
-        elif func_type == "MinDose":
+        elif actual_func_type == "MinDose":
             self._adjust_min_dose(target_function, description, weight, is_constraint)
-        elif func_type == "MaxEud":
+        elif actual_func_type == "MaxEud":
             self._adjust_max_eud(target_function, description, weight, is_constraint)
-        elif func_type == "MinEud":
+        elif actual_func_type == "MinEud":
             self._adjust_min_eud(target_function, description, weight, is_constraint)
-        elif func_type == "TargetEud":
+        elif actual_func_type == "TargetEud":
             self._adjust_target_eud(target_function, description, weight, is_constraint)
-        elif func_type == "UniformDose":
+        elif actual_func_type == "UniformDose":
             self._adjust_uniform_dose(target_function, description, weight, is_constraint)
-        elif func_type == "DoseFallOff":
+        elif actual_func_type == "DoseFallOff":
             self._adjust_fall_off(target_function, description, weight, is_constraint)
-        elif func_type == "MaxDvh":
+        elif actual_func_type == "MaxDvh":
             self._adjust_max_dvh(target_function, description, weight, is_constraint)
-        elif func_type == "MinDvh":
+        elif actual_func_type == "MinDvh":
             self._adjust_min_dvh(target_function, description, weight, is_constraint)
         else:
-            # Default: just update weight and dose level if available
-            if not is_constraint:
-                target_function.DoseFunctionParameters.Weight = weight
-            try:
-                dose_level = self._extract_dose(description)
-                target_function.DoseFunctionParameters.DoseLevel = dose_level
-            except:
-                pass
-        print("✓")
+            print(f"Unknown function type for adjustment: {actual_func_type}")
     # ========== Helper methods to adjust existing functions ==========
     
     def _edit_function(self, target_function, func_type, roi_name, is_constraint, restrict_all_beams_individually, restrict_to_beams, robust, restrict_to_beamset):

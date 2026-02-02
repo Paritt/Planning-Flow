@@ -326,10 +326,9 @@ class StartFlow:
                     print("  Checking conditions...")
                     conditions_checker.set_optimization_round(i+1)
                     met_condition = conditions_checker.check_all_conditions()
-                    print(f"  Met Condition: {met_condition}")
                     if not met_condition:
-                        print("  No conditions met. Exiting optimization loop.\n")
-                        break
+                        print("  No conditions met. No optimization in this loop.\n")
+                        pass
                     else:
                         loop_start = time.time()
                         conditional_roi_creator.create_all_conditional_rois(met_condition)
