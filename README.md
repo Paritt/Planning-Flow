@@ -2,7 +2,8 @@
 Planning-Flow: a flowchart-like GUI to design and run radiotherapy planning scripts for automated planning.
 
 ## TODO
-- Robust Opt/Eval
+- Early stop opt
+- Robust Eval
 - Function Value as condition
 - AND OR condition
 - Round >,<,>=,<=,= to condition
@@ -10,5 +11,4 @@ Planning-Flow: a flowchart-like GUI to design and run radiotherapy planning scri
 - Wait for User input (Draw ROI, Manual add function)
 - Avoid beam (VMAT)
 - Fix Jaw (VMAT)
-- Early stop opt
 - Auto save

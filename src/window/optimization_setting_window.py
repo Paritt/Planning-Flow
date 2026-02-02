@@ -16,16 +16,17 @@ class OptimizationSetting_Window:
         self.tolerance_var = tk.StringVar()
         self.tolerance_entry = ttk.Entry(optimization_window, textvariable=self.tolerance_var)
         self.tolerance_entry.grid(row=0, column=1, padx=5, pady=5)
+        self.tolerance_var.set("1.000e-5")
         
         ttk.Label(optimization_window, text="Maximum iterations:").grid(row=1, column=0, padx=5, pady=5)
         self.max_iterations_var = tk.StringVar()
         self.max_iterations_entry = ttk.Entry(optimization_window, textvariable=self.max_iterations_var)
         self.max_iterations_entry.grid(row=1, column=1, padx=5, pady=5)
-        
+        self.max_iterations_var.set("40")
         # Load existing data if available
         if self.designer.optimization_data:
-            self.tolerance_var.set(self.designer.optimization_data.get("tolerance", ""))
-            self.max_iterations_var.set(self.designer.optimization_data.get("max_iterations", ""))
+            self.tolerance_var.set(self.designer.optimization_data.get("tolerance", "1.000e-5"))
+            self.max_iterations_var.set(self.designer.optimization_data.get("max_iterations", "40"))
         
         # Save Button
         ttk.Button(optimization_window, text="Save", command=self.save_optimization_settings).grid(row=2, column=0, pady=10)

@@ -13,7 +13,13 @@ class FinalCalculationSetting_Window:
 
         ttk.Label(final_calc_window, text="Algorithm").grid(row=0, column=0, padx=5, pady=5)
         self.algorithm_var = tk.StringVar()
-        ttk.Combobox(final_calc_window, values=['Pencil beam', 'CC', 'MonteCarlo'], state="readonly", textvariable=self.algorithm_var).grid(row=0, column=1, padx=5, pady=5)
+        if self.designer.technique_var.get() == 'IMPT':
+            ttk.Combobox(final_calc_window, values=['Pencil beam', 'MonteCarlo'], state="readonly", textvariable=self.algorithm_var).grid(row=0, column=1, padx=5, pady=5)
+            self.algorithm_var.set('MonteCarlo')
+        else:
+            ttk.Combobox(final_calc_window, values=['Collapsed Cone'], state="readonly", textvariable=self.algorithm_var).grid(row=0, column=1, padx=5, pady=5)
+            self.algorithm_var.set('Collapsed Cone')
+        
         
         # Load existing data if available
         if self.designer.final_calc_data:
