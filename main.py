@@ -59,7 +59,8 @@ class AutoPlanGUI(tk.Tk):
             "add_clinical_goal": True,
             "add_objectives": True,
             "first_optimization": True,
-            "loop_optimization": True
+            "loop_optimization": True,
+            "Early_Stop_mode": False
         }
 
     def create_treatment_settings(self):
@@ -171,7 +172,7 @@ class AutoPlanGUI(tk.Tk):
         """Open window to select which workflow steps to execute."""
         step_window = tk.Toplevel(self)
         step_window.title("Select Workflow Steps")
-        step_window.geometry("350x250")
+        step_window.geometry("350x280")
         step_window.attributes('-topmost', True)
         
         tk.Label(step_window, text="Select steps to execute:", font=("Arial", 10, "bold")).pack(pady=10)
@@ -183,14 +184,23 @@ class AutoPlanGUI(tk.Tk):
             ("automate_roi", "Automate ROI"),
             ("add_clinical_goal", "Add Clinical Goal"),
             ("add_objectives", "Add Initial Objectives"),
-            ("first_optimization", "Run 1st Optimization"),
-            ("loop_optimization", "Run Loop Optimization")
+            ("first_optimization", "Run 1st Optimization")
         ]
         
         for step_key, step_label in step_labels:
             var = tk.BooleanVar(value=self.selected_steps[step_key])
             check_vars[step_key] = var
             ttk.Checkbutton(step_window, text=step_label, variable=var).pack(anchor="w", padx=30, pady=3)
+        
+        loop_optimize_frame = ttk.Frame(step_window)
+        check_vars["loop_optimization"] = tk.BooleanVar(value=self.selected_steps["loop_optimization"])
+        ttk.Checkbutton(loop_optimize_frame, text="Run Loop Optimization", variable=check_vars["loop_optimization"]).pack(side='left', pady=3)
+        check_vars["Early_Stop_mode"] = tk.BooleanVar(value=self.selected_steps["Early_Stop_mode"])
+        ttk.Checkbutton(loop_optimize_frame, text="Early Stop Mode", variable=check_vars["Early_Stop_mode"]).pack(side='left', padx=5,pady=3)
+        early_stop_info_but = ttk.Button(loop_optimize_frame, text="?", command=lambda: messagebox.showinfo("Early Stop Mode", "If enabled, the loop optimization will stop early if none of the defined conditions are met in a loop iteration."), width=2)
+        early_stop_info_but.pack(side='left', pady=3)
+        
+        loop_optimize_frame.pack(anchor="w", padx=30, pady=3)
         
         def apply_selection():
             for step_key in check_vars:

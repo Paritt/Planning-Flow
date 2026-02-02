@@ -342,7 +342,17 @@ class StartFlow:
                     print("  Checking conditions...")
                     conditions_checker.set_optimization_round(i+1)
                     met_condition = conditions_checker.check_all_conditions()
-                    if not met_condition:
+                    
+                    early_stop = False
+                    
+                    if self.selected_steps.get("Early_Stop_mode"):
+                        print("  Check for early stop...")
+                        if any(met_condition.values()): 
+                            early_stop = False 
+                        else: 
+                            early_stop = True
+                    
+                    if early_stop:
                         print("  No conditions met. No optimization in this loop.\n")
                         pass
                     else:
