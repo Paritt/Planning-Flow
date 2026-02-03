@@ -13,8 +13,12 @@ except ImportError:
 except ImportError:
     messagebox.showerror("RayStation API not found", "Please run this script within RayStation.")
 
+# Machine options - modify these to match your RayStation treatment rooms
 machine_options = ['Agility', 'P1']
+# Example of other machine options:
 # machine_options = ['N3_VersaHD', 'N4_VersaHD', 'TrueBeam_L6', 'TrueBeam_L7', 'TrueBeam_N5']
+
+# Beam energy options - modify these to match your RayStation beam energies
 beam_energy_list = ['6', '10', '6 FFF', '10 FFF']
 
 class TextRedirector:
