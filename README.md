@@ -43,13 +43,14 @@ The application is built with Python and Tkinter, and interfaces directly with t
    │   └── window/
    └── README.md
    ```
+3. Edit **machine_options** and **beam_energy_list** in main.py to match your RayStation configuration
+4. Open RayStation and navigate to the scripting interface
 
 ## ⭐ Usage
 
 ### Starting the Application
 
 1. **Launch from RayStation**:
-   - Open RayStation
    - Execute `main.py` through RayStation's scripting interface
 
 2. **Main Window**:
