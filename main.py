@@ -60,7 +60,7 @@ class AutoPlanGUI(tk.Tk):
             "add_objectives": True,
             "first_optimization": True,
             "loop_optimization": True,
-            "Early_Stop_mode": False
+            "Early_Stop_mode": True
         }
 
     def create_treatment_settings(self):

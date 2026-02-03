@@ -49,60 +49,65 @@ class ConditionChecker:
             condition_type = condition.get("type", "")
             roi_name = condition.get("roi", "")
             criteria = condition.get("criteria", "")
+            active_round_symbol = condition.get("active_round", "≥ 0").split()[0]
+            active_round = condition.get("active_round", "≥ 0").split()[1]
             
-            try:
-                # Evaluate based on condition type
-                if condition_type == "Optimization Round":
-                    results[condition_name], value = self._check_optimization_round(criteria)
-                elif condition_type == "Max Dose":
-                    results[condition_name], value = self._check_max_dose(roi_name, criteria)
-                elif condition_type == "Min Dose":
-                    results[condition_name], value = self._check_min_dose(roi_name, criteria)
-                elif condition_type == "Max Dmean" or condition_type == "Min Dmean":
-                    results[condition_name], value = self._check_dmean(roi_name, criteria)
-                elif condition_type == "Max DaV" or condition_type == "Min DaV":
-                    results[condition_name], value = self._check_dav(roi_name, criteria)
-                elif condition_type == "Min VaD" or condition_type == "Max VaD":
-                    results[condition_name], value = self._check_vad(roi_name, criteria)
-                else:
-                    print(f"Warning: Unknown condition type '{condition_type}' for condition '{condition_name}'")
-                    results[condition_name] = False
-                    continue
+            # Check if condition is active in current optimization round
+            round_met = False
+            if active_round_symbol == "≥":
+                round_met = self.optimization_round >= int(active_round)
+            elif active_round_symbol == ">":
+                round_met = self.optimization_round > int(active_round)
+            elif active_round_symbol == "=":
+                round_met = self.optimization_round == int(active_round)
+            elif active_round_symbol == "<":
+                round_met = self.optimization_round < int(active_round)
+            elif active_round_symbol == "≤":
+                round_met = self.optimization_round <= int(active_round)
+            else:
+                print(f"Warning: Unknown active round symbol '{active_round_symbol}' for condition '{condition_name}'")
+                round_met = False
                 
-                # Print result for all condition types
-                if results[condition_name]:
-                    print(f"  ✅ Condition MET: {condition_name} - Value: {value:.2f} ({criteria})")
-                else:
-                    print(f"  ❌ Condition NOT met: {condition_name} - Value: {value:.2f} ({criteria})")
-                    
-            except Exception as e:
-                print(f"  ⚠️ Error evaluating condition '{condition_name}': {str(e)}")
+            if not round_met:
                 results[condition_name] = False
+                # print(f"  ⏩ Condition NOT evaluated (inactive round): {condition_name}")
+                continue
+            else:
+                print(f"  ▶️ Evaluating condition: {condition_name}")
+                try:
+                    # Evaluate based on condition type
+                    if condition_type == "Alway TRUE":
+                        results[condition_name], value = (True, self.optimization_round)
+                    elif condition_type == "Max Dose":
+                        results[condition_name], value = self._check_max_dose(roi_name, criteria)
+                    elif condition_type == "Min Dose":
+                        results[condition_name], value = self._check_min_dose(roi_name, criteria)
+                    elif condition_type == "Max Dmean" or condition_type == "Min Dmean":
+                        results[condition_name], value = self._check_dmean(roi_name, criteria)
+                    elif condition_type == "Max DaV" or condition_type == "Min DaV":
+                        results[condition_name], value = self._check_dav(roi_name, criteria)
+                    elif condition_type == "Min VaD" or condition_type == "Max VaD":
+                        results[condition_name], value = self._check_vad(roi_name, criteria)
+                    else:
+                        print(f"Warning: Unknown condition type '{condition_type}' for condition '{condition_name}'")
+                        results[condition_name] = False
+                        continue
+                    
+                    # Print result for all condition types
+                    if results[condition_name]:
+                        print(f"    ✅ Condition MET: {condition_name} - Value: {value:.2f} ({criteria})")
+                    else:
+                        print(f"    ❌ Condition NOT met: {condition_name} - Value: {value:.2f} ({criteria})")
+                        
+                except Exception as e:
+                    print(f"  ⚠️ Error evaluating condition '{condition_name}': {str(e)}")
+                    results[condition_name] = False
         
         return results
     
     def set_optimization_round(self, round_number):
         """Set the current optimization round number."""
         self.optimization_round = round_number
-    
-    def _check_optimization_round(self, criteria):
-        """
-        Check if optimization round meets criteria.
-        Criteria format: "Optimization Round ≥ 2"
-        Returns: (bool, int) - (condition_met, current_round)
-        """
-        try:
-            # Extract threshold from criteria
-            match = re.search(r'≥\s*(\d+)', criteria)
-            if match:
-                threshold = int(match.group(1))
-                return (self.optimization_round >= threshold, self.optimization_round)
-            else:
-                print(f"Could not parse optimization round criteria: {criteria}")
-                return (False, self.optimization_round)
-        except Exception as e:
-            print(f"Error checking optimization round: {str(e)}")
-            return (False, self.optimization_round)
     
     def _check_max_dose(self, roi_name, criteria):
         """

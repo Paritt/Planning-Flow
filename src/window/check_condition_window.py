@@ -20,7 +20,7 @@ class CheckCondition_Window:
         
         condition_tree_scroll_y = ttk.Scrollbar(condition_tree_frame, orient="vertical")
         
-        self.condition_tree = ttk.Treeview(condition_tree_frame, columns=("Condition Name", "ROI",  "Condition Type", "Criteria"), show="headings",
+        self.condition_tree = ttk.Treeview(condition_tree_frame, columns=("Condition Name", "ROI",  "Active Round","Condition Type", "Criteria"), show="headings",
                                             yscrollcommand=condition_tree_scroll_y.set)
         
         condition_tree_scroll_y.config(command=self.condition_tree.yview)
@@ -29,11 +29,12 @@ class CheckCondition_Window:
         self.condition_tree.heading("ROI", text="ROI")
         self.condition_tree.heading("Condition Type", text="Condition Type")
         self.condition_tree.heading("Criteria", text="Criteria")
-        
+        self.condition_tree.heading("Active Round", text="Active Round")
         self.condition_tree.column("Condition Name", width=150)
         self.condition_tree.column("ROI", width=100)
         self.condition_tree.column("Condition Type", width=130)
         self.condition_tree.column("Criteria", width=200)
+        self.condition_tree.column("Active Round", width=100)
         
         self.condition_tree.pack(side="left", fill="both", expand=True)
         condition_tree_scroll_y.pack(side="right", fill="y")
@@ -53,7 +54,7 @@ class CheckCondition_Window:
         # Load existing data if available
         if self.designer.check_conditions_data:
             for item in self.designer.check_conditions_data:
-                self.condition_tree.insert("", "end", values=(item["name"], item["roi"], item["type"], item["criteria"]))
+                self.condition_tree.insert("", "end", values=(item["name"], item["roi"], item["active_round"], item["type"], item["criteria"]))
         
         # Save Button
         self.save_condition_btn = ttk.Button(self.check_condition_window, text="Save", command=self.save_conditions)
@@ -71,8 +72,9 @@ class CheckCondition_Window:
             conditions.append({
                 "name": values[0],
                 "roi": values[1],
-                "type": values[2],
-                "criteria": values[3]
+                "active_round": values[2],
+                "type": values[3],
+                "criteria": values[4]
             })
         
         self.designer.check_conditions_data = conditions
@@ -290,6 +292,9 @@ class CheckCondition_Window:
 
     def add_condition(self, popup):
         """Save the new condition to the list."""
+        active_round_symbol = self.active_round_symbol_var.get().strip()
+        active_round = self.active_round_var.get()
+        active_round_str = f"{active_round_symbol} {active_round}"
         condition_name = self.condition_name_var.get().strip()
         condition_type = self.condition_type_var.get().strip()
         if condition_type == 'Alway TRUE':
@@ -336,7 +341,7 @@ class CheckCondition_Window:
             min_dmean = self.min_dmean_var.get().strip()
             criteria = f"Dmean (cGy) ≤ {min_dmean}"
         # Here you would add the condition to your data structure
-        self.condition_tree.insert("", "end", values=(condition_name, roi_name, condition_type, criteria))
+        self.condition_tree.insert("", "end", values=(condition_name, roi_name, active_round_str, condition_type, criteria))
         popup.destroy()
     
     def remove_condition(self):
@@ -356,34 +361,42 @@ class CheckCondition_Window:
         item_values = self.condition_tree.item(selected_item[0], "values")
         selected_name = item_values[0]
         selected_roi = item_values[1]
-        selected_type = item_values[2]
-        selected_criteria = item_values[3]
+        selected_active_round = item_values[2]
+        selected_type = item_values[3]
+        selected_criteria = item_values[4]
         
         edit_condition_window = tk.Toplevel(self.check_condition_window)
         edit_condition_window.title("Edit Condition")
-        edit_condition_window.geometry("350x220")
+        edit_condition_window.geometry("380x220")
         
         ttk.Label(edit_condition_window, text="Condition Name:").grid(row=0, column=0, padx=5, pady=5)
         self.condition_name_var = tk.StringVar(value=selected_name)
         self.condition_name_entry = ttk.Entry(edit_condition_window, textvariable=self.condition_name_var)
         self.condition_name_entry.grid(row=0, column=1, padx=5, pady=5)
         
-        ttk.Label(edit_condition_window, text="Condition Type:").grid(row=1, column=0, padx=5, pady=5)
+        ttk.Label(edit_condition_window, text="Active Round:").grid(row=1, column=0, padx=5, pady=5)
+        self.active_round_symbol_var = tk.StringVar(value=selected_active_round.split()[0])
+        self.active_round_symbol_combo = ttk.Combobox(edit_condition_window, textvariable=self.active_round_symbol_var,
+                                            values=['≥', '>', '=', '<', '≤'], state="readonly", width=5)
+        self.active_round_symbol_combo.grid(row=1, column=1, padx=5, pady=5)
+        
+        self.active_round_var = tk.IntVar(value=selected_active_round.split()[1])
+        self.active_round_entry = ttk.Entry(edit_condition_window, textvariable=self.active_round_var, width=10)
+        self.active_round_entry.grid(row=1, column=2, padx=5, pady=5)
+        
+        ttk.Label(edit_condition_window, text="Condition Type:").grid(row=2, column=0, padx=5, pady=5)
         self.condition_type_var = tk.StringVar(value=selected_type)
         self.condition_type_combo = ttk.Combobox(edit_condition_window, textvariable=self.condition_type_var,
                                             values=['Optimization Round', 'Max Dose','Max DaV', 'Max VaD', 'Max Dmean', 'Min Dose','Min DaV', 'Min VaD', 'Min Dmean'], state="readonly")
-        self.condition_type_combo.grid(row=1, column=1, padx=5, pady=5)
+        self.condition_type_combo.grid(row=2, column=1, padx=5, pady=5)
         
         # --------------------
         # Frame for each type
         # --------------------
         
         # Frame for optimization round
-        frame_opt_round = ttk.Frame(edit_condition_window)
-        ttk.Label(frame_opt_round, text="Optimization Round ≥").grid(row=0, column=0, padx=5, pady=5)
-        self.opt_round_var = tk.StringVar()
-        self.opt_round_entry = ttk.Entry(frame_opt_round, textvariable=self.opt_round_var)
-        self.opt_round_entry.grid(row=0, column=1, padx=5, pady=5)
+        frame_alway = ttk.Frame(edit_condition_window)
+        ttk.Label(frame_alway, text="This condition is always TRUE in active round").grid(row=0, column=0,columnspan=2, padx=5, pady=5)
 
         # Frame for Max Dose
         frame_max_dose = ttk.Frame(edit_condition_window)
@@ -523,7 +536,7 @@ class CheckCondition_Window:
         
         def show_selected_frame(self):
             """Show the relevant frame based on condition type selection."""
-            frame_opt_round.grid_forget()
+            frame_alway.grid_forget()
             frame_max_dose.grid_forget()
             frame_min_dose.grid_forget()
             frame_max_dav.grid_forget()
@@ -533,36 +546,38 @@ class CheckCondition_Window:
             frame_max_dmean.grid_forget()
             frame_min_dmean.grid_forget()
             selection = self.condition_type_var.get()
-            if selection == 'Optimization Round':
-                frame_opt_round.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+            if selection == 'Alway TRUE':
+                frame_alway.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
             elif selection == 'Max Dose':
-                frame_max_dose.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+                frame_max_dose.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
             elif selection == 'Min Dose':
-                frame_min_dose.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+                frame_min_dose.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
             elif selection == 'Max DaV':
-                frame_max_dav.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+                frame_max_dav.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
             elif selection == 'Min DaV':
-                frame_min_dav.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+                frame_min_dav.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
             elif selection == 'Max VaD':
-                frame_max_vad.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+                frame_max_vad.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
             elif selection == 'Min VaD':
-                frame_min_vad.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+                frame_min_vad.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
             elif selection == 'Max Dmean':
-                frame_max_dmean.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+                frame_max_dmean.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
             elif selection == 'Min Dmean':
-                frame_min_dmean.grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+                frame_min_dmean.grid(row=3, column=0, columnspan=3, padx=5, pady=5)
                 
         self.condition_type_combo.bind("<<ComboboxSelected>>", lambda event: show_selected_frame(self))
         show_selected_frame(self)  # Show the initial frame based on the default selection
         
         def save_edited_condition():
             """Save the edited condition."""
+            active_round_symbol = self.active_round_symbol_var.get().strip()
+            active_round = self.active_round_var.get()
+            active_round_str = f"{active_round_symbol} {active_round}"
             condition_name = self.condition_name_var.get().strip()
             condition_type = self.condition_type_var.get().strip()
-            if condition_type == 'Optimization Round':
+            if condition_type == 'Alway TRUE':
                 roi_name = 'N/A'
-                opt_round = self.opt_round_var.get().strip()
-                criteria = f"Round ≥ {opt_round}"
+                criteria = f"Alway TRUE in active round"
             elif condition_type == 'Max Dose':
                 roi_name = self.roi_name_var_max_dose.get().strip()
                 max_dose = self.max_dose_var.get().strip()
@@ -605,7 +620,7 @@ class CheckCondition_Window:
                 criteria = f"Dmean (cGy) ≤ {min_dmean}"
             
             # Update tree item
-            self.condition_tree.item(selected_item[0], values=(condition_name, roi_name, condition_type, criteria))
+            self.condition_tree.item(selected_item[0], values=(condition_name, roi_name, active_round_str, condition_type, criteria))
             edit_condition_window.destroy()
         
         ttk.Button(edit_condition_window, text="Save Changes", command=save_edited_condition).grid(row=5, column=0, columnspan=2, pady=10)
@@ -613,12 +628,9 @@ class CheckCondition_Window:
     def _parse_and_populate_condition_values(self, condition_type, roi_name, criteria):
         """Parse the criteria and populate the corresponding input fields."""
         import re
-        
-        if condition_type == 'Optimization Round':
-            # "Round ≥ 3"
-            match = re.search(r'Round ≥ (\d+)', criteria)
-            if match:
-                self.opt_round_var.set(match.group(1))
+        if condition_type == 'Alway TRUE':
+            # No additional fields to populate
+            pass
         elif condition_type == 'Max Dose':
             # "Dmax (cGy) ≥ 5000"
             self.roi_name_var_max_dose.set(roi_name)
