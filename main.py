@@ -35,7 +35,7 @@ class AutoPlanGUI(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        self.title("Planning Flow 🍃")
+        self.title("Planning Flow 🍃 v1.2")
         self.geometry("570x150")
 
         # Treatment Parameters Section

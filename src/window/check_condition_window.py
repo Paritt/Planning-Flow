@@ -340,7 +340,28 @@ class CheckCondition_Window:
             roi_name = self.roi_name_var_min_dmean.get().strip()
             min_dmean = self.min_dmean_var.get().strip()
             criteria = f"Dmean (cGy) ≤ {min_dmean}"
-        # Here you would add the condition to your data structure
+        
+        # auto condition name if empty
+        if not condition_name:
+            # Count existing conditions with same ROI and type
+            count = 0
+            for child in self.condition_tree.get_children():
+                item_values = self.condition_tree.item(child)["values"]
+                if item_values[1] == roi_name and item_values[3] == condition_type:
+                    count += 1
+            
+            # Generate name: {roi}_{condition_type}_R{active_round_str}_{index}
+            # Replace spaces and special characters in the components
+            roi_clean = roi_name.replace(" ", "_").replace("/", "_") if roi_name != "N/A" else "NA"
+            type_clean = condition_type.replace(" ", "_")
+            active_round_clean = active_round_str.replace(" ", "").replace("≥", "gte").replace(">", "gt").replace("=", "eq").replace("<", "lt").replace("≤", "lte")
+            
+            condition_name = f"{roi_clean}_{type_clean}_R{active_round_clean}_{count + 1}"
+            
+            # Ensure name is less than 50 characters
+            if len(condition_name) >= 50:
+                condition_name = condition_name[:49]
+        
         self.condition_tree.insert("", "end", values=(condition_name, roi_name, active_round_str, condition_type, criteria))
         popup.destroy()
     

@@ -144,10 +144,26 @@ class InitialFunction_Window:
         """Save the new function to the list."""
         values = config_frame.get_values()
         
-        # Validate required fields
-        if not values["tag"] or not values["type"] or not values["roi"] or not values["weight"]:
-            messagebox.showwarning("Missing Fields", "Please fill in all required fields.")
+        # Validate required fields (except tag which can be auto-generated)
+        if not values["type"] or not values["roi"] or not values["weight"]:
+            messagebox.showwarning("Missing Fields", "Please fill in all required fields (Type, ROI, Weight).")
             return
+        
+        # Auto-generate tag if empty
+        if not values["tag"]:
+            # Count existing functions with same ROI and type
+            count = 0
+            for child in self.initial_function_tree.get_children():
+                item_values = self.initial_function_tree.item(child)["values"]
+                if item_values[1] == values["type"] and item_values[2] == values["roi"]:
+                    count += 1
+            
+            # Generate tag: roi_type_{index}
+            values["tag"] = f"{values['roi']}_{values['type']}_{count + 1}"
+            
+            # Ensure tag is less than 50 characters
+            if len(values["tag"]) >= 50:
+                values["tag"] = values["tag"][:49]
         
         # Insert into tree
         self.initial_function_tree.insert(

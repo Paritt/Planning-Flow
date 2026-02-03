@@ -303,10 +303,26 @@ class FunctionAdjustment_Window:
                 return
             
             values = config_frame.get_values()
-            # Validate required fields
-            if not values["tag"] or not values["type"] or not values["roi"] or not values["weight"]:
-                messagebox.showwarning("Missing Fields", "Please fill in all required fields.")
+            # Validate required fields (except tag which can be auto-generated)
+            if not values["type"] or not values["roi"] or not values["weight"]:
+                messagebox.showwarning("Missing Fields", "Please fill in all required fields (Type, ROI, Weight).")
                 return
+            
+            # Auto-generate tag if empty
+            if not values["tag"]:
+                # Count existing functions with same ROI and type
+                count = 0
+                for child in self.function_adjustment_tree.get_children():
+                    item_values = self.function_adjustment_tree.item(child)["values"]
+                    if item_values[3] == values["type"] and item_values[4] == values["roi"]:
+                        count += 1
+                
+                # Generate tag: roi_type_{index}
+                values["tag"] = f"C_{condition_true}_{values['roi']}_{values['type']}_{count + 1}"
+                
+                # Ensure tag is less than 50 characters
+                if len(values["tag"]) >= 50:
+                    values["tag"] = values["tag"][:49]
             
             # Insert into function adjustment tree with condition and adjustment type
             self.function_adjustment_tree.insert(
