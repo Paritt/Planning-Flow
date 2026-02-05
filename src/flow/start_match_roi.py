@@ -91,7 +91,7 @@ class MatchROI:
         case_roi_names_with_blank = ["--Not Match--"] + case_roi_names
         
         # Calculate window height based on number of ROIs
-        window_height = min(600, 50 + len(self.match_roi_data) * 35 + 60)
+        window_height = min(600, 50 + len(self.match_roi_data) * 35 + 90)
         match_window.geometry(f'320x{window_height}')
         
         # Store combo boxes and matched ROI labels
@@ -165,7 +165,7 @@ class MatchROI:
             match_window.destroy()
         
         button_apply = Button(match_window, text='Apply', command=on_apply)
-        button_apply.grid(column=1, row=len(self.match_roi_data), pady=15)
+        button_apply.grid(column=1, row=len(self.match_roi_data), pady=5)
         button_apply.config(width=10)
         
         # Wait for window to close before continuing

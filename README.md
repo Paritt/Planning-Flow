@@ -39,13 +39,14 @@ The application is built with Python and Tkinter, and interfaces directly with t
    ├── src/
    │   ├── PlanFlowDesigner.py
    │   ├── StartFlow.py
+   │   ├── PlanningFlowApp.py
+   │   ├── setting.json
    │   ├── flow/
    │   └── window/
    └── README.md
    ```
-3. Edit **machine_options** and **beam_energy_list** in main.py to match your RayStation configuration
-   ![alt text](image.png)
-4. Open RayStation and navigate to the scripting interface
+3. Edit **machine_options** and **beam_energy_list** in **setting.json** to match your RayStation configuration. (**Tip:** You can check your machine and beam energy names in RayStation.)
+1. Open RayStation and navigate to the scripting interface
 
 ## ⭐ Usage
 
@@ -245,7 +246,11 @@ If you find Planning-Flow useful in your research or clinical work, please consi
 ## 📃 My TODO List
 - Automate Robust Evaluation
 - Function Value as condition
+- Dose distribution as condition?
+- Organ overlap volume as condition
+- Add condition fromclinical goal
 - AND OR condition
+- Adjust new adjusted function
 - Wait for User input (Draw ROI, Manual add function)
 - Avoid beam (VMAT)
 - Fix Jaw (VMAT)

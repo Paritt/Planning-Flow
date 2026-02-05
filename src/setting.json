@@ -1,0 +1,4 @@
+{
+    "machine_options": ["Agility", "P1"],
+    "beam_energy_list": ["6 MV", "10 MV", "6 MV FFF", "10 MV FFF"] 
+}
