@@ -46,7 +46,20 @@ The application is built with Python and Tkinter, and interfaces directly with t
    └── README.md
    ```
 3. Edit **machine_options** and **beam_energy_list** in **setting.json** to match your RayStation configuration. (**Tip:** You can check your machine and beam energy names in RayStation.)
-1. Open RayStation and navigate to the scripting interface
+4. Open RayStation and navigate to the scripting side bar
+5. **[Option 1: Run directly]**
+   - Click "Script creation" 
+   - Open **main.py** in RayStation's script editor
+   - Change the **'path'** variable in **main.py** to the location where you saved Planning-Flow
+   - Run the script to launch Planning-Flow
+6. **[Option 2: Add to RayStation Scripts Database]**
+   - Click "Script management"
+   - Click "import"
+   - Click "..." to select path to **main.py** to import it into RayStation's script library.
+   - You can rename Database script name as you like, e.g., "Planning-Flow".
+   - Modify the **'path'** variable in **main.py** to point to the Planning-Flow location
+   - Click "Save"
+   - You can now launch Planning-Flow from the RayStation script menu
 
 ## ⭐ Usage
 

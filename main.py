@@ -3,7 +3,7 @@ import json
 import os
 import sys
 
-path = f"//zkh/appdata/Raystation/Research/ML/Paritt/Planning_Flow🍃/Planning-Flow" # Change this to where you have Planning-Flow
+path = f"//zkh/appdata/Raystation/Research/ML/Paritt/Planning_Flow🍃/Planning-Flow" # Change this to where you save Planning-Flow
 
 def setupPath(path):
     """ Set the path and environment """
