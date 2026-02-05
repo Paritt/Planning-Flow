@@ -98,11 +98,11 @@ class PlanningFlowApp(tk.Tk):
         """Open the README file for user guidance."""
         import webbrowser
         import os
-        readme_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'README.md')
+        readme_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'README.html')
         if os.path.exists(readme_path):
             webbrowser.open(f'file://{os.path.abspath(readme_path)}')
         else:
-            messagebox.showerror("README Not Found", "The README.md file could not be found.")
+            messagebox.showerror("README Not Found", "The README.html file could not be found.")
             
     def create_workflow_controls(self):
         """Create workflow management buttons."""

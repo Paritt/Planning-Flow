@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Planning-Flow Documentation</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica', 'Arial', sans-serif;
+            line-height: 1.6;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #34495e;
+            margin-top: 30px;
+            border-bottom: 2px solid #ecf0f1;
+            padding-bottom: 8px;
+        }
+        h3 {
+            color: #555;
+            margin-top: 20px;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            border-left: 4px solid #3498db;
+        }
+        pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+        ul, ol {
+            padding-left: 30px;
+        }
+        li {
+            margin: 8px 0;
+        }
+        .emoji {
+            font-size: 1.2em;
+        }
+        .note {
+            background-color: #fff9e6;
+            border-left: 4px solid #ffcc00;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        .warning {
+            background-color: #ffe6e6;
+            border-left: 4px solid #ff0000;
+            padding: 12px;
+            margin: 15px 0;
+            border-radius: 4px;
+        }
+        strong {
+            color: #2c3e50;
+        }
+        a {
+            color: #3498db;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1><span class="emoji">🍃</span> Planning-Flow</h1>
+        
+        <p><strong>Planning-Flow</strong> is a flowchart-like GUI application designed for running in RayStation radiotherapy treatment planning system. It enables users to design, save, and execute automated planning workflows through an intuitive graphical interface, eliminating the need for manual scripting.</p>
+
+        <h2><span class="emoji">🌏</span> Overview</h2>
+        
+        <p>Planning-Flow provides a visual workflow designer that allows you to automate various aspects of treatment planning, including:</p>
+        <ul>
+            <li>Configure beam and plan settings for VMAT and IMPT techniques</li>
+            <li>Create new helping ROIs through boolean operations</li>
+            <li>Set up initial optimization functions with various dose objectives and constraints (including robust optimization and beam restrictions)</li>
+            <li>Define conditional logic based on dose-volume metrics</li>
+            <li>Automatically adjust optimization functions or add new ones based on conditions logic</li>
+            <li>Automatically create ROIs when certain conditions are met</li>
+            <li>Execute multi-round optimization with customizable stopping criteria</li>
+            <li>Save workflow configurations as JSON files for reuse</li>
+            <li>Selective execution of workflow steps</li>
+            <li>Add clinical goals for plan evaluation</li>
+            <li>Robust optimization settings for IMPT plans</li>
+            <li>Final dose calculation with chosen algorithms</li>
+            <li>Comprehensive logging of execution progress and results</li>
+            <li>Load previously saved workflows for modification or execution</li>
+            <li>Choose which Plan flow steps to execute</li>
+        </ul>
+        
+        <p>The application is built with Python and Tkinter, and interfaces directly with the RayStation API.</p>
+
+        <h2><span class="emoji">🚲</span> Installation</h2>
+        
+        <h3>Prerequisites</h3>
+        <ul>
+            <li><strong>RayStation</strong> treatment planning system (v2025, v2024 or compatible)</li>
+            <li><strong>Python</strong> (version used by RayStation, typically Python 3.x)</li>
+            <li><strong>tkinter</strong> (usually included with Python)</li>
+        </ul>
+
+        <h3>Setup</h3>
+        <ol>
+            <li>Clone or download this repository to a location accessible from RayStation</li>
+            <li>Ensure the folder structure is maintained:
+                <pre><code>Planning-Flow/
+├── main.py
+├── src/
+│   ├── PlanFlowDesigner.py
+│   ├── StartFlow.py
+│   ├── PlanningFlowApp.py
+│   ├── setting.json
+│   ├── flow/
+│   └── window/
+└── README.md</code></pre>
+            </li>
+            <li>Edit <strong>machine_options</strong> and <strong>beam_energy_list</strong> in <strong>setting.json</strong> to match your RayStation configuration. (<strong>Tip:</strong> You can check your machine and beam energy names in RayStation.)</li>
+            <li>Open RayStation and navigate to the scripting side bar</li>
+            <li><strong>[Option 1: Run directly]</strong>
+                <ul>
+                    <li>Click "Script creation"</li>
+                    <li>Open <strong>main.py</strong> in RayStation's script editor</li>
+                    <li>Change the <strong>'path'</strong> variable in <strong>main.py</strong> to the location where you saved Planning-Flow</li>
+                    <li>Run the script to launch Planning-Flow</li>
+                </ul>
+            </li>
+            <li><strong>[Option 2: Add to RayStation Scripts Database]</strong>
+                <ul>
+                    <li>Click "Script management"</li>
+                    <li>Click "import"</li>
+                    <li>Click "..." to select path to <strong>main.py</strong> to import it into RayStation's script library.</li>
+                    <li>You can rename Database script name as you like, e.g., "Planning-Flow".</li>
+                    <li>Modify the <strong>'path'</strong> variable in <strong>main.py</strong> to point to the Planning-Flow location</li>
+                    <li>Click "Save"</li>
+                    <li>You can now launch Planning-Flow from the RayStation script menu</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h2><span class="emoji">⭐</span> Usage</h2>
+
+        <h3>Starting the Application</h3>
+        <ol>
+            <li><strong>Launch from RayStation</strong>:
+                <ul><li>Execute <code>main.py</code> through RayStation's scripting interface</li></ul>
+            </li>
+            <li><strong>Main Window</strong>:
+                <p>The application opens with treatment settings:</p>
+                <ul>
+                    <li><strong>Machine</strong>: Select treatment machine (Agility, P1, etc.)</li>
+                    <li><strong>Plan Name</strong>: Enter name for the treatment plan</li>
+                    <li><strong>Load Flow</strong>: Load a previously saved workflow</li>
+                    <li><strong>New Flow</strong>: Start designing a new workflow</li>
+                    <li><strong>Edit Flow</strong>: Modify an existing workflow</li>
+                    <li><strong>Select steps</strong>: Choose which steps to execute</li>
+                    <li><strong>Start</strong>: Begin execution of the automate planning workflow</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h3>Creating a Plan flow</h3>
+        <ol>
+            <li><strong>Click "New Flow"</strong> to open the PlanFlow designer</li>
+            <li><strong>Configure Flow Name</strong>:
+                <ul><li>Enter a name for your flow</li></ul>
+            </li>
+            <li><strong>Add Planning Steps</strong> (in order):
+                <br><br>
+                <strong>Step 1: Match ROI</strong>
+                <ul><li>Add all ROI name and it's possible name that you will use in this flow</li></ul>
+                
+                <strong>Step 2: Technique Configuration</strong>
+                <ul>
+                    <li>Choose between VMAT or IMPT</li>
+                    <li>Click 'Beam' to Add beam and it's settings (angles, energies, etc.)</li>
+                    <li>Click 'Isocenter' to set isocenter location</li>
+                    <li>Click 'Prescription' to set dose prescription</li>
+                </ul>
+                
+                <strong>Step 3: Plan Configuration (Optional)</strong>
+                <ul>
+                    <li>Set clinical goal (This will load template from your RayStation database) and match the ROIs</li>
+                    <li>Set Robustness for robust function (Do not set if you don't have robust function)</li>
+                </ul>
+
+                <strong>Step 4: Automate ROI</strong>
+                <ul>
+                    <li>Create helping ROIs you want to use in initial optimization function or match in clinical goal using boolean operations (e.g., ring, OAR-PTV, etc.)</li>
+                </ul>
+
+                <strong>Step 5: Initial Function</strong>
+                <ul>
+                    <li>Add dose initial objectives function and constraints you will use in 1st optimization round</li>
+                    <li>Set function types, ROIs, weights</li>
+                    <li>Configure robust settings if needed</li>
+                    <li>Configure beam restrictions if applicable</li>
+                    <li>Tags auto-generate if left empty: <code>{roi}_{type}_{index}</code></li>
+                </ul>
+
+                <strong>Step 6: Optimization Settings and Final Calculation setting</strong>
+                <ul>
+                    <li>Set maximum iterations per round</li>
+                    <li>Set optimization tolerance</li>
+                    <li>Set algorithm for final dose calculation</li>
+                </ul>
+
+                <strong>Step 7: Check Conditions</strong>
+                <ul>
+                    <li>Define evaluation conditions based on DVH metrics</li>
+                    <li>Set active rounds for each condition</li>
+                    <li>Condition names auto-generate if left empty: <code>c_{roi}_{type}_r{round}_{index}</code></li>
+                </ul>
+
+                <strong>Step 8: Conditional ROI Creation</strong>
+                <ul>
+                    <li>Create ROIs when specific conditions (in step 7) are met</li>
+                </ul>
+
+                <strong>Step 9: Function Adjustment</strong>
+                <ul>
+                    <li>Modify initial optimization functions if specific conditions (in step 7) are met</li>
+                    <li>Add new optimization functions if specific conditions (in step 7) are met (Tags auto-generate if left empty: <code>{roi}_{type}_{index}</code>)</li>
+                </ul>
+
+                <strong>Step 10: End Planning Flow</strong>
+                <ul>
+                    <li>Define how many optimization rounds to perform before end the Planning Flow</li>
+                </ul>
+            </li>
+            <li><strong>Save or Use Workflow</strong>:
+                <ul>
+                    <li><strong>Save Flow</strong>: Saves the workflow as a JSON file for future use</li>
+                    <li><strong>Use Without Saving</strong>: Proceeds to execution selection without saving</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h3>Executing a Workflow</h3>
+        <ol>
+            <li>After designing (or loading) a workflow</li>
+            <li><strong>Select Steps to Execute</strong>:
+                <ul>
+                    <li>Check/uncheck steps you want to run</li>
+                    <li>Useful for running only portions of a workflow</li>
+                </ul>
+            </li>
+            <li><strong>Click "Start"</strong> to begin Automated Planning Flow execution</li>
+            <li><strong>Monitor Progress</strong>:
+                <ul>
+                    <li>The console window shows real-time progress</li>
+                    <li>Step timings are displayed</li>
+                    <li>Any errors or warnings appear in the console</li>
+                    <li>Execution log can be saved to a text file at the end</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h3>Loading Existing Workflows</h3>
+        <ol>
+            <li>Click <strong>"Load Flow"</strong> in the main window</li>
+            <li>Select a previously saved JSON workflow file</li>
+            <li>The workflow designer opens with all settings pre-loaded</li>
+            <li>You can modify settings by click 'Edit Flow' or directly proceed to execution</li>
+        </ol>
+
+        <h2><span class="emoji">🗺️</span> Plan Flow File Format</h2>
+        
+        <p>Plan flow are saved as JSON files containing:</p>
+        <ul>
+            <li>Plan configuration (name, technique)</li>
+            <li>All step configurations (beams, ROIs, functions, conditions, etc.)</li>
+        </ul>
+
+        <p>Example structure:</p>
+        <pre><code>{
+    "flow_name": "Esophagus_4140",
+    "created_by": "Paritt",
+    "created_date": "2026-01-26 13:57:52",
+    "version": "1.0",
+    "technique": "VMAT",
+    "vmat_beam": [
+        {
+            "beam_name": "1CW181-180",
+            "energy": "6",
+            "gantry_start": "181.0",
+            "gantry_stop": "180.0",
+            "rotation": "CW",
+            "collimator": "355.0",
+            "couch": "0.0"
+        },
+        {
+            "beam_name": "2CCW180-181",
+            "energy": "6",
+            "gantry_start": "180.0",
+            "gantry_stop": "181.0",
+            "rotation": "CCW",
+            "collimator": "5.0",
+            "couch": "0.0"
+        }
+    ],
+    ...
+}</code></pre>
+
+        <h2><span class="emoji">💡</span> Tips and Best Practices</h2>
+        
+        <ol>
+            <li><strong>Naming Conventions</strong>:
+                <ul>
+                    <li>Use descriptive workflow names</li>
+                    <li>Let auto-naming handle function tags and condition names (Or name it yourself if you prefer just make sure they are unique)</li>
+                    <li>Keep names under 50 characters</li>
+                </ul>
+            </li>
+            <li><strong>ROI Matching</strong>:
+                <ul>
+                    <li>Match all required ROIs before every step (but if you forget to match some you can always add them later)</li>
+                </ul>
+            </li>
+            <li><strong>Optimization Strategy</strong>:
+                <ul>
+                    <li>Start with broader objectives in initial functions</li>
+                    <li>Use conditions to refine functions in later rounds</li>
+                    <li>Example: Start with PTV coverage, then add OAR sparing based on conditions</li>
+                </ul>
+            </li>
+            <li><strong>Conditional Logic</strong>:
+                <ul>
+                    <li>Use conditions to create adaptive Plan flows</li>
+                    <li>Test this with some cases and make it more complex as you see cases that it not working as expected</li>
+                    <li>You can use clinical goals as a guide for setting conditions</li>
+                </ul>
+            </li>
+        </ol>
+
+        <h2><span class="emoji">🛠️</span> Troubleshooting</h2>
+        
+        <div class="warning">
+            <p><strong>Problem</strong>: "RayStation API not found" error</p>
+            <p><strong>Solution</strong>: Ensure you're running the script from within RayStation</p>
+        </div>
+
+        <div class="warning">
+            <p><strong>Problem</strong>: Plan name already exists</p>
+            <p><strong>Solution</strong>: Choose a different plan name or delete the existing plan</p>
+        </div>
+
+        <div class="warning">
+            <p><strong>Problem</strong>: ROI not found during execution</p>
+            <p><strong>Solution</strong>: Verify ROI matching is configured correctly</p>
+        </div>
+
+        <div class="warning">
+            <p><strong>Problem</strong>: Optimization not converging</p>
+            <p><strong>Solution</strong>: Check function weights, increase iterations, or adjust objectives</p>
+        </div>
+
+        <div class="note">
+            <strong>If you find any bug or have suggestions, please don't hesitate to contact me.</strong>
+        </div>
+
+        <h2><span class="emoji">😊</span> Developer Notes</h2>
+        
+        <p>Hi there! my name is Paritt and I am the original developer of Planning-Flow. Currently, I am a PhD student focusing on integrating AI and automation into radiotherapy treatment planning. This project is part of my ongoing efforts to streamline and enhance the planning process.</p>
+
+        <p>The goal of Planning-Flow is to provide a flexible and user-friendly tool that empowers planner to automate complex planning workflows without deep programming knowledge. And also to capture all the planning tip and trick to further use for creating AI agent to assist in treatment planning. Therefore, any feedback, suggestions, or contributions are highly welcome!</p>
+
+        <p><strong>My Contact Info</strong>:</p>
+        <ul>
+            <li>Email: <a href="mailto:p.wongtrakool@umcg.nl">p.wongtrakool@umcg.nl</a></li>
+        </ul>
+
+        <h2><span class="emoji">📘</span> Citation</h2>
+        
+        <p>If you find Planning-Flow useful in your research or clinical work, please consider citing it as follows:</p>
+        <pre><code>@software{Wongtrakool2026,
+  author = {Wongtrakool, Paritt},
+  title = {Planning-Flow},
+  url = {https://github.com/Paritt/Planning-Flow},
+  year = {2026}
+}</code></pre>
+
+        <h2><span class="emoji">📃</span> My TODO List</h2>
+        <ul>
+            <li>Automate Robust Evaluation</li>
+            <li>Function Value as condition</li>
+            <li>Dose distribution as condition?</li>
+            <li>Organ overlap volume as condition</li>
+            <li>Add condition from clinical goal</li>
+            <li>AND OR condition</li>
+            <li>Adjust new adjusted function</li>
+            <li>Wait for User input (Draw ROI, Manual add function)</li>
+            <li>Avoid beam (VMAT)</li>
+            <li>Fix Jaw (VMAT)</li>
+            <li>Auto save</li>
+        </ul>
+    </div>
+</body>
+</html>

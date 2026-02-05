@@ -80,6 +80,16 @@ class MatchROI_Window:
 
         ttk.Button(edit_roi_popup, text="Save", command=lambda: self.save_edited_match_roi(selected_item, edit_roi_popup)).grid(row=2, column=0, columnspan=2, pady=5)
     
+    def save_edited_match_roi(self, item, popup):
+        """Save the edited ROI item back to the tree."""
+        roi_name = self.edit_roi_name_var.get().strip()
+        if roi_name:
+            possible_roi_name = self.edit_possible_roi_name_var.get().strip()
+            self.roi_tree.item(item, values=(roi_name, possible_roi_name))
+            popup.destroy()
+        else:
+            messagebox.showwarning("Input Error", "ROI Name cannot be empty.")
+            
     def open_add_roi_popup(self, parent):
         """Open a popup window to add ROI."""
         add_roi_popup = tk.Toplevel(parent)

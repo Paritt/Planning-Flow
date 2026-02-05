@@ -264,7 +264,7 @@ If you find Planning-Flow useful in your research or clinical work, please consi
 - Add condition fromclinical goal
 - AND OR condition
 - Adjust new adjusted function
-- Wait for User input (Draw ROI, Manual add function)
+- Wait for User input (Draw ROI, Manual add function, Before running)
 - Avoid beam (VMAT)
 - Fix Jaw (VMAT)
 - Auto save
