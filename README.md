@@ -26,7 +26,7 @@ The application is built with Python and Tkinter, and interfaces directly with t
 ## 🚲 Installation
 
 ### Prerequisites
-- **RayStation** treatment planning system (v2025 or compatible)
+- **RayStation** treatment planning system (v2025, v2024 or compatible)
 - **Python** (version used by RayStation, typically Python 3.x)
 - **tkinter** (usually included with Python)
 
