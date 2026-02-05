@@ -12,6 +12,7 @@ except ImportError:
     from connect import *
 
 
+app_version = "1.2"
 
 class TextRedirector:
     """Redirect stdout/stderr to a text widget."""
@@ -34,7 +35,7 @@ class PlanningFlowApp(tk.Tk):
         self.machine_options = machine_options
         self.beam_energy_list = beam_energy_list
         
-        self.title("Planning Flow 🍃 v1.2")
+        self.title(f"Planning Flow 🍃 v{app_version}")
         self.geometry("570x150")
 
         # Treatment Parameters Section
@@ -158,14 +159,14 @@ class PlanningFlowApp(tk.Tk):
             self.flow_entry.config(state="readonly")
             
             # Open PlanFlowDesigner with loaded data
-            PlanFlowDesigner(self, load_data=self.workflow_data, beam_energy_list=self.beam_energy_list)
+            PlanFlowDesigner(self, load_data=self.workflow_data, beam_energy_list=self.beam_energy_list, app_version=app_version)
         else:
             messagebox.showwarning("Edit Flow", "Please load a flow first using 'Load Flow' button.")
     
     def new_flow(self):
         """Create a completely new blank planning flow."""
         # Open PlanFlowDesigner without any data (blank flow)
-        PlanFlowDesigner(self, beam_energy_list=self.beam_energy_list)
+        PlanFlowDesigner(self, beam_energy_list=self.beam_energy_list, app_version=app_version)
     
     def select_steps(self):
         """Open window to select which workflow steps to execute."""

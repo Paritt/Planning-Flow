@@ -19,11 +19,12 @@ from src.window.robust_setting_window import RoustSetting_Window
 class PlanFlowDesigner:
     """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
     """Open a new window for planning steps."""
-    def __init__(self, parent, load_data=None, beam_energy_list=None):
+    def __init__(self, parent, load_data=None, beam_energy_list=None, app_version=None):
         self.parent = parent
         self.beam_energy_list = beam_energy_list if beam_energy_list is not None else ['6', '10', '15', '6 FFF', '10 FFF']
+        self.app_version = app_version if app_version is not None else "XX"
         self.planning_window = tk.Toplevel(parent)
-        self.planning_window.title("Planning flow")
+        self.planning_window.title(f"PlanFlow Designer v{self.app_version}")
         self.planning_window.geometry("550x500")
         
         # Initialize data storage for all steps
@@ -153,7 +154,7 @@ class PlanFlowDesigner:
             "flow_name": self.flow_name_var.get().strip(),
             "created_by": self.user_name_var.get().strip(),
             "created_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "version": "1.0",
+            "version": self.app_version,
             "technique": self.technique_var.get(),
             "vmat_beam": self.vmat_beam_data,
             "impt_beam": self.impt_beam_data,
@@ -197,7 +198,7 @@ class PlanFlowDesigner:
             "flow_name": self.flow_name_var.get().strip(),
             "created_by": self.user_name_var.get().strip(),
             "created_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            "version": "1.0",
+            "version": f"{self.app_version}",
             "technique": self.technique_var.get(),
             "vmat_beam": self.vmat_beam_data,
             "impt_beam": self.impt_beam_data,
