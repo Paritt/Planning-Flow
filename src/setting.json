@@ -1,4 +1,5 @@
 {
     "machine_options": ["Agility", "P1"],
-    "beam_energy_list": ["6 MV", "10 MV", "6 MV FFF", "10 MV FFF"] 
+    "beam_energy_list": ["6", "10", "6 FFF", "10 FFF"],
+    "flow_collection_path": "../flow_collection"
 }

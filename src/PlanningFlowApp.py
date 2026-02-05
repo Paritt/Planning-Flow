@@ -29,11 +29,12 @@ class TextRedirector:
 
 
 class PlanningFlowApp(tk.Tk):
-    def __init__(self, machine_options, beam_energy_list):
+    def __init__(self, machine_options, beam_energy_list, flow_collection_path):
         super().__init__()
 
         self.machine_options = machine_options
         self.beam_energy_list = beam_energy_list
+        self.flow_collection_path = flow_collection_path
         
         self.title(f"Planning Flow 🍃 v{app_version}")
         self.geometry("570x150")
@@ -140,14 +141,17 @@ class PlanningFlowApp(tk.Tk):
         """Load an existing workflow from JSON."""
         from tkinter import filedialog
         import json
+        import os
         
         file_path = filedialog.askopenfilename(
             title="Select Planning Flow JSON",
-            filetypes=[("JSON Files", "*.json"), ("All Files", "*.*")]
+            filetypes=[("JSON Files", "*.json"), ("All Files", "*.*")],
+            initialdir=self.flow_collection_path
         )
         
         if file_path:
             try:
+                self.flow_collection_path = os.path.dirname(file_path)
                 with open(file_path, "r") as f:
                     self.workflow_data = json.load(f)
                 

@@ -31,6 +31,7 @@ try:
         settings = json.load(f)
     machine_options = settings["machine_options"]
     beam_energy_list = settings["beam_energy_list"]
+    flow_collection_path = settings["flow_collection_path"]
 except FileNotFoundError:
     messagebox.showwarning("Settings file not found", f"{settings_file} not found. Using default settings.")
     
@@ -39,8 +40,10 @@ except FileNotFoundError:
     
     # Default Beam energy options - modify these to match your RayStation beam energies
     beam_energy_list = ['6', '10', '6 FFF', '10 FFF']
-
+    
+    # Default Flow collection path
+    flow_collection_path = os.path.join(path,'flow_collection')
 
 if __name__ == "__main__":
-    app = PlanningFlowApp(machine_options=machine_options, beam_energy_list=beam_energy_list)
+    app = PlanningFlowApp(machine_options=machine_options, beam_energy_list=beam_energy_list, flow_collection_path=flow_collection_path)
     app.mainloop()
