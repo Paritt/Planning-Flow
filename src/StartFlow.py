@@ -119,8 +119,12 @@ class StartFlow:
             if self.selected_steps.get("create_plan_and_beams"):
                 print("Plan creation...")
                 step_start = time.time()
-                self.ui.Navigation.MenuItem['Plan design'].Click()
-                self.ui.Navigation.MenuItem['Plan design'].Popup.MenuItem['Plan setup'].Click()
+                try:
+                    self.ui.Navigation.MenuItem['Plan design'].Click()
+                    self.ui.Navigation.MenuItem['Plan design'].Popup.MenuItem['Plan setup'].Click()
+                except:
+                    self.ui.TitleBar.Navigation.MenuItem['Plan design'].Click()
+                    self.ui.TitleBar.Navigation.MenuItem['Plan design'].Popup.MenuItem['Plan setup'].Click()
                 plan_creator = PlanCreater(loaded_flow_data, self.case, self.selected_examination, self.match_roi_dict)
                 plan_creator.create_plan_step()
                 self.Patient.Save()
@@ -185,8 +189,12 @@ class StartFlow:
             # 4. Create Automate ROI
             if self.selected_steps.get("automate_roi"):
                 print("Creating Automate ROIs...")
-                self.ui.Navigation.MenuItem['Patient modeling'].Click()
-                self.ui.Navigation.MenuItem['Patient modeling'].Popup.MenuItem['Structure definition'].Click()
+                try:
+                    self.ui.Navigation.MenuItem['Patient modeling'].Click()
+                    self.ui.Navigation.MenuItem['Patient modeling'].Popup.MenuItem['Structure definition'].Click()
+                except:
+                    self.ui.TitleBar.Navigation.MenuItem['Patient modeling'].Click()
+                    self.ui.TitleBar.Navigation.MenuItem['Patient modeling'].Popup.MenuItem['Structure definition'].Click()
                 self.ui.ToolPanel.TabItem['ROIs'].Select()
                 step_start = time.time()
                 roi_creater = Automate_ROI_Creater(
@@ -208,8 +216,12 @@ class StartFlow:
             if self.selected_steps.get("add_clinical_goal") and loaded_flow_data['clinical_goal_data']:
                 print("Adding Clinical Goals from Template...")
                 step_start = time.time()
-                self.ui.Navigation.MenuItem['Plan optimization'].Click()
-                self.ui.Navigation.MenuItem['Plan optimization'].Popup.MenuItem['Plan optimization'].Click()
+                try:
+                    self.ui.Navigation.MenuItem['Plan optimization'].Click()
+                    self.ui.Navigation.MenuItem['Plan optimization'].Popup.MenuItem['Plan optimization'].Click()
+                except:
+                    self.ui.TitleBar.Navigation.MenuItem['Plan optimization'].Click()
+                    self.ui.TitleBar.Navigation.MenuItem['Plan optimization'].Popup.MenuItem['Plan optimization'].Click()
                 self.ui.Workspace.TabControl['DVH'].TabItem['Clinical goals'].Select()
                 clinical_goal_adder = ClinicalGoalAdder(
                     clinical_goal_data=loaded_flow_data['clinical_goal_data'],
@@ -230,8 +242,13 @@ class StartFlow:
             if self.selected_steps.get("add_objectives"):
                 print("Adding Initial Objectives...")
                 step_start = time.time()
-                self.ui.Navigation.MenuItem['Plan optimization'].Click()
-                self.ui.Navigation.MenuItem['Plan optimization'].Popup.MenuItem['Plan optimization'].Click()
+                try:
+                    self.ui.Navigation.MenuItem['Plan optimization'].Click()
+                    self.ui.Navigation.MenuItem['Plan optimization'].Popup.MenuItem['Plan optimization'].Click()
+                except:
+                    self.ui.TitleBar.Navigation.MenuItem['Plan optimization'].Click()
+                    self.ui.TitleBar.Navigation.MenuItem['Plan optimization'].Popup.MenuItem['Plan optimization'].Click()
+
                 self.ui.Workspace.TabControl['Objectives/constraints'].TabItem['Objectives/constraints'].Select()
                 opjective_adder = ObjectiveAdder(
                     initial_functions_data=loaded_flow_data['initial_functions_data'],
