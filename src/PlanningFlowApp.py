@@ -177,14 +177,14 @@ class PlanningFlowApp(tk.Tk):
             self.flow_entry.config(state="readonly")
             
             # Open PlanFlowDesigner with loaded data
-            PlanFlowDesigner(self, load_data=self.workflow_data, beam_energy_list=self.beam_energy_list, app_version=app_version)
+            PlanFlowDesigner(self, load_data=self.workflow_data, beam_energy_list=self.beam_energy_list, app_version=app_version, flow_collection_path=self.flow_collection_path)
         else:
             messagebox.showwarning("Edit Flow", "Please load a flow first using 'Load Flow' button.")
     
     def new_flow(self):
         """Create a completely new blank planning flow."""
         # Open PlanFlowDesigner without any data (blank flow)
-        PlanFlowDesigner(self, beam_energy_list=self.beam_energy_list, app_version=app_version)
+        PlanFlowDesigner(self, beam_energy_list=self.beam_energy_list, app_version=app_version, flow_collection_path=self.flow_collection_path)
     
     def select_steps(self):
         """Open window to select which workflow steps to execute."""

@@ -19,10 +19,11 @@ from src.window.robust_setting_window import RoustSetting_Window
 class PlanFlowDesigner:
     """Create a section for designing flow steps with labels for flow/user and Save Flow button."""
     """Open a new window for planning steps."""
-    def __init__(self, parent, load_data=None, beam_energy_list=None, app_version=None):
+    def __init__(self, parent, load_data=None, beam_energy_list=None, app_version=None, flow_collection_path=None):
         self.parent = parent
         self.beam_energy_list = beam_energy_list if beam_energy_list is not None else ['6', '10', '15', '6 FFF', '10 FFF']
         self.app_version = app_version if app_version is not None else "XX"
+        self.flow_collection_path = flow_collection_path if flow_collection_path is not None else "../flow_collection"
         self.planning_window = tk.Toplevel(parent)
         self.planning_window.title(f"PlanFlow Designer v{self.app_version}")
         self.planning_window.geometry("550x500")
@@ -178,7 +179,8 @@ class PlanFlowDesigner:
         file_path = filedialog.asksaveasfilename(
             defaultextension=".json",
             filetypes=[("JSON files", "*.json"), ("All files", "*.*")],
-            title="Save Planning Flow"
+            title="Save Planning Flow",
+            initialdir=self.flow_collection_path
         )
         
         if file_path:
