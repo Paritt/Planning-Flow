@@ -1,5 +1,20 @@
 from tkinter import messagebox
 import json
+import os
+import sys
+
+path = f"//zkh/appdata/Raystation/Research/ML/Paritt/Planning_Flow🍃/Planning-Flow" # Change this to where you have Planning-Flow
+
+def setupPath(path):
+    """ Set the path and environment """
+    sys.path.insert(0, path)
+    os.environ["SCRIPT_PATH"] = path
+
+try:
+    setupPath(path)
+except Exception as e:
+    messagebox.showerror("Path Error", f"Error setting up path: {e}")
+
 from src.PlanningFlowApp import PlanningFlowApp
 
 try:
@@ -9,7 +24,7 @@ except ImportError:
 except ImportError:
     messagebox.showerror("RayStation API not found", "Please run this script within RayStation.")
 
-settings_file = 'src/setting.json'
+settings_file = os.path.join(path,'src/setting.json')
 
 try:
     with open(settings_file, 'r') as f:

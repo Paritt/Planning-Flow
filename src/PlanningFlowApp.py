@@ -80,7 +80,11 @@ class PlanningFlowApp(tk.Tk):
         self.room_dropdown = ttk.Combobox(frame, textvariable=self.room_var,
                                         values=self.machine_options, state="readonly")
         self.room_dropdown.grid(row=0, column=3, padx=5, pady=2)
-
+        
+        # Help Button for Open README
+        help_button = ttk.Button(frame, text="Help", width=5, command=self.open_readme)
+        help_button.grid(row=0, column=4, padx=5, pady=2)
+        
         # Planning Flow (Read-only)
         ttk.Label(frame, text="Planning Flow:").grid(row=1, column=0, padx=5, pady=2)
         self.flow_entry = ttk.Entry(frame, state="readonly")
@@ -89,7 +93,17 @@ class PlanningFlowApp(tk.Tk):
         # Load Flow Button
         self.load_flow_button = ttk.Button(frame, text="Load Flow", command=self.load_flow)
         self.load_flow_button.grid(row=1, column=2, padx=5, pady=2)
-
+        
+    def open_readme(self):
+        """Open the README file for user guidance."""
+        import webbrowser
+        import os
+        readme_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'README.md')
+        if os.path.exists(readme_path):
+            webbrowser.open(f'file://{os.path.abspath(readme_path)}')
+        else:
+            messagebox.showerror("README Not Found", "The README.md file could not be found.")
+            
     def create_workflow_controls(self):
         """Create workflow management buttons."""
         frame = ttk.LabelFrame(self, text="Planning Flow Management")
