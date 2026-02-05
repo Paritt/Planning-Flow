@@ -243,7 +243,8 @@ class FunctionAdjustment_Window:
         config_frame = FunctionConfigFrame(
             adjust_window, self.designer, mode="edit",
             selected_data=selected_data,
-            disable_fields=["tag"]
+            disable_fields=["tag"],
+            extended_roi_list=True
         )
         config_frame.pack(padx=10, pady=10)
         
@@ -292,7 +293,7 @@ class FunctionAdjustment_Window:
         condition_combo.pack(side="left", padx=5, fill="x", expand=True)
         
         # Create function config frame in add mode
-        config_frame = FunctionConfigFrame(add_adjustment_window, self.designer, mode="add")
+        config_frame = FunctionConfigFrame(add_adjustment_window, self.designer, mode="add", extended_roi_list=True)
         config_frame.pack(padx=10, pady=10)
         
         def save_new_adjustment():
@@ -386,7 +387,8 @@ class FunctionAdjustment_Window:
         config_frame = FunctionConfigFrame(
             edit_adjustment_window, self.designer, mode="edit",
             selected_data=selected_data,
-            disable_fields=disable_fields
+            disable_fields=disable_fields,
+            extended_roi_list=True
         )
         config_frame.pack(padx=10, pady=10)
         

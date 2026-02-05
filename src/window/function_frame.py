@@ -18,7 +18,7 @@ class FunctionConfigFrame:
     # Volume unit options
     VOLUME_UNITS = ['%', 'cc']
 
-    def __init__(self, parent, designer, mode="add", selected_data=None, disable_fields=None):
+    def __init__(self, parent, designer, mode="add", selected_data=None, disable_fields=None, extended_roi_list=False):
         """
         Initialize the function configuration frame.
 
@@ -34,6 +34,7 @@ class FunctionConfigFrame:
         self.mode = mode
         self.selected_data = selected_data or {}
         self.disable_fields = disable_fields or []
+        self.extended_roi_list = extended_roi_list
         
         # Store all input variables
         self.vars = {}
@@ -64,10 +65,18 @@ class FunctionConfigFrame:
         roi_frame.pack(side="left", padx=5, pady=5, fill="x", expand=True)
         ttk.Label(roi_frame, text="ROI Name:").pack(side="left", padx=5)
         self.vars["roi"] = tk.StringVar(value=self.selected_data.get("roi", ""))
-        roi_combo = ttk.Combobox(
+        
+        if self.extended_roi_list:
+            roi_combo = ttk.Combobox(
+            roi_frame, textvariable=self.vars["roi"],
+            values=self.designer.get_extended_roi_list(), state="readonly"
+        )
+        else:
+            roi_combo = ttk.Combobox(
             roi_frame, textvariable=self.vars["roi"],
             values=self.designer.get_roi_list(), state="readonly"
         )
+            
         roi_combo.pack(side="left", padx=5, fill="x", expand=True)
         self.combos["roi"] = roi_combo
         if "roi" in self.disable_fields:
